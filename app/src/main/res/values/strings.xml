@@ -1,3 +1,10 @@
 <resources>
     <string name="app_name">HealthCare</string>
+    <string name="zhenjiu">针灸</string>
+    <string name="warm">加热</string>
+    <string name="default_time">0分钟</string>
+
+    <string name="ble_not_supported">您的设备不支持BLE</string>
+    <string name="unknown_device">Unknown device</string>
+    <string name="error_bluetooth_not_supported">Bluetooth not supported.</string>
 </resources>
