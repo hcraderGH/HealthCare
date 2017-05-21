@@ -12,4 +12,8 @@ public class Constants {
 	public static final String NOTIFY_CHARACTERISTIC_UUID="0003cdd1-0000-1000-8000-00805f9b0131";
 
 	public static final String WRITE_CHARACTERISTIC_UUID="0003cdd2-0000-1000-8000-00805f9b0131";
+
+	public static final String ORIGINAL_TIME="original_time";
+
+	public static final String RECEIVE_BLUETOOTH_INFO="receive_bluetooth_info";
 }

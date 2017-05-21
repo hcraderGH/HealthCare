@@ -4,6 +4,12 @@
 
     <uses-permission android:name="android.permission.BLUETOOTH"/>
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+
+    //是否必须支持低功耗蓝牙，此处不必须(当正式使用时设置为true)
+    <uses-feature android:name="android.hardware.bluetooth_le"
+        android:required="false"/>
 
     <application
         android:name=".MyApplication"
@@ -12,22 +18,23 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+        <activity android:name=".ui.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity android:name=".DeviceScanActivity"
-            android:parentActivityName=".MainActivity">
+        <activity android:name=".ui.DeviceScanActivity"
+            android:parentActivityName=".ui.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".MainActivity"/>
+                android:value=".ui.MainActivity"/>
 
         </activity>
         <service android:name=".BluetoothLeService"
             android:enabled="true"/>
+        <activity android:name=".ui.RunningActivity"/>
     </application>
 
 </manifest>

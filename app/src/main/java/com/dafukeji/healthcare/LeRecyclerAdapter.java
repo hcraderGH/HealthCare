@@ -70,6 +70,7 @@ public class LeRecyclerAdapter extends RecyclerView.Adapter<LeRecyclerAdapter.Re
 		}
 
 		holder.deviceAddress.setText(device.getAddress());
+		holder.order.setText(String.valueOf((position+1)));
 
 		//如果设置了回调，则设置点击事件
 		if (mOnItemClickListener!=null){
@@ -91,11 +92,13 @@ public class LeRecyclerAdapter extends RecyclerView.Adapter<LeRecyclerAdapter.Re
 	class RecyclerViewHolder extends RecyclerView.ViewHolder{
 		TextView deviceName;
 		TextView deviceAddress;
+		TextView order;
 
 		public RecyclerViewHolder(View itemView) {
 			super(itemView);
 			deviceName= (TextView) itemView.findViewById(R.id.device_name);
 			deviceAddress= (TextView) itemView.findViewById(R.id.device_address);
+			order= (TextView) itemView.findViewById(R.id.tv_record_order);
 		}
 	}
 }

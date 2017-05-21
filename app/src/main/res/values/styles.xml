@@ -6,6 +6,8 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
     </style>
     
     <!--功能选项卡中主标题的样式-->
@@ -29,11 +31,16 @@
         <item name="android:textColor">@color/subtitle_text_color</item>
     </style>
     
-    <style name="function_toggle_button">
-        <item name="android:layout_width">@dimen/function_toggle_button_width</item>
-        <item name="android:layout_height">@dimen/function_toggle_button_height</item>
-        <item name="android:textColor">@color/fucntion_toggle_button_text_color</item>
-        <item name="android:textSize">@dimen/function_toggle_button_text_size</item>
+    <style name="function_button">
+        <item name="android:layout_width">@dimen/function_button_width</item>
+        <item name="android:layout_height">@dimen/function_button_height</item>
+        <item name="android:textColor">@color/function_button_text_color</item>
+        <item name="android:textSize">@dimen/function_button_text_size</item>
+    </style>
+
+    <style name="RunningStatus">
+        <item name="android:layout_width">72dp</item>
+        <item name="android:layout_height">72dp</item>
     </style>
 
 </resources>
