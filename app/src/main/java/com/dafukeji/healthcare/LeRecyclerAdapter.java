@@ -98,7 +98,7 @@ public class LeRecyclerAdapter extends RecyclerView.Adapter<LeRecyclerAdapter.Re
 			super(itemView);
 			deviceName= (TextView) itemView.findViewById(R.id.device_name);
 			deviceAddress= (TextView) itemView.findViewById(R.id.device_address);
-			order= (TextView) itemView.findViewById(R.id.tv_record_order);
+			order= (TextView) itemView.findViewById(R.id.tv_device_order);
 		}
 	}
 }

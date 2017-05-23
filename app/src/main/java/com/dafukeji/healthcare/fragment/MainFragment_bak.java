@@ -22,7 +22,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.BluetoothLeService;
-import com.dafukeji.healthcare.Constants;
+import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.ui.DeviceScanActivity;
 import com.dafukeji.healthcare.MyApplication;
 import com.dafukeji.healthcare.R;

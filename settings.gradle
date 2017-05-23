@@ -1,1 +1,1 @@
-include ':app', ':nice-spinner-master', ':ArcProgressBarLibrary'
+include ':app', ':daogenerator'

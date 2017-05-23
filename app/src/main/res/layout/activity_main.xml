@@ -6,25 +6,25 @@
                 tools:context=".ui.MainActivity">
 
     <android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:background="@color/app_bar_color"
-        android:layout_width="match_parent"
-        android:minHeight="?attr/actionBarSize"
+    android:id="@+id/toolbar"
+    android:background="@color/app_bar_color"
+    android:layout_width="match_parent"
+    android:minHeight="?attr/actionBarSize"
+    android:layout_height="wrap_content"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentEnd="true">
+
+    <TextView
+        android:id="@+id/tv_toolbar_title"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true">
+        android:text="@string/title_home"
+        android:layout_centerInParent="true"
+        android:layout_gravity="center"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"/>
 
-        <TextView
-            android:id="@+id/tv_toolbar_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/title_home"
-            android:layout_centerInParent="true"
-            android:layout_gravity="center"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"/>
-
-    </android.support.v7.widget.Toolbar>
+</android.support.v7.widget.Toolbar>
 
     <FrameLayout
         android:layout_below="@+id/toolbar"

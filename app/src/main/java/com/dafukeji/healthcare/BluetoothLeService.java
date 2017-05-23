@@ -32,7 +32,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
-import com.dafukeji.healthcare.contants.GattAttributes;
+import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.constants.GattAttributes;
 
 import java.util.Arrays;
 import java.util.List;
@@ -323,7 +324,7 @@ public class BluetoothLeService extends Service {
             mBluetoothGatt = null;
         }
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
-        //mBluetoothGatt.connect();
+//        mBluetoothGatt.connect();
 
         Log.d(TAG, "Trying to create a new connection.");
         return true;

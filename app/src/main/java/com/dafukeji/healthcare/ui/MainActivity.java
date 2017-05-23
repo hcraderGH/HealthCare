@@ -9,7 +9,6 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.RadioButton;
@@ -17,7 +16,6 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import com.dafukeji.healthcare.BaseActivity;
-import com.dafukeji.healthcare.Constants;
 import com.dafukeji.healthcare.MyApplication;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.fragment.HomeFragment;

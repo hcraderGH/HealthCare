@@ -30,7 +30,7 @@
  * 
  */
 
-package com.dafukeji.healthcare.contants;
+package com.dafukeji.healthcare.constants;
 
 import java.util.HashMap;
 

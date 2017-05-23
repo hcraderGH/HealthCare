@@ -35,16 +35,12 @@ dependencies {
     //    compile project(path: ':nice-spinner-master')
     //    compile project(':nice-spinner-master')
     compile 'com.orhanobut:logger:1.15'
-    compile project(':ArcProgressBarLibrary')
-
-//    //MPAndroidChart
-//    compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
-
+    //    //MPAndroidChart
+    //    compile 'com.github.PhilJay:MPAndroidChart:v3.0.2'
     //HelloCharts
     compile 'com.github.lecho:hellocharts-android:v1.5.8'
-
     compile 'com.readystatesoftware.systembartint:systembartint:1.0.3'
-
     //水波纹效果
     compile 'com.skyfishjy.ripplebackground:library:1.0.1'
+    compile 'de.greenrobot:greendao:2.1.0'
 }

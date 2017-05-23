@@ -14,4 +14,8 @@
     <string name="title_controller">控制设备</string>
     <string name="ble_need">需要开启蓝牙权限</string>
     <string name="title_running">治疗</string>
+
+    <string name="cure_cauterize">灸疗程</string>
+    <string name="cure_needle">针疗程</string>
+    <string name="cure_medicine">药疗程</string>
 </resources>

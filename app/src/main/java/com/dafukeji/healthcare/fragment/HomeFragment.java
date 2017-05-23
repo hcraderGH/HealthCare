@@ -4,7 +4,6 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.BluetoothProfile;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -24,7 +23,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.BluetoothLeService;
-import com.dafukeji.healthcare.Constants;
+import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.ui.RunningActivity;
 import com.dafukeji.healthcare.util.ToastUtil;
@@ -173,11 +172,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 				break;
 			case R.id.btn_cauterize_start:
 
-				if (!(mBluetoothLEAdapter.getProfileConnectionState(BluetoothProfile.HEADSET)==BluetoothAdapter.STATE_CONNECTED)){
+				if (!mConnected){
 					ToastUtil.showToast(getActivity(),"请连接设备",1000);
 					return;
 				}
-				
+
 				if (btnCauterizeTime.getText().toString().equals("0分钟")){
 					ToastUtil.showToast(getActivity(),"请设定持续时间",1000);
 					return;
@@ -186,6 +185,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 					mBluetoothLeService.WriteValue(settings);
 					Intent intent=new Intent(getActivity(),RunningActivity.class);
 					Log.i(TAG, "onClick: originalTime"+originalTime);
+					intent.putExtra(Constants.CURE_TYPE,Constants.CURE_CAUTERIZE);
 					intent.putExtra(Constants.ORIGINAL_TIME, originalTime);
 					startActivity(intent);
 				}
@@ -304,10 +304,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
 				Log.e(TAG, "Only gatt, just wait");
+				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				mConnected = false;
-				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
-				//TODO 断开连接处理
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){ //可以开始干活了
 				mConnected = true;
 				Log.e(TAG, "In what we need");
@@ -351,16 +350,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	public void onDestroyView() {
 		super.onDestroyView();
 		getActivity().unregisterReceiver(mBlueToothBroadCast);
-		getActivity().unregisterReceiver(mGattUpdateReceiver);
+//		getActivity().unregisterReceiver(mGattUpdateReceiver);
 //		getActivity().unbindService(mServiceConnection);
-
-		if (mBluetoothLeService != null) {
-			mBluetoothLeService.close();
-			mBluetoothLeService = null;
-		}
-		if (mBluetoothLEAdapter != null) {
-			mBluetoothLEAdapter.disable();
-		}
+//		if (mBluetoothLeService != null) {
+//			mBluetoothLeService.close();
+//			mBluetoothLeService = null;
+//		}
+//
+//		if (mBluetoothLEAdapter != null) {
+//			mBluetoothLEAdapter.disable();
+//		}
 		Log.d(TAG, "We are in destroy");
 	}
 }

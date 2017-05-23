@@ -7,6 +7,7 @@ import android.content.Context;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.UUID;
 
 public class MyApplication extends Application {
@@ -15,6 +16,14 @@ public class MyApplication extends Application {
 	private static MyApplication instance;
 	private static Context context;
 
+
+	@Override
+	public void onCreate() {
+		//设置时区
+		TimeZone tz=TimeZone.getTimeZone("ETC/GMT-8");
+		TimeZone.setDefault(tz);
+		super.onCreate();
+	}
 
 	public synchronized static MyApplication getInstance() {
 		if (instance == null) {

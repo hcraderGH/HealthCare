@@ -18,4 +18,6 @@
 
     <color name="item_divider">#cccccccc</color>
 
+    <color name="translucence">#33ffffff</color>
+
 </resources>
