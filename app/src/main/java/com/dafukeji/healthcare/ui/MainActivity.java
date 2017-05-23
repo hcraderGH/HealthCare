@@ -145,6 +145,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 				Intent controlIntent=new Intent(this, DeviceScanActivity.class);
 				startActivity(controlIntent);
 				break;
+
 		}
 	}
+	
 }

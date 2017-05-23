@@ -15,6 +15,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,19 +24,18 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.BluetoothLeService;
-import com.dafukeji.healthcare.MyApplication;
-import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.R;
-import com.dafukeji.healthcare.ui.RunningActivity;
+import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.ToastUtil;
+import com.dafukeji.healthcare.viewpagercards.CardItem;
+import com.dafukeji.healthcare.viewpagercards.CardPagerAdapter;
+import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
 import com.rey.material.app.Dialog;
 import com.rey.material.app.DialogFragment;
-import com.rey.material.app.SimpleDialog;
-import com.rey.material.app.TimePickerDialog;
 
 import java.util.ArrayList;
 
-public class HomeFragment extends Fragment implements View.OnClickListener{
+public class HomeFragment extends Fragment{
 
 
 	private Button btnCauterizeGrade,btnNeedleGrade,btnMedicalTemp;
@@ -52,18 +52,22 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	private BluetoothAdapter mBluetoothLEAdapter;
 	private String mDeviceName;
 	private String mDeviceAddress;
-	private BluetoothLeService mBluetoothLeService;
+	private static BluetoothLeService mBluetoothLeService;
 	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<>();
-	private boolean mConnected = false;
+	private static boolean mConnected = false;
 
 	private int selectedGrade =1;//档位
-	private View view;
+	private View mView;
 
 	private Dialog.Builder mBuilder;
 	private DialogFragment mFragment;
 
 	private BlueToothBroadCast mBlueToothBroadCast;
 
+	private ViewPager mViewPager;
+	private CardPagerAdapter mCardAdapter;
+	private ShadowTransformer mCardShadowTransformer;
+	private View mInflaterView;
 	@Override
 	public void onAttach(Context context) {
 		//注册接受蓝牙信息的广播
@@ -89,7 +93,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-		view=inflater.inflate(R.layout.fragment_home,container,false);
+		mView =inflater.inflate(R.layout.fragment_home,container,false);
 		initViews();
 
 		// Use this check to determine whether BLE is supported on the device.  Then you can
@@ -118,168 +122,26 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		Intent gattServiceIntent = new Intent(getActivity(), BluetoothLeService.class);
 		Log.d(TAG, "Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-		return view;
+		return mView;
 	}
 
 
 	private void initViews() {
-		btnCauterizeGrade= (Button) view.findViewById(R.id.btn_cauterize_grade);
-		btnNeedleGrade= (Button) view.findViewById(R.id.btn_needle_grade);
-		btnMedicalTemp= (Button) view.findViewById(R.id.btn_medical_temp);
 
-		btnCauterizeTime= (Button) view.findViewById(R.id.btn_cauterize_time);
-		btnNeedleTime= (Button) view.findViewById(R.id.btn_needle_time);
-		btnMedicalTime= (Button) view.findViewById(R.id.btn_medical_time);
+		//初始化ViewPagerCard
+		mViewPager = (ViewPager)mView.findViewById(R.id.vp_cure);
 
-		btnCauterizeStart= (Button) view.findViewById(R.id.btn_cauterize_start);
-		btnNeedleStart= (Button) view.findViewById(R.id.btn_needle_start);
-		btnMedicalStart= (Button) view.findViewById(R.id.btn_medical_start);
+		mCardAdapter=new CardPagerAdapter(getActivity(),getActivity().getSupportFragmentManager());
+		mCardAdapter.addCardItem(new CardItem(R.string.cauterize));
+		mCardAdapter.addCardItem(new CardItem(R.string.needle));
+		mCardAdapter.addCardItem(new CardItem(R.string.medical));
 
-
-		btnCauterizeGrade.setOnClickListener(this);
-		btnNeedleGrade.setOnClickListener(this);
-		btnMedicalTemp.setOnClickListener(this);
-
-		btnCauterizeTime.setOnClickListener(this);
-		btnNeedleTime.setOnClickListener(this);
-		btnMedicalTime.setOnClickListener(this);
-
-		btnCauterizeStart.setOnClickListener(this);
-		btnNeedleStart.setOnClickListener(this);
-		btnMedicalStart.setOnClickListener(this);
-
+		mCardShadowTransformer = new ShadowTransformer(mViewPager, mCardAdapter);
+		mCardShadowTransformer.enableScaling(true);
+		mViewPager.setAdapter(mCardAdapter);
+		mViewPager.setPageTransformer(false, mCardShadowTransformer);
+		mViewPager.setOffscreenPageLimit(3);
 	}
-
-	@Override
-	public void onClick(View v) {
-		switch (v.getId()){
-			case R.id.btn_cauterize_grade:
-				getGrade(new String[]{"一档","二档","三档","四档","五档"},btnCauterizeGrade);
-				break;
-			case R.id.btn_needle_grade:
-				getGrade(new String[]{"一档","二档","三档","四档","五档"},btnNeedleGrade);
-				break;
-			case R.id.btn_medical_temp:
-				getGrade(new String[]{"40℃", "42℃", "44℃", "46℃", "48℃", "50℃"},btnMedicalTemp);
-				break;
-			case R.id.btn_cauterize_time:
-				getSustainTime(btnCauterizeTime);
-				break;
-			case R.id.btn_needle_time:
-				getSustainTime(btnNeedleTime);
-				break;
-			case R.id.btn_medical_time:
-				getSustainTime(btnMedicalTime);
-				break;
-			case R.id.btn_cauterize_start:
-
-				if (!mConnected){
-					ToastUtil.showToast(getActivity(),"请连接设备",1000);
-					return;
-				}
-
-				if (btnCauterizeTime.getText().toString().equals("0分钟")){
-					ToastUtil.showToast(getActivity(),"请设定持续时间",1000);
-					return;
-				}else{
-					byte[] settings=new byte[]{0x31,0x32,0x33};
-					mBluetoothLeService.WriteValue(settings);
-					Intent intent=new Intent(getActivity(),RunningActivity.class);
-					Log.i(TAG, "onClick: originalTime"+originalTime);
-					intent.putExtra(Constants.CURE_TYPE,Constants.CURE_CAUTERIZE);
-					intent.putExtra(Constants.ORIGINAL_TIME, originalTime);
-					startActivity(intent);
-				}
-
-				break;
-			case R.id.btn_needle_start:
-
-				break;
-			case R.id.btn_medical_start:
-
-				break;
-		}
-	}
-
-	private String displayTime(int[] time){
-		String displayTime;
-		int hour =time[0];
-		int minute =time[1];
-		if (hour == 0) {
-			displayTime = minute + "分钟";
-		} else if (minute < 10) {
-			displayTime = hour + "小时" +"0"+minute+ "分钟";
-		} else {
-			displayTime = hour + "小时" + minute + "分钟";
-		}
-		return displayTime;
-	}
-
-	private void getSustainTime(final Button btnTime) {
-		if (mBuilder != null) {
-			return;
-		}
-				mBuilder = new TimePickerDialog.Builder(R.style.Material_App_Dialog_TimePicker_Light, 24, 00) {
-					@Override
-					public void onPositiveActionClicked(DialogFragment fragment) {
-						TimePickerDialog dialog = (TimePickerDialog) fragment.getDialog();
-						int hour = dialog.getHour();
-						int minute = dialog.getMinute();
-						sustainTime[0]=hour;
-						sustainTime[1]=minute;
-						Log.i(TAG, "onPositiveActionClicked: sustainTime"+sustainTime[0]+"   "+sustainTime[1]);
-						originalTime =(sustainTime[0]*60+sustainTime[1])*60*1000;
-						Log.i(TAG, "onPositiveActionClicked: originalTime"+ originalTime);
-						btnTime.setText(displayTime(sustainTime));
-						ToastUtil.showToast(getActivity(), "您选择的持续时间是" +hour+"小时"+minute+"分钟", 1500);
-						mBuilder=null;
-						mFragment=null;
-						super.onPositiveActionClicked(fragment);//此代码必须放在下面
-					}
-
-					@Override
-					public void onNegativeActionClicked(DialogFragment fragment) {
-						mBuilder=null;
-						mFragment=null;
-						super.onNegativeActionClicked(fragment);
-					}
-				};
-				mBuilder.positiveAction("确定")
-						.negativeAction("取消");
-		mFragment = DialogFragment.newInstance(mBuilder);
-		mFragment.show(getActivity().getSupportFragmentManager(), null);
-	}
-
-	private void getGrade(String[] grade, final Button btn) {
-		if (mBuilder != null) {
-			return;
-		}
-		mBuilder = new SimpleDialog.Builder(R.style.Material_App_Dialog_Simple_Light) {
-			@Override
-			public void onPositiveActionClicked(DialogFragment fragment) {
-				ToastUtil.showToast(getActivity(), "您选择了" + getSelectedValue(), 1500);
-				selectGrade = (String) getSelectedValue();
-				btn.setText(selectGrade);
-				mBuilder=null;
-				mFragment=null;
-				super.onPositiveActionClicked(fragment);
-			}
-
-			@Override
-			public void onNegativeActionClicked(DialogFragment fragment) {
-				mBuilder=null;
-				mFragment=null;
-				super.onNegativeActionClicked(fragment);
-			}
-		};
-		((SimpleDialog.Builder) mBuilder).items(grade, 0)
-				.title("加热温度选择")
-				.positiveAction("确定")
-				.negativeAction("取消");
-		mFragment = DialogFragment.newInstance(mBuilder);
-		mFragment.show(getActivity().getSupportFragmentManager(), null);
-	}
-
 
 	//注册接收的事件
 	private static IntentFilter makeGattUpdateIntentFilter() {
@@ -345,6 +207,14 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			mBluetoothLeService = null;
 		}
 	};
+
+	public static boolean getBlueToothStatus(){
+		return mConnected;
+	}
+
+	public static BluetoothLeService getBluetoothLeService(){
+		return mBluetoothLeService;
+	}
 
 
 	@Override

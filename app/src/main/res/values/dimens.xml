@@ -15,4 +15,6 @@
     <dimen name="toolbar_title_size">20sp</dimen>
 
     <dimen name="running_cardView_size">100dp</dimen>
+
+    <dimen name="card_padding">60dp</dimen>
 </resources>

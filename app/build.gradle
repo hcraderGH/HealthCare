@@ -43,4 +43,10 @@ dependencies {
     //水波纹效果
     compile 'com.skyfishjy.ripplebackground:library:1.0.1'
     compile 'de.greenrobot:greendao:2.1.0'
+
+    //MaterialDialog
+    compile 'com.afollestad.material-dialogs:core:0.9.4.5'
+
+    //TimePicker
+    compile 'com.code-troopers.betterpickers:library:3.1.0'
 }
