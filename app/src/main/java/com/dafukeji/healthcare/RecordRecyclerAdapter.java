@@ -27,14 +27,14 @@ import static com.dafukeji.healthcare.constants.Constants.CURE_NEEDLE;
 
 public class RecordRecyclerAdapter extends RecyclerView.Adapter<RecordRecyclerAdapter.RecyclerViewHolder>{
 
-	private ArrayList<Cure> mCures;
+	private List<Cure> mCures;
 	private LayoutInflater mInflater;
 	private Context mContext;
 	private static String TAG="测试RecordRecyclerAdapter";
 
 	private OnItemClickListener mOnItemClickListener;
 
-	public RecordRecyclerAdapter(Context context,ArrayList<Cure> cures){
+	public RecordRecyclerAdapter(Context context,List<Cure> cures){
 		this.mCures=cures;
 		this.mContext=context;
 		this.mInflater=LayoutInflater.from(context);
