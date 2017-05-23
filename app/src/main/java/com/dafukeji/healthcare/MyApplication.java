@@ -3,7 +3,12 @@ package com.dafukeji.healthcare;
 import android.app.Activity;
 import android.app.Application;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.os.IBinder;
+import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,6 +21,7 @@ public class MyApplication extends Application {
 	private static MyApplication instance;
 	private static Context context;
 
+	private static String TAG="测试MyApplication";
 
 	@Override
 	public void onCreate() {
@@ -36,7 +42,6 @@ public class MyApplication extends Application {
 	public void addActivity(Activity activity) {
 		mList.add(activity);
 	}
-
 
 	public void exit() {
 		try {

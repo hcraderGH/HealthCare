@@ -106,6 +106,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		} else {
 			ToastUtil.cancelToast();
 			MyApplication.getInstance().exit();
+//			homeFragment.unBindService();
 		}
 	}
 

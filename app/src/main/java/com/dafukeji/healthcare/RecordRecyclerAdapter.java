@@ -67,6 +67,8 @@ public class RecordRecyclerAdapter extends RecyclerView.Adapter<RecordRecyclerAd
 
 		SimpleDateFormat sdf2=new SimpleDateFormat("HH′mm′ss″", Locale.CHINA);
 		String startTime=sdf2.format(cure.getStartTime());
+		Log.i(TAG, "onBindViewHolder: startTime"+startTime);
+		Log.i(TAG, "onBindViewHolder: stopTime"+cure.getStopTime());
 		String stopTime=sdf2.format(cure.getStopTime());
 		String wholeTime=sdf2.format(cure.getStopTime()-cure.getStartTime());
 
@@ -78,13 +80,13 @@ public class RecordRecyclerAdapter extends RecyclerView.Adapter<RecordRecyclerAd
 		int cureType=cure.getCureType();
 		switch (cureType){
 			case CURE_CAUTERIZE:
-				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_cauterize));
+				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_cauterize_orange));
 				break;
 			case CURE_NEEDLE:
-				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_needle));
+				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_needle_blue));
 				break;
 			case CURE_MEDICINE:
-				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_medicine));
+				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_medicine_purple));
 				break;
 		}
 		holder.tvOrder.setText(String.valueOf(position+1));

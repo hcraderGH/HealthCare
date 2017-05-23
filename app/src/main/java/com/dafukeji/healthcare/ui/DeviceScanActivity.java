@@ -28,6 +28,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.dafukeji.healthcare.MyApplication;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.LeRecyclerAdapter;
 import com.dafukeji.healthcare.R;

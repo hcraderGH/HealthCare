@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.BluetoothLeService;
+import com.dafukeji.healthcare.MyApplication;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.ui.RunningActivity;
@@ -350,16 +351,29 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	public void onDestroyView() {
 		super.onDestroyView();
 		getActivity().unregisterReceiver(mBlueToothBroadCast);
-//		getActivity().unregisterReceiver(mGattUpdateReceiver);
-//		getActivity().unbindService(mServiceConnection);
-//		if (mBluetoothLeService != null) {
-//			mBluetoothLeService.close();
-//			mBluetoothLeService = null;
-//		}
-//
-//		if (mBluetoothLEAdapter != null) {
-//			mBluetoothLEAdapter.disable();
-//		}
+		getActivity().unregisterReceiver(mGattUpdateReceiver);
+		getActivity().unbindService(mServiceConnection);
+		if (mBluetoothLeService != null) {
+			mBluetoothLeService.close();
+			mBluetoothLeService = null;
+		}
+
+		if (mBluetoothLEAdapter != null) {
+			mBluetoothLEAdapter.disable();
+		}
 		Log.d(TAG, "We are in destroy");
+	}
+
+	public void unBindService(){
+		getActivity().unregisterReceiver(mGattUpdateReceiver);
+		getActivity().unbindService(mServiceConnection);
+		if (mBluetoothLeService != null) {
+			mBluetoothLeService.close();
+			mBluetoothLeService = null;
+		}
+
+		if (mBluetoothLEAdapter != null) {
+			mBluetoothLEAdapter.disable();
+		}
 	}
 }

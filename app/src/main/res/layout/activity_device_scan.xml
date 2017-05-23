@@ -59,11 +59,16 @@
             app:cardElevation="6dp"
             android:layout_height="wrap_content">
 
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@mipmap/ic_search_background"/>
+
             <com.skyfishjy.library.RippleBackground
                 android:id="@+id/rb_scan"
-                android:layout_gravity="center_horizontal"
+                android:layout_gravity="center"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
+                android:layout_height="match_parent"
                 app:rb_color="#dc3941"
                 app:rb_radius="32dp"
                 app:rb_type="fillRipple"

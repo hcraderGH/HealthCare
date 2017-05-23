@@ -10,6 +10,7 @@ public class BaseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        MyApplication.getInstance().addActivity(this);
 //        StatusBar.setImmersiveStatusBar(this,R.color.app_bar_color);//沉浸式状态栏
     }
 }
