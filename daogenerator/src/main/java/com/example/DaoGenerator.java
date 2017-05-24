@@ -10,9 +10,9 @@ public class DaoGenerator {
 		Schema schema=new Schema(1,"com.dafukeji.daogenerator");
 		Entity point=schema.addEntity("Point");
 		point.addLongProperty("currentTime");
-		point.addIdProperty().primaryKey().autoincrement();//主键自增加
+		point.addIdProperty().primaryKey().autoincrement();
 		point.addFloatProperty("temperature");
-		Property cureId=point.addLongProperty("cureId").getProperty();//在Point表中建立Cure表的外键
+		Property cureId=point.addLongProperty("cureId").getProperty();
 
 		Entity cure=schema.addEntity("Cure");
 		cure.addLongProperty("startTime");

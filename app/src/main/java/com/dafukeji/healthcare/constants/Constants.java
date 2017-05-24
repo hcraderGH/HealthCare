@@ -22,4 +22,20 @@ public class Constants {
 	public static final int CURE_CAUTERIZE=1;
 	public static final int CURE_NEEDLE=2;
 	public static final int CURE_MEDICINE=3;
+
+	public static final String SP_CURE_CAUTERIZE="sp_cure_cauterize";
+	public static final String SP_CURE_NEEDLE="sp_cure_needle";
+	public static final String SP_CURE_MEDICINE="sp_cure_medicine";
+
+	public static final String SP_CURE_TIME="sp_cure_time";
+	public static final String SP_CURE_TEMP="sp_cure_temp";
+	public static final String SP_CURE_INTENSITY="sp_cure_intensity";
+	public static final String SP_CURE_FREQUENCY="sp_cure_frequency";
+
+
+
+//	public static final String SP_CURE_CAUTERIZE_TIME="sp_cure_cauterize_time";
+//	public static final String SP_CURE_NEEDLE_TIME="sp_cure_needle_time";
+//	public static final String SP_CURE_MEDICINE_TIME="sp_cure_medicine_time";
+
 }

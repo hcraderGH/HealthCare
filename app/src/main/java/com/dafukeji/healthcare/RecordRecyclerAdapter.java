@@ -1,7 +1,6 @@
 package com.dafukeji.healthcare;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,9 +10,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.dafukeji.daogenerator.Cure;
+import com.dafukeji.healthcare.util.TimeUtil;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -61,21 +60,18 @@ public class RecordRecyclerAdapter extends RecyclerView.Adapter<RecordRecyclerAd
 			return;
 		}
 		Cure cure=mCures.get(position);
-		SimpleDateFormat sdf=new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
-		String date=sdf.format(cure.getStartTime());
+		String date= TimeUtil.date2String(cure.getStartTime(),"yyyy-MM-dd");
 		Log.i(TAG, "onBindViewHolder: date"+date);
 
-		SimpleDateFormat sdf2=new SimpleDateFormat("HH′mm′ss″", Locale.CHINA);
-		String startTime=sdf2.format(cure.getStartTime());
+		String startTime=TimeUtil.date2String(cure.getStartTime(),"HH′mm′ss″");
 		Log.i(TAG, "onBindViewHolder: startTime"+startTime);
+		String stopTime=TimeUtil.date2String(cure.getStopTime(),"HH′mm′ss″");
 		Log.i(TAG, "onBindViewHolder: stopTime"+cure.getStopTime());
-		String stopTime=sdf2.format(cure.getStopTime());
-		String wholeTime=sdf2.format(cure.getStopTime()-cure.getStartTime());
-
+		String[] wholeTime=TimeUtil.getSubtractedString(cure.getStopTime(),cure.getStartTime());
 		holder.tvDate.setText(date);
 		holder.tvStartTime.setText(startTime);
 		holder.tvStopTime.setText(stopTime);
-		holder.tvWholeTime.setText(wholeTime);
+		holder.tvWholeTime.setText(wholeTime[0]+"′"+wholeTime[1]+"′"+wholeTime[2]+"″");
 
 		int cureType=cure.getCureType();
 		switch (cureType){

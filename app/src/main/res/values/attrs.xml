@@ -17,6 +17,7 @@
         <attr name="current_value" format="float"/>
         <attr name="max_value" format="float"/>
 
+        <attr name="value_unit" format="string"/>
         <attr name="start_angle" format="float"/>
         <attr name="circle_diameter" format="float"/>
         <attr name="text_size" format="dimension"/>

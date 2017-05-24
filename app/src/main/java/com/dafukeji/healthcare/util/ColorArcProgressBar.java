@@ -29,6 +29,9 @@ public class ColorArcProgressBar extends View{
     private float centerX;  //圆心X坐标
     private float centerY;  //圆心Y坐标
 
+    private float baseX;//字X坐标
+    private float baseY;//字Y坐标
+
     private Paint allArcPaint;
     private Paint progressPaint;
     private Paint vTextPaint;
@@ -65,6 +68,8 @@ public class ColorArcProgressBar extends View{
     private boolean isNeedTitle;
     private boolean isNeedUnit;
     private boolean isNeedContent;
+
+    private String valueUnit;//跟在数字后面的单位的名称
 
     // sweepAngle / maxValues 的值
     private float k;
@@ -111,6 +116,7 @@ public class ColorArcProgressBar extends View{
         startAngle=a.getFloat(R.styleable.ColorArcProgressBar_start_angle,270);
 
         diameter=a.getFloat(R.styleable.ColorArcProgressBar_circle_diameter,500);
+        valueUnit=a.getString(R.styleable.ColorArcProgressBar_value_unit);
 
         textSize=a.getDimension(R.styleable.ColorArcProgressBar_text_size,18);
         hintSize=a.getDimension(R.styleable.ColorArcProgressBar_hint_text_size,12);
@@ -196,8 +202,16 @@ public class ColorArcProgressBar extends View{
         //当前进度
         canvas.drawArc(bgRect, startAngle, currentAngle, false, progressPaint);
 
+
         if (isNeedContent) {
-            canvas.drawText(String.format("%.0f", curValues)+"%", centerX, centerY + textSize / 3, vTextPaint);
+            if (isNeedUnit){
+                canvas.drawText(String.format("%.0f", curValues), centerX, centerY + textSize / 3, vTextPaint);
+            }else{
+                baseX=getMeasuredWidth()/2;
+                Paint.FontMetricsInt fontMetricsInt=vTextPaint.getFontMetricsInt();
+                baseY=(getMeasuredHeight()-fontMetricsInt.bottom+fontMetricsInt.top)/2-fontMetricsInt.top;
+                canvas.drawText(String.format("%.0f", curValues)+valueUnit, baseX, baseY, vTextPaint);
+            }
         }
         if (isNeedUnit) {
             canvas.drawText(hintString, centerX, centerY + dipToPx(textSize)/2, hintPaint);

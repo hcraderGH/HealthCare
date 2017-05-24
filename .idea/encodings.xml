@@ -2,9 +2,10 @@
 <project version="4">
   <component name="Encoding" defaultCharsetForPropertiesFiles="UTF-8">
     <file url="file://$PROJECT_DIR$/app/src/main/java/com/dafukeji/healthcare/constants/GattAttributes.java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/app/src/main/res/drawable-xxhdpi/selector_button_background_2.xml" charset="GBK" />
     <file url="file://$PROJECT_DIR$/app/src/main/res/drawable/pause_or_continue_button_selector.xml" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/app/src/main/res/drawable/selector_button_background.xml" charset="GBK" />
     <file url="file://$PROJECT_DIR$/app/src/main/res/drawable/start_or_stop_button_selector.xml" charset="GBK" />
-    <file url="file://$PROJECT_DIR$/app/src/main/res/drawable/time_button_selector.xml" charset="GBK" />
     <file url="file://$PROJECT_DIR$/app/src/main/res/layout/eplay_toast.xml" charset="GBK" />
     <file url="PROJECT" charset="UTF-8" />
   </component>

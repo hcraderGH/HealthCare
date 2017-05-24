@@ -1,6 +1,7 @@
 package com.dafukeji.healthcare;
 
 import android.app.Activity;
+import android.app.AlarmManager;
 import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -19,15 +20,12 @@ public class MyApplication extends Application {
 
 	private List<Activity> mList = new ArrayList<Activity>();
 	private static MyApplication instance;
-	private static Context context;
 
 	private static String TAG="测试MyApplication";
 
 	@Override
 	public void onCreate() {
-		//设置时区
-		TimeZone tz=TimeZone.getTimeZone("ETC/GMT-8");
-		TimeZone.setDefault(tz);
+
 		super.onCreate();
 	}
 
@@ -55,9 +53,5 @@ public class MyApplication extends Application {
 		} finally {
 			System.exit(0);
 		}
-	}
-
-	public static Context getContext(){
-		return context;
 	}
 }

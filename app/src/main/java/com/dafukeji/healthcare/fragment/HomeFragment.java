@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
@@ -20,7 +21,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebView;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.BluetoothLeService;
@@ -34,20 +38,20 @@ import com.rey.material.app.Dialog;
 import com.rey.material.app.DialogFragment;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Random;
+
+import me.itangqi.waveloadingview.WaveLoadingView;
 
 public class HomeFragment extends Fragment{
 
-
-	private Button btnCauterizeGrade,btnNeedleGrade,btnMedicalTemp;
-	private Button btnCauterizeTime,btnNeedleTime,btnMedicalTime;
-	private Button btnCauterizeStart,btnNeedleStart,btnMedicalStart;
-
-	private int[] sustainTime=new int[2];
-	private long originalTime;
-	private String selectGrade;
+	private WaveLoadingView mWaveLoadingView;
+	private ImageView ivDeviceStatusLogo,ivTempLogo,ivDeviceStatus;
+	private TextView tvDeviceStatus,tvTempStatus,tvCurrentTemp;
+	private int mRemindEle;
+	private int mCurrentTemp;
 
 	private String TAG ="测试HomeFragment";
-
 
 	private BluetoothAdapter mBluetoothLEAdapter;
 	private String mDeviceName;
@@ -59,15 +63,11 @@ public class HomeFragment extends Fragment{
 	private int selectedGrade =1;//档位
 	private View mView;
 
-	private Dialog.Builder mBuilder;
-	private DialogFragment mFragment;
-
 	private BlueToothBroadCast mBlueToothBroadCast;
 
 	private ViewPager mViewPager;
 	private CardPagerAdapter mCardAdapter;
 	private ShadowTransformer mCardShadowTransformer;
-	private View mInflaterView;
 	@Override
 	public void onAttach(Context context) {
 		//注册接受蓝牙信息的广播
@@ -141,6 +141,47 @@ public class HomeFragment extends Fragment{
 		mViewPager.setAdapter(mCardAdapter);
 		mViewPager.setPageTransformer(false, mCardShadowTransformer);
 		mViewPager.setOffscreenPageLimit(3);
+
+		mWaveLoadingView= (WaveLoadingView) mView.findViewById(R.id.wlv_reminder_electric_quantity);
+
+		ivDeviceStatusLogo= (ImageView) mView.findViewById(R.id.iv_home_device_status_logo);
+		ivTempLogo= (ImageView) mView.findViewById(R.id.iv_home_current_temp_status_logo);
+		ivDeviceStatus= (ImageView) mView.findViewById(R.id.iv_home_device_status);
+		tvDeviceStatus= (TextView) mView.findViewById(R.id.tv_home_device_status);
+		tvTempStatus= (TextView) mView.findViewById(R.id.tv_home_current_temp_status);
+		tvCurrentTemp= (TextView) mView.findViewById(R.id.tv_home_current_temp);
+
+	}
+
+
+	/**
+	 * 根据连接状态设置
+	 */
+	private void setDisplayStatus(boolean isConnected){
+		if (isConnected){
+			ivDeviceStatusLogo.setBackgroundResource(R.mipmap.ic_circle_green);
+			ivTempLogo.setBackgroundResource(R.mipmap.ic_circle_yellow);
+			ivDeviceStatus.setBackgroundResource(R.mipmap.ic_device_connect);
+
+			tvDeviceStatus.setTextColor(getResources().getColor(R.color.connect_status));
+			tvTempStatus.setTextColor(getResources().getColor(R.color.connect_status));
+			tvCurrentTemp.setTextColor(Color.parseColor("#FFFFFF"));
+
+			mWaveLoadingView.setProgressValue(0);
+			mWaveLoadingView.setCenterTitle("0%");
+			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.disconnect_status));
+			mWaveLoadingView.cancelAnimation();
+		}else{
+			ivDeviceStatusLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
+			ivTempLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
+			ivDeviceStatus.setBackgroundResource(R.mipmap.ic_device_disconnect);
+
+			tvDeviceStatus.setTextColor(getResources().getColor(R.color.disconnect_status));
+			tvTempStatus.setTextColor(getResources().getColor(R.color.disconnect_status));
+			tvCurrentTemp.setTextColor(getResources().getColor(R.color.disconnect_status));
+
+			mWaveLoadingView.startAnimation();
+		}
 	}
 
 	//注册接收的事件
@@ -170,20 +211,44 @@ public class HomeFragment extends Fragment{
 				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				mConnected = false;
+				setDisplayStatus(mConnected);
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){ //可以开始干活了
 				mConnected = true;
+				setDisplayStatus(mConnected);
 				Log.e(TAG, "In what we need");
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
 				Log.e(TAG, "DATA");
 				byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
 					//TODO 接收数据处理
-					Log.i(TAG, "onReceive: "+data.toString());
-//					tvCurrentTemp.setText(ConvertUtils.bytes2HexString(data)+"℃");//TODO 注意此处获取的数据
+					Log.i(TAG, "onReceive: "+ Arrays.toString(data));
+//					mCurrentTemp=(int) data[3];//TODO int和byte之间的转换
+//					tvCurrentTemp.setText(mCurrentTemp+"℃");
+//					mRemindEle=(int)data[8];
+
+					mRemindEle=(int)(Math.random() * 100);//TODO 测试用
+
+					JudgeEleSetWare(mRemindEle);
+					tvCurrentTemp.setText(data[0]+"℃");
 				}
 			}
 		}
 	};
+
+	/**
+	 * 根据电量来设置Ware的颜色
+	 */
+	private void JudgeEleSetWare(int ele) {
+		mWaveLoadingView.setProgressValue(ele);
+		mWaveLoadingView.setCenterTitle(ele+"%");
+		if (ele>=30){
+			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_normal));
+		}else if (ele<30&&ele>=15){
+			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_warn));
+		}else{
+			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_danger));
+		}
+	}
 
 
 	// Code to manage Service lifecycle.

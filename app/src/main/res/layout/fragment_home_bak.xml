@@ -1,282 +1,131 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
-
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
+        android:layout_marginTop="10dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"><!--灸处方功能-->
-        <android.support.v7.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="155dp"
-            android:foreground="?android:attr/selectableItemBackground"
-            android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="10dp"
-            app:cardElevation="6dp"
-            app:cardCornerRadius="6dp">
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="match_parent"
+
+        <View
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"/>
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <com.dafukeji.healthcare.util.ColorArcProgressBar
+                android:layout_margin="3dp"
+                android:layout_gravity="center"
+                android:id="@+id/cpb_reminder_electric_quantity"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@null"
-                android:scaleType="centerCrop"
-                android:src="@mipmap/card_view1"/>
+                app:is_need_content="true"
+                app:front_color1="#4CAF50"
+                app:max_value="100"
+                app:circle_diameter="90"
+                app:text_size="25sp"
+                app:back_width="3dp"
+                app:value_unit="%"
+                app:front_width="3dp"
+                app:total_angle="360"
+                app:is_need_unit="false"
+                app:back_color="@android:color/darker_gray"/>
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_gravity="center"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:background="@mipmap/ic_circle_purple"/>
 
                 <TextView
-                    style="@style/MainTitle"
-                    android:drawableStart="@mipmap/ic_medical_box"
-                    android:text="@string/cauterize"/>
-
-                <LinearLayout
+                    android:layout_gravity="center"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginTop="5dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/subtitle"
-                        android:text="强度："/>
-
-                    <Button
-                        android:background="@drawable/time_button_selector"
-                        android:id="@+id/btn_cauterize_grade"
-                        style="@style/subtitle_select_item"
-                        android:layout_width="wrap_content"
-                        android:layout_height="25dp"
-                        android:text="一档"/>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginTop="5dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/subtitle"
-                        android:text="持续时间："/>
-
-                    <Button
-                        android:id="@+id/btn_cauterize_time"
-                        android:layout_width="wrap_content"
-                        android:layout_height="25dp"
-                        style="@style/subtitle_select_item"
-                        android:background="@drawable/time_button_selector"
-                        android:text="@string/default_time"/>
-                </LinearLayout>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1">
-                    <Button
-                        android:id="@+id/btn_cauterize_start"
-                        style="@style/function_button"
-                        android:layout_alignParentBottom="true"
-                        android:layout_centerHorizontal="true"
-                        android:background="@drawable/start_or_stop_button_selector"
-                        android:text="开始"/>
-                </RelativeLayout>
+                    android:textColor="#000000"
+                    android:textSize="12sp"
+                    android:text="剩余电量"/>
 
             </LinearLayout>
+        </LinearLayout>
 
-        </android.support.v7.widget.CardView>
 
-
-        <!--针处方功能-->
-        <android.support.v7.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="155dp"
-            android:foreground="?android:attr/selectableItemBackground"
-            android:layout_marginLeft="10dp"
+        <LinearLayout
             android:layout_marginRight="10dp"
-            android:layout_marginTop="10dp"
-            app:cardElevation="6dp"
-            app:cardCornerRadius="6dp">
-
-
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@null"
-                android:scaleType="centerCrop"
-                android:src="@mipmap/card_view2"/>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
-
-                <TextView
-                    style="@style/MainTitle"
-                    android:drawableStart="@mipmap/ic_medical_box"
-                    android:text="@string/needle"/>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginTop="5dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/subtitle"
-                        android:text="强度："/>
-
-
-                    <Button
-                        android:background="@drawable/time_button_selector"
-                        android:id="@+id/btn_needle_grade"
-                        style="@style/subtitle_select_item"
-                        android:layout_width="wrap_content"
-                        android:layout_height="25dp"
-                        android:text="一档"/>
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginTop="5dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/subtitle"
-                        android:text="持续时间："/>
-
-                    <Button
-                        android:id="@+id/btn_needle_time"
-                        android:layout_width="wrap_content"
-                        android:layout_height="25dp"
-                        style="@style/subtitle_select_item"
-                        android:background="@drawable/time_button_selector"
-                        android:text="@string/default_time"/>
-                </LinearLayout>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1">
-                    <Button
-                        android:id="@+id/btn_needle_start"
-                        style="@style/function_button"
-                        android:layout_alignParentBottom="true"
-                        android:layout_centerHorizontal="true"
-                        android:background="@drawable/start_or_stop_button_selector"
-                        android:text="开始"/>
-                </RelativeLayout>
-
-            </LinearLayout>
-
-        </android.support.v7.widget.CardView>
-
-
-        <!--药处方-->
-        <android.support.v7.widget.CardView
-            android:layout_width="match_parent"
-            android:layout_height="155dp"
-            android:foreground="?android:attr/selectableItemBackground"
             android:layout_marginLeft="10dp"
-            android:layout_marginRight="10dp"
-            android:layout_marginTop="10dp"
-            app:cardElevation="6dp"
-            app:cardCornerRadius="6dp">
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-            <ImageView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@null"
-                android:scaleType="centerCrop"
-                android:src="@mipmap/card_view3"/>
-
+            <com.dafukeji.healthcare.util.ColorArcProgressBar
+                android:layout_margin="3dp"
+                android:layout_gravity="center"
+                android:id="@+id/cpb_current_temperature"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:is_need_content="true"
+                app:front_color1="#FF5722"
+                app:max_value="100"
+                app:value_unit="℃"
+                app:circle_diameter="90"
+                app:text_size="25sp"
+                app:back_width="3dp"
+                app:front_width="3dp"
+                app:total_angle="360"
+                app:is_need_unit="false"
+                app:back_color="@android:color/darker_gray"/>
             <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:layout_margin="10dp"
-                android:orientation="vertical">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_gravity="center"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:background="@mipmap/ic_circle_blue"/>
 
                 <TextView
-                    style="@style/MainTitle"
-                    android:drawableStart="@mipmap/ic_medical_box"
-                    android:text="@string/medical"/>
-
-                <LinearLayout
+                    android:layout_gravity="center"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginTop="5dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/subtitle"
-                        android:text="加热温度："/>
-
-
-                    <Button
-                        android:background="@drawable/time_button_selector"
-                        android:id="@+id/btn_medical_temp"
-                        style="@style/subtitle_select_item"
-                        android:layout_width="wrap_content"
-                        android:layout_height="25dp"
-                        android:text="40℃"/>
-
-
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="20dp"
-                    android:layout_marginTop="5dp"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        style="@style/subtitle"
-                        android:text="持续时间："/>
-
-                    <Button
-                        android:id="@+id/btn_medical_time"
-                        android:layout_width="wrap_content"
-                        android:layout_height="25dp"
-                        style="@style/subtitle_select_item"
-                        android:background="@drawable/time_button_selector"
-                        android:text="@string/default_time"/>
-                </LinearLayout>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="0dp"
-                    android:layout_weight="1">
-                    <Button
-                        android:id="@+id/btn_medical_start"
-                        style="@style/function_button"
-                        android:layout_alignParentBottom="true"
-                        android:layout_centerHorizontal="true"
-                        android:background="@drawable/start_or_stop_button_selector"
-                        android:text="开始"/>
-                </RelativeLayout>
+                    android:textColor="#000000"
+                    android:textSize="12sp"
+                    android:text="当前温度"/>
 
             </LinearLayout>
+        </LinearLayout>
 
-        </android.support.v7.widget.CardView>
+
+
     </LinearLayout>
 
 
-</ScrollView>
+    <android.support.v4.view.ViewPager
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="15dp"
+        android:id="@+id/vp_cure"
+        android:layout_width="match_parent"
+        android:layout_height="330dp"
+        android:clipToPadding="false"
+        android:overScrollMode="never"
+        android:paddingBottom="30dp"
+        android:paddingEnd="@dimen/card_padding"
+        android:paddingLeft="@dimen/card_padding"
+        android:paddingRight="@dimen/card_padding"
+        android:paddingStart="@dimen/card_padding" />
+</RelativeLayout>

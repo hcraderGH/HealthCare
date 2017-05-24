@@ -6,7 +6,9 @@
 
     <color name="main_title_text_color">#FFFFFF</color>
     <!--<color name="subtitle_text_color">#6a6a6a</color>-->
-    <color name="subtitle_text_color">#000000</color>
+    <color name="subtitle_text_color">#cc000000</color>
+
+    <color name="button_text_color">#FFFFFFFF</color>
 
     <color name="light_gray">#fff5f5f5</color>
 
@@ -20,4 +22,10 @@
 
     <color name="translucence">#33ffffff</color>
 
+    <color name="disconnect_status">#dbdbdb</color>
+    <color name="connect_status">#000000</color>
+
+    <color name="battery_electric_quantity_normal">#00c853</color>
+    <color name="battery_electric_quantity_warn">#ffd600</color>
+    <color name="battery_electric_quantity_danger">#f44336</color>
 </resources>
