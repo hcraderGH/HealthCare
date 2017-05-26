@@ -28,4 +28,9 @@
     <color name="battery_electric_quantity_normal">#00c853</color>
     <color name="battery_electric_quantity_warn">#ffd600</color>
     <color name="battery_electric_quantity_danger">#f44336</color>
+
+
+    <color name="wlv_title_bottom_color">#FFFFFF</color>
+
+    <color name="cover_color">#aa333333</color>
 </resources>

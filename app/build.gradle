@@ -43,14 +43,23 @@ dependencies {
     //水波纹效果
     compile 'com.skyfishjy.ripplebackground:library:1.0.1'
     compile 'de.greenrobot:greendao:2.1.0'
-
     //MaterialDialog
     compile 'com.afollestad.material-dialogs:core:0.9.4.5'
-
     //TimePicker
     compile 'com.code-troopers.betterpickers:library:3.1.0'
-
     //WaveView
     compile 'me.itangqi.waveloadingview:library:0.3.5'
+    //Toasty Toast
+    compile 'com.github.GrenderG:Toasty:1.2.5'
 
+//    compile 'com.android.support:design:25.0.0'
+
+    //FloatActionButton
+    compile 'com.github.clans:fab:1.6.4'
+
+    //BoomMenuButton
+    compile 'com.nightonke:boommenu:2.0.0'
+
+    //Logger日志打印
+    compile 'com.orhanobut:logger:1.15'
 }

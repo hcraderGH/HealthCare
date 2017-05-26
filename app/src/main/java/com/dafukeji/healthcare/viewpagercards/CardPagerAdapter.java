@@ -11,8 +11,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.codetroopers.betterpickers.radialtimepicker.RadialTimePickerDialogFragment;
 import com.dafukeji.healthcare.R;
@@ -23,7 +25,10 @@ import com.dafukeji.healthcare.util.SPUtils;
 import com.dafukeji.healthcare.util.ToastUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import es.dmoral.toasty.Toasty;
 
 public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.OnClickListener {
 
@@ -85,6 +90,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 	public Object instantiateItem(ViewGroup container, int position) {
 		int type=position+1;
 
+		Log.i(TAG, "instantiateItem: type"+type);
+
 		switch (position) {
 			case 0:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_cauterize, container, false);
@@ -116,7 +123,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				btnNeedleStart.setOnClickListener(this);
 
 				if (isSaved(type,Constants.SP_CURE_INTENSITY)) {
-					btnNeedleGrade.setText(mGrades[getSP(type,Constants.SP_CURE_INTENSITY)]);
+					btnNeedleGrade.setText(mIntensity[getSP(type,Constants.SP_CURE_INTENSITY)]);
 				}
 				if (isSaved(type,Constants.SP_CURE_TIME)) {
 					btnNeedleTime.setText(getSP(type,Constants.SP_CURE_TIME)+"分钟");
@@ -200,7 +207,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 			case R.id.btn_cauterize_start:
 
 				if (!HomeFragment.getBlueToothStatus()) {
-					ToastUtil.showToast(mContext, "请连接设备", 1000);
+//					ToastUtil.showToast(mContext, "请连接设备", 1000);
+					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
 					return;
 				}
 
@@ -210,12 +218,13 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				} else {
 					//TODO　目前只是发档位并不是发真实的频率、温度值等
 					byte[] settings;
-					int type=Constants.CURE_MEDICINE;
-					int temp=getSP(type,Constants.SP_CURE_TEMP);
+					int type=Constants.CURE_CAUTERIZE;
+					int temp=getSP(type,Constants.SP_CURE_INTENSITY);
 					int intensity=0;
 					int time=getSP(type,Constants.SP_CURE_TIME);
 					int frequency=0;
 					settings=setSettingData(type,temp,intensity,time,frequency);
+					Log.i(TAG, "onClick: setting"+ Arrays.toString(settings));
 
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 					Intent intent = new Intent(mContext, RunningActivity.class);
@@ -228,7 +237,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				break;
 			case R.id.btn_needle_start:
 				if (!HomeFragment.getBlueToothStatus()) {
-					ToastUtil.showToast(mContext, "请连接设备", 1000);
+//					ToastUtil.showToast(mContext, "请连接设备", 1000);
+					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
 					return;
 				}
 
@@ -237,12 +247,14 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					return;
 				} else {
 					byte[] settings;
-					int type=Constants.CURE_MEDICINE;
+					int type=Constants.CURE_NEEDLE;
 					int temp=0;
 					int intensity=getSP(type,Constants.SP_CURE_INTENSITY);
 					int time=getSP(type,Constants.SP_CURE_TIME);
 					int frequency=getSP(type,Constants.SP_CURE_FREQUENCY);
 					settings=setSettingData(type,temp,intensity,time,frequency);
+					Log.i(TAG, "onClick: setting"+ Arrays.toString(settings));
+
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 					Intent intent = new Intent(mContext, RunningActivity.class);
 					Log.i(TAG, "onClick: originalTime" + originalTime);
@@ -253,7 +265,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				break;
 			case R.id.btn_medical_start:
 				if (!HomeFragment.getBlueToothStatus()) {
-					ToastUtil.showToast(mContext, "请连接设备", 1000);
+//					ToastUtil.showToast(mContext, "请连接设备", 1000);
+					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
 					return;
 				}
 
@@ -268,6 +281,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					int time=getSP(type,Constants.SP_CURE_TIME);//传递的时间单位为分钟
 					int frequency=0;
 					settings=setSettingData(type,temp,intensity,time,frequency);
+					Log.i(TAG, "onClick: setting"+ Arrays.toString(settings));
+
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 					Intent intent = new Intent(mContext, RunningActivity.class);
 					Log.i(TAG, "onClick: originalTime" + originalTime);
@@ -425,21 +440,35 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 		return spUtils.getInt(keyName);
 	}
 
+
+	private int mWhich;
 	private void getGrade(final String[] grade, final Button btn, String reminder
 			, final int type, final String keyName) {
 
+		int checkedItem;
+		if (isSaved(type,keyName)){
+			checkedItem=getSP(type,keyName);
+		}else{
+			checkedItem=0;
+		}
+
+
 		AlertDialog.Builder builder = new AlertDialog.Builder(mContext)
 				.setTitle(reminder)
-				.setSingleChoiceItems(grade, 0, new DialogInterface.OnClickListener() {//0表示的是默认的第一个选项
+				.setSingleChoiceItems(grade, checkedItem , new DialogInterface.OnClickListener() {//0表示的是默认的第一个选项
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						selectGrade = grade[which];
-						setSPOfType(type,keyName,which+1);
+						mWhich=which;
+
 					}
 				})
 				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+						setSPOfType(type,keyName,mWhich);
+						Log.i(TAG, "onClick: getSP"+getSP(type,keyName));
+
 						btn.setText(selectGrade);
 						dialog.dismiss();
 					}

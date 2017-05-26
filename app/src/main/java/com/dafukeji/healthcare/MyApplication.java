@@ -1,20 +1,13 @@
 package com.dafukeji.healthcare;
 
 import android.app.Activity;
-import android.app.AlarmManager;
 import android.app.Application;
-import android.content.BroadcastReceiver;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.os.IBinder;
-import android.util.Log;
+
+import com.orhanobut.logger.LogLevel;
+import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.TimeZone;
-import java.util.UUID;
 
 public class MyApplication extends Application {
 
@@ -23,10 +16,22 @@ public class MyApplication extends Application {
 
 	private static String TAG="测试MyApplication";
 
+	private static boolean isTest=true;//TODO 当不处于测试的时候应该设置为false
+
 	@Override
 	public void onCreate() {
-
 		super.onCreate();
+
+		//初始化日志
+		initLogger();
+	}
+
+	private void initLogger() {
+		Logger.init()
+				.methodCount(3)//配置Log中调用堆栈的函数行数
+		.hideThreadInfo()//隐藏Log中的线程信息
+		.methodOffset(0)// 设置调用堆栈的函数偏移值，0的话则从打印该Log的函数开始输出堆栈信息
+		.logLevel(isTest?LogLevel.FULL:LogLevel.NONE);//设置Log的是否输出，LogLevel.NONE即无Log输出
 	}
 
 	public synchronized static MyApplication getInstance() {
@@ -36,6 +41,9 @@ public class MyApplication extends Application {
 		return instance;
 	}
 
+	public static boolean isTest(){
+		return isTest;
+	}
 
 	public void addActivity(Activity activity) {
 		mList.add(activity);

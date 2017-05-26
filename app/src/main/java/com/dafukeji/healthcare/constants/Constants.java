@@ -16,6 +16,8 @@ public class Constants {
 	public static final String ORIGINAL_TIME="original_time";
 
 	public static final String RECEIVE_BLUETOOTH_INFO="receive_bluetooth_info";
+	public static final String RECEIVE_GATT_STATUS="receive_gatt_status";
+	public static final String EXTRAS_GATT_STATUS="extras_gatt_status";
 
 
 	public static final String CURE_TYPE="cure_type";
@@ -31,8 +33,6 @@ public class Constants {
 	public static final String SP_CURE_TEMP="sp_cure_temp";
 	public static final String SP_CURE_INTENSITY="sp_cure_intensity";
 	public static final String SP_CURE_FREQUENCY="sp_cure_frequency";
-
-
 
 //	public static final String SP_CURE_CAUTERIZE_TIME="sp_cure_cauterize_time";
 //	public static final String SP_CURE_NEEDLE_TIME="sp_cure_needle_time";

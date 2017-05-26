@@ -21,19 +21,18 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
-import com.dafukeji.healthcare.MyApplication;
-import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.LeRecyclerAdapter;
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.ToastUtil;
+import com.orhanobut.logger.Logger;
 import com.skyfishjy.library.RippleBackground;
 
 public class DeviceScanActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
@@ -167,7 +166,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 			case R.id.tb_scan:
 				if (tbScan.isChecked()) {
 					openBlueTooth();
-					Log.i("DeviceScan蓝牙打开了？", mBluetoothAdapter.isEnabled() + "");
+					Logger.i("DeviceScan蓝牙打开了？", mBluetoothAdapter.isEnabled() + "");
 					if (!mBluetoothAdapter.isEnabled()) {
 						return;
 					}
@@ -214,7 +213,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 //
 //			case R.id.menu_scan:
 //				openBlueTooth();
-//				Log.i("蓝牙是否打开了",mBluetoothAdapter.isEnabled()+"");
+//				Logger.i("蓝牙是否打开了",mBluetoothAdapter.isEnabled()+"");
 //				mLeDeviceRecyclerAdapter.clear();
 //				scanLeDevice(true);
 //				break;
@@ -274,7 +273,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 			mScanning = true;
 			mLeDeviceRecyclerAdapter.clear();
 			startScan();
-			Log.i("DeviceScan", "开始扫描，蓝牙设备");
+			Logger.i("DeviceScan", "开始扫描，蓝牙设备");
 		} else {
 			mScanning = false;
 			stopScan();
@@ -323,7 +322,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 
 						@Override
 						public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
-							Log.i("DeviceScan", "onLeScan");
+							Logger.i("DeviceScan", "onLeScan");
 							runOnUiThread(new Runnable() {
 								@Override
 								public void run() {

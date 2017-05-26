@@ -3,6 +3,7 @@
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                xmlns:app="http://schemas.android.com/apk/res-auto"
                 tools:context=".ui.MainActivity">
 
     <android.support.v7.widget.Toolbar
@@ -31,7 +32,7 @@
         android:id="@+id/fl_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/iv_controller"/>
+        android:layout_above="@+id/rg_tab"/>
 
     <View
         android:layout_width="match_parent"
@@ -100,12 +101,34 @@
     </RadioGroup>
 
 
-    <ImageView
-        android:id="@+id/iv_controller"
+    <!--<ImageView-->
+        <!--android:id="@+id/iv_controller"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_marginBottom="9dp"-->
+        <!--android:src="@drawable/selector_controller"-->
+        <!--android:layout_alignParentBottom="true"-->
+        <!--android:layout_centerHorizontal="true"/>-->
+
+
+    <com.nightonke.boommenu.BoomMenuButton
+        android:id="@+id/boom"
+        android:background="@drawable/selector_controller"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="9dp"
+        android:layout_alignParentBottom="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="9dp"
-        android:src="@drawable/selector_controller"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"/>
+        app:bmb_normalColor="#00000000"
+        app:bmb_backgroundEffect="false"
+        app:bmb_buttonEnum="textOutsideCircle"
+        app:bmb_dotRadius="0dp"
+        app:bmb_showMoveEaseEnum="inBack"
+        app:bmb_showScaleEaseEnum="linear"
+        app:bmb_showRotateEaseEnum="outBack"
+        app:bmb_hideMoveEaseEnum="inBack"
+        app:bmb_hideScaleEaseEnum="inBack"
+        app:bmb_hideRotateEaseEnum="inBack"
+        app:bmb_buttonPlaceAlignmentEnum="buttonPlaceAlignment_bottom"/>
+
 </RelativeLayout>

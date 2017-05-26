@@ -2,7 +2,6 @@ package com.dafukeji.healthcare;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +10,7 @@ import android.widget.TextView;
 
 import com.dafukeji.daogenerator.Cure;
 import com.dafukeji.healthcare.util.TimeUtil;
+import com.orhanobut.logger.Logger;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -61,12 +61,12 @@ public class RecordRecyclerAdapter extends RecyclerView.Adapter<RecordRecyclerAd
 		}
 		Cure cure=mCures.get(position);
 		String date= TimeUtil.date2String(cure.getStartTime(),"yyyy-MM-dd");
-		Log.i(TAG, "onBindViewHolder: date"+date);
+		Logger.i(TAG, "onBindViewHolder: date"+date);
 
 		String startTime=TimeUtil.date2String(cure.getStartTime(),"HH′mm′ss″");
-		Log.i(TAG, "onBindViewHolder: startTime"+startTime);
+		Logger.i(TAG, "onBindViewHolder: startTime"+startTime);
 		String stopTime=TimeUtil.date2String(cure.getStopTime(),"HH′mm′ss″");
-		Log.i(TAG, "onBindViewHolder: stopTime"+cure.getStopTime());
+		Logger.i(TAG, "onBindViewHolder: stopTime"+cure.getStopTime());
 		String[] wholeTime=TimeUtil.getSubtractedString(cure.getStopTime(),cure.getStartTime());
 		holder.tvDate.setText(date);
 		holder.tvStartTime.setText(startTime);
