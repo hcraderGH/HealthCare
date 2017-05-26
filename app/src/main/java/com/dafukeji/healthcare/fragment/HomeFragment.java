@@ -21,7 +21,6 @@ import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -32,25 +31,22 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.dafukeji.healthcare.BluetoothLeService;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
-import com.dafukeji.healthcare.util.ToastUtil;
 import com.dafukeji.healthcare.viewpagercards.CardItem;
 import com.dafukeji.healthcare.viewpagercards.CardPagerAdapter;
 import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
 import com.orhanobut.logger.Logger;
-import com.rey.material.app.Dialog;
-import com.rey.material.app.DialogFragment;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
 
 import es.dmoral.toasty.Toasty;
 import me.itangqi.waveloadingview.WaveLoadingView;
 
-public class HomeFragment extends Fragment{
+public class HomeFragment extends Fragment implements View.OnClickListener{
 
 	private WaveLoadingView mWaveLoadingView;
-	private ImageView ivDeviceStatusLogo,ivTempLogo,ivDeviceStatus;
+	private ImageView ivDeviceStatusLogo,ivTempLogo;
+	private Button btnDeviceStatus;
 	private TextView tvDeviceStatus,tvTempStatus,tvCurrentTemp;
 	private int mRemindEle;
 	private int mCurrentTemp;
@@ -85,6 +81,7 @@ public class HomeFragment extends Fragment{
 		getActivity().registerReceiver(mBlueToothBroadCast,filter);
 		super.onAttach(context);
 	}
+
 
 	class BlueToothBroadCast extends BroadcastReceiver{
 
@@ -154,11 +151,24 @@ public class HomeFragment extends Fragment{
 
 		ivDeviceStatusLogo= (ImageView) mView.findViewById(R.id.iv_home_device_status_logo);
 		ivTempLogo= (ImageView) mView.findViewById(R.id.iv_home_current_temp_status_logo);
-		ivDeviceStatus= (ImageView) mView.findViewById(R.id.iv_home_device_status);
+		btnDeviceStatus = (Button) mView.findViewById(R.id.btn_home_device_status);
 		tvDeviceStatus= (TextView) mView.findViewById(R.id.tv_home_device_status);
 		tvTempStatus= (TextView) mView.findViewById(R.id.tv_home_current_temp_status);
 		tvCurrentTemp= (TextView) mView.findViewById(R.id.tv_home_current_temp);
 
+		btnDeviceStatus.setOnClickListener(this);
+	}
+
+	@Override
+	public void onClick(View v) {
+		switch (v.getId()){
+			case R.id.btn_home_device_status:
+				if (mConnected){
+					byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB,0x00,0x00,0x00,0x00,0x00, (byte) 0xF5, (byte) 0xFE};
+					mBluetoothLeService.WriteValue(setting);
+				}
+				break;
+		}
 	}
 
 
@@ -169,7 +179,9 @@ public class HomeFragment extends Fragment{
 		if (isConnected){
 			ivDeviceStatusLogo.setBackgroundResource(R.mipmap.ic_circle_green);
 			ivTempLogo.setBackgroundResource(R.mipmap.ic_circle_yellow);
-			ivDeviceStatus.setBackgroundResource(R.mipmap.ic_device_connect);
+
+			btnDeviceStatus.setBackground(getResources().getDrawable(R.drawable.selector_power_off));
+			btnDeviceStatus.setClickable(true);
 
 			tvDeviceStatus.setTextColor(getResources().getColor(R.color.connect_status));
 			tvTempStatus.setTextColor(getResources().getColor(R.color.connect_status));
@@ -178,7 +190,9 @@ public class HomeFragment extends Fragment{
 		}else{
 			ivDeviceStatusLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
 			ivTempLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
-			ivDeviceStatus.setBackgroundResource(R.mipmap.ic_device_disconnect);
+
+			btnDeviceStatus.setBackgroundResource(R.mipmap.ic_device_disconnect);
+			btnDeviceStatus.setClickable(false);
 
 			tvDeviceStatus.setTextColor(getResources().getColor(R.color.disconnect_status));
 			tvTempStatus.setTextColor(getResources().getColor(R.color.disconnect_status));
@@ -233,11 +247,11 @@ public class HomeFragment extends Fragment{
 				if (data != null) {
 					//TODO 接收数据处理
 					Logger.i(TAG, "onReceive: "+ Arrays.toString(data));
-//					mCurrentTemp=(int) data[3];//TODO int和byte之间的转换
-//					tvCurrentTemp.setText(mCurrentTemp+"℃");
-//					mRemindEle=(int)data[8];
+					mCurrentTemp=(int) data[3];//TODO int和byte之间的转换
+					tvCurrentTemp.setText(mCurrentTemp+"℃");
+					mRemindEle=(int)data[8];
 
-					mRemindEle=(int)(Math.random() * 100);//TODO 测试用
+//					mRemindEle=(int)(Math.random() * 100);//TODO 测试用
 
 					JudgeEleSetWare(mRemindEle);
 					tvCurrentTemp.setText(data[0]+"℃");
