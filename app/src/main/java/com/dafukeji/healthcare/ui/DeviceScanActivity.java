@@ -33,6 +33,9 @@ import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.orhanobut.logger.Logger;
+import com.romainpiel.shimmer.Shimmer;
+import com.romainpiel.shimmer.ShimmerButton;
+import com.romainpiel.shimmer.ShimmerTextView;
 import com.skyfishjy.library.RippleBackground;
 
 public class DeviceScanActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
@@ -46,6 +49,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 	private ImageView ivBack;
 	private ToggleButton tbScan;
 	private RippleBackground mRippleBackground;
+	private ShimmerTextView mSBScanString;
 
 	private ScanCallback mScanCallback;
 	// Device scan callback.
@@ -149,6 +153,10 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 		mRippleBackground = (RippleBackground) findViewById(R.id.rb_scan);
 		tbScan = (ToggleButton) findViewById(R.id.tb_scan);
 		tbScan.setOnCheckedChangeListener(this);
+
+		mSBScanString= (ShimmerTextView) findViewById(R.id.stv_scan_string);
+		Shimmer shimmer=new Shimmer();
+		shimmer.start(mSBScanString);
 	}
 
 	@Override
@@ -165,6 +173,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 		switch (buttonView.getId()) {
 			case R.id.tb_scan:
 				if (tbScan.isChecked()) {
+					mSBScanString.setVisibility(View.INVISIBLE);//当点击搜索时，则隐藏文字
 					openBlueTooth();
 					Logger.i("DeviceScan蓝牙打开了？", mBluetoothAdapter.isEnabled() + "");
 					if (!mBluetoothAdapter.isEnabled()) {
@@ -174,6 +183,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 					mLeDeviceRecyclerAdapter.clear();
 					scanLeDevice(true);
 				} else {
+					mSBScanString.setVisibility(View.VISIBLE);
 					mRippleBackground.stopRippleAnimation();
 					scanLeDevice(false);
 				}

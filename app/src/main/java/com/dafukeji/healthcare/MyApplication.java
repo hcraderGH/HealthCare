@@ -5,6 +5,8 @@ import android.app.Application;
 
 import com.orhanobut.logger.LogLevel;
 import com.orhanobut.logger.Logger;
+import com.squareup.leakcanary.LeakCanary;
+import com.tencent.bugly.crashreport.CrashReport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +26,13 @@ public class MyApplication extends Application {
 
 		//初始化日志
 		initLogger();
+
+		//初始化Bugly
+		CrashReport.initCrashReport(getApplicationContext(),"6e15e6f72b",isTest);//推荐测试时使用true，运行时使用false
+
+		if (isTest){
+			LeakCanary.install(this);
+		}
 	}
 
 	private void initLogger() {

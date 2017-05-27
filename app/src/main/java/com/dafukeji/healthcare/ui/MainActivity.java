@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -17,13 +18,15 @@ import android.support.annotation.RequiresApi;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.MyApplication;
@@ -64,6 +67,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	private boolean isGATTConnected;
 	private BlueToothBroadCast mBlueToothBroadCast;
 
+	private DrawerLayout mDrawer;
+	private ActionBarDrawerToggle mDrawerToggle;
+
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -77,6 +83,52 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		final BluetoothManager bluetoothManager =
 				(BluetoothManager)this.getSystemService(Context.BLUETOOTH_SERVICE);
 		mBluetoothLEAdapter = bluetoothManager.getAdapter();
+
+		mDrawer = (DrawerLayout) findViewById(R.id.draw_layout);
+		mDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNDEFINED);
+		//设置左上角导航抽屉图标
+		mDrawerToggle=new ActionBarDrawerToggle(this, mDrawer,mToolbar
+		, R.string.navigation_drawer_open,R.string.navigation_drawer_close){//如果实现的方式中没有ToolBar参数，那么在ToolBar中就不会显示图标
+			@Override
+			public void onDrawerClosed(View drawerView) {
+				super.onDrawerClosed(drawerView);
+			}
+
+			@Override
+			public void onDrawerOpened(View drawerView) {
+				mDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+				super.onDrawerOpened(drawerView);
+			}
+
+			@Override
+			public void onDrawerSlide(View drawerView, float slideOffset) {
+				super.onDrawerSlide(drawerView, slideOffset);
+			}
+
+			@Override
+			public void onDrawerStateChanged(int newState) {
+				super.onDrawerStateChanged(newState);
+			}
+		};
+		mDrawer.setDrawerListener(mDrawerToggle);
+	}
+
+	@Override
+	protected void onPostCreate(Bundle savedInstanceState) {
+		super.onPostCreate(savedInstanceState);
+		mDrawerToggle.syncState();
+	}
+
+	@Override
+	public void onConfigurationChanged(Configuration newConfig) {
+		super.onConfigurationChanged(newConfig);
+		mDrawerToggle.onConfigurationChanged(newConfig);
+	}
+
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		return mDrawerToggle.onOptionsItemSelected(item) ||
+				super.onOptionsItemSelected(item);
 	}
 
 	private void registerGATTReceiver() {
@@ -111,7 +163,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 
 		mBmbController = (BoomMenuButton) findViewById(R.id.boom);
-		mBmbController.setButtonBottomMargin(200);
+		mBmbController.setButtonBottomMargin(400);
 		mBmbController.setDotRadius(0);//BoomMenuButton上的点大小设置为0，则表示不显示
 		mBmbController.setNormalColor(Color.parseColor("#00000000"));//设置BoomMenuButton的背景颜色，设置为全透明则不显示
 		mBmbController.setBackgroundEffect(false);//设置是否显示BoomMenuButton的背景阴影
@@ -147,10 +199,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			int width = mBitmap.getWidth();
 			int height = mBitmap.getHeight();
 
-			int left = (int) (mBmbController.getButtonRadius() - Math.floor(width / 2) + 4);
-			int top = (int) (mBmbController.getButtonRadius() - Math.floor(height / 2) + 4);
-			int right = (int) (mBmbController.getButtonRadius() + Math.floor(width / 2) + 4);
-			int bottom = (int) (mBmbController.getButtonRadius() + Math.floor(height / 2 + 4));
+			int left= (int) (Math.max(width,height)-Math.floor(width/2));
+			int top=(int) (Math.max(width,height)-Math.floor(height/2));
+			int right=(int) (Math.max(width,height)+Math.floor(width/2));
+			int bottom=(int) (Math.max(width,height)+Math.floor(height/2));
 			TextOutsideCircleButton.Builder builder = new TextOutsideCircleButton.Builder()
 					.listener(new OnBMClickListener() {
 						@Override
@@ -170,11 +222,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 					})
 					.normalImageRes(res[i])
 					.textSize(15)
-					.buttonRadius(60)
+					.buttonRadius(Math.max(width,height))
 					.normalColor(normalColor[i])
 					.highlightedColor(highLightedColor[i])
 					.imageRect(new Rect(left, top, right, bottom))//通过此方法来设置图片的位置
-					.textHeight(40)
+					.textHeight(100)
 					.normalTextColor(Color.WHITE)
 					.normalText(content[i]);
 
@@ -225,6 +277,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			MyApplication.getInstance().exit();
 //			homeFragment.unBindService();
 		}
+
+		if (mDrawer.isDrawerOpen(GravityCompat.START)) {
+			mDrawer.closeDrawers();
+			return;
+		}
+		super.onBackPressed();
 	}
 
 	public void setIndexSelected(int index) {
@@ -261,5 +319,5 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 		}
 	}
-	
+
 }

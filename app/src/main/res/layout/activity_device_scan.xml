@@ -11,10 +11,8 @@
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:background="@color/app_bar_color"
-        android:minHeight="?attr/actionBarSize"
+        style="@style/MyToolBar"
         android:weightSum="1">
 
         <ImageView
@@ -86,6 +84,18 @@
                     android:button="@null"
                     android:layout_centerInParent="true"
                     android:background="@mipmap/ic_scan_device"/>
+
+                <com.romainpiel.shimmer.ShimmerTextView
+                    android:id="@+id/stv_scan_string"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_below="@+id/tb_scan"
+                    android:text="点击搜索设备"
+                    android:textColor="#cc000000"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="10dp"
+                    android:textSize="18sp"/>
+
 
             </com.skyfishjy.library.RippleBackground>
 

@@ -48,7 +48,7 @@ public class StatusBar {
 			tintManager.setStatusBarTintColor(activity.getResources().getColor(color));
 			tintManager.setStatusBarTintEnabled(true);
 			int statusBarHeight=ScreenUtil.getStatusBarHeight(activity);
-			view.setPadding(0,statusBarHeight,0,0);
+//			view.setPadding(0,statusBarHeight,0,0);
 		}
 	}
 }
