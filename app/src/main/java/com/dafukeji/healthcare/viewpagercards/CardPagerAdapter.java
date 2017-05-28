@@ -23,6 +23,7 @@ import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.ui.RunningActivity;
 import com.dafukeji.healthcare.util.SPUtils;
 import com.dafukeji.healthcare.util.ToastUtil;
+import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 
 
 	private int[] sustainTime = new int[2];
-	private int originalTime;
+	private int originalTime=1;//不能默认为0否则出错之后被除数会为0
 	private String selectGrade;
 	private FragmentManager mFragmentManager;
 
@@ -48,7 +49,6 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 	private float mBaseElevation;
 	private View mView;
 	private Context mContext;
-	private static String TAG = "测试CardPagerAdapter";
 
 	private String[] mGrades=new String[]{"一档", "二档", "三档", "四档", "五档"};
 	private String[] mIntensity=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
@@ -90,7 +90,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 	public Object instantiateItem(ViewGroup container, int position) {
 		int type=position+1;
 
-		Log.i(TAG, "instantiateItem: type"+type);
+		Logger.i("instantiateItem: type"+type);
 
 		switch (position) {
 			case 0:
@@ -224,13 +224,13 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					int time=getSP(type,Constants.SP_CURE_TIME);
 					int frequency=0;
 					settings=setSettingData(type,temp,intensity,time,frequency);
-					Log.i(TAG, "onClick: setting"+ Arrays.toString(settings));
+					Logger.i("onClick: setting btn_cauterize_start"+ Arrays.toString(settings));
 
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 					Intent intent = new Intent(mContext, RunningActivity.class);
-					Log.i(TAG, "onClick: originalTime" + originalTime);
+					Logger.i("onClick: originalTime btn_cauterize_start" + getSP(type,Constants.SP_CURE_TIME));
 					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_CAUTERIZE);
-					intent.putExtra(Constants.ORIGINAL_TIME, originalTime*1000);
+					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));
 					mContext.startActivity(intent);
 				}
 
@@ -253,13 +253,13 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					int time=getSP(type,Constants.SP_CURE_TIME);
 					int frequency=getSP(type,Constants.SP_CURE_FREQUENCY);
 					settings=setSettingData(type,temp,intensity,time,frequency);
-					Log.i(TAG, "onClick: setting"+ Arrays.toString(settings));
+					Logger.i("onClick: setting btn_needle_start"+ Arrays.toString(settings));
 
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 					Intent intent = new Intent(mContext, RunningActivity.class);
-					Log.i(TAG, "onClick: originalTime" + originalTime);
+					Logger.i("onClick: originalTime btn_needle_start" + getSP(type,Constants.SP_CURE_TIME));
 					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_NEEDLE);
-					intent.putExtra(Constants.ORIGINAL_TIME, originalTime*1000);
+					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));
 					mContext.startActivity(intent);
 				}
 				break;
@@ -281,13 +281,13 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					int time=getSP(type,Constants.SP_CURE_TIME);//传递的时间单位为分钟
 					int frequency=0;
 					settings=setSettingData(type,temp,intensity,time,frequency);
-					Log.i(TAG, "onClick: setting"+ Arrays.toString(settings));
+					Logger.i("onClick: setting btn_medical_start"+ Arrays.toString(settings));
 
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 					Intent intent = new Intent(mContext, RunningActivity.class);
-					Log.i(TAG, "onClick: originalTime" + originalTime);
+					Logger.i("onClick: originalTime btn_medical_start" + getSP(type,Constants.SP_CURE_TIME));
 					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_MEDICINE);
-					intent.putExtra(Constants.ORIGINAL_TIME, originalTime*1000);//传递的时间单位为毫秒
+					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));//传递的时间单位为分钟
 					mContext.startActivity(intent);
 				}
 				break;
@@ -347,12 +347,12 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 
 						sustainTime[0] = hourOfDay;
 						sustainTime[1] = minute;
-						Log.i(TAG, "onPositiveActionClicked: sustainTime" + sustainTime[0] + "   " + sustainTime[1]);
+						Logger.i("onPositiveActionClicked: sustainTime" + sustainTime[0] + "   " + sustainTime[1]);
 						originalTime = sustainTime[0] * 60 + sustainTime[1];
 
 						setSPOfType(type,Constants.SP_CURE_TIME,originalTime);//保存的时间单位为分钟
 
-						Log.i(TAG, "onPositiveActionClicked: originalTime" + originalTime);
+						Logger.i("getSustainTime: originalTime" + getSP(type,Constants.SP_CURE_TIME));
 						btnTime.setText(displayTime(sustainTime));
 //						ToastUtil.showToast(mContext, "您选择的持续时间是" + hourOfDay + "小时" + minute + "分钟", 1500);
 						ToastUtil.showToast(mContext, "您选择的持续时间是" + (hourOfDay *60+ minute) + "分钟", 1500);
@@ -467,7 +467,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						setSPOfType(type,keyName,mWhich);
-						Log.i(TAG, "onClick: getSP"+getSP(type,keyName));
+						Logger.i("onClick: getSP"+getSP(type,keyName));
 
 						btn.setText(selectGrade);
 						dialog.dismiss();

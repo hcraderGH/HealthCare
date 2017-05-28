@@ -3,13 +3,11 @@
                 xmlns:tools="http://schemas.android.com/tools"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                                        android:clipToPadding="true"
+                                        android:fitsSystemWindows="true"
                                         android:id="@+id/draw_layout"
                 xmlns:app="http://schemas.android.com/apk/res-auto"
-                                        android:fitsSystemWindows="true"
-                                        tools:openDrawer="start"
                 tools:context=".ui.MainActivity">
-
-    <include layout="@layout/draw_layout_left"/>
 
     <RelativeLayout
         android:layout_width="match_parent"
@@ -131,13 +129,15 @@
             app:bmb_buttonEnum="textOutsideCircle"
             app:bmb_dotRadius="0dp"
             app:bmb_showMoveEaseEnum="inBack"
-            app:bmb_showScaleEaseEnum="linear"
-            app:bmb_showRotateEaseEnum="outBack"
+            app:bmb_showScaleEaseEnum="inBack"
+            app:bmb_showRotateEaseEnum="@null"
             app:bmb_hideMoveEaseEnum="inBack"
             app:bmb_hideScaleEaseEnum="inBack"
-            app:bmb_hideRotateEaseEnum="inBack"
+            app:bmb_hideRotateEaseEnum="@null"
             app:bmb_buttonPlaceAlignmentEnum="buttonPlaceAlignment_bottom"/>
     </RelativeLayout>
 
+    <!--DrawerLayout的布局界面必须放在整个主界面布局的最下面-->
+    <include layout="@layout/draw_layout_left"/>
 
 </android.support.v4.widget.DrawerLayout>

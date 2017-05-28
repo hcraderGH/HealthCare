@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dafukeji.healthcare;
+package com.dafukeji.healthcare.service;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;

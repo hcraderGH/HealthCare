@@ -61,12 +61,12 @@ public class RecordRecyclerAdapter extends RecyclerView.Adapter<RecordRecyclerAd
 		}
 		Cure cure=mCures.get(position);
 		String date= TimeUtil.date2String(cure.getStartTime(),"yyyy-MM-dd");
-		Logger.i(TAG, "onBindViewHolder: date"+date);
+		Logger.i("onBindViewHolder: date"+date);
 
 		String startTime=TimeUtil.date2String(cure.getStartTime(),"HH′mm′ss″");
-		Logger.i(TAG, "onBindViewHolder: startTime"+startTime);
+		Logger.i("onBindViewHolder: startTime"+startTime);
 		String stopTime=TimeUtil.date2String(cure.getStopTime(),"HH′mm′ss″");
-		Logger.i(TAG, "onBindViewHolder: stopTime"+cure.getStopTime());
+		Logger.i("onBindViewHolder: stopTime"+cure.getStopTime());
 		String[] wholeTime=TimeUtil.getSubtractedString(cure.getStopTime(),cure.getStartTime());
 		holder.tvDate.setText(date);
 		holder.tvStartTime.setText(startTime);

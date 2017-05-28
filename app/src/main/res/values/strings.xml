@@ -21,4 +21,9 @@
 
     <string name="navigation_drawer_open">打开导航界面</string>
     <string name="navigation_drawer_close">关闭导航界面</string>
+
+    <string name="dialog_ok">确定</string>
+    <string name="dialog_cancel">取消</string>
+
+    <string name="title_share">分享</string>
 </resources>

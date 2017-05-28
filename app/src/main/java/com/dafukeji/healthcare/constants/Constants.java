@@ -24,6 +24,7 @@ public class Constants {
 	public static final int CURE_CAUTERIZE=1;
 	public static final int CURE_NEEDLE=2;
 	public static final int CURE_MEDICINE=3;
+	public static final int DEVICE_POWER_OFF=0;
 
 	public static final String SP_CURE_CAUTERIZE="sp_cure_cauterize";
 	public static final String SP_CURE_NEEDLE="sp_cure_needle";
@@ -33,6 +34,14 @@ public class Constants {
 	public static final String SP_CURE_TEMP="sp_cure_temp";
 	public static final String SP_CURE_INTENSITY="sp_cure_intensity";
 	public static final String SP_CURE_FREQUENCY="sp_cure_frequency";
+
+	public static final String BATTERY_ELECTRIC_QUANTITY="battery_electric_quantity";
+	public static final String EXTRAS_BATTERY_ELECTRIC_QUANTITY="extras_battery_electric_quantity";
+
+
+	public static final int EXTRAS_BATTERY_WARN=30;
+	public static final int EXTRAS_BATTERY_DANGER=15;
+
 
 //	public static final String SP_CURE_CAUTERIZE_TIME="sp_cure_cauterize_time";
 //	public static final String SP_CURE_NEEDLE_TIME="sp_cure_needle_time";

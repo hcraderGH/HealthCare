@@ -18,6 +18,7 @@
 
 -dontwarn com.tencent.bugly.**
 -keep public class com.tencent.bugly.**{*;}
+-keep class android.support.**{*;}
 
 #指定代码的压缩级别
 -optimizationpasses 5

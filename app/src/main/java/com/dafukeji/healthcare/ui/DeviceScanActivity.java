@@ -27,6 +27,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.LeRecyclerAdapter;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
@@ -38,7 +39,7 @@ import com.romainpiel.shimmer.ShimmerButton;
 import com.romainpiel.shimmer.ShimmerTextView;
 import com.skyfishjy.library.RippleBackground;
 
-public class DeviceScanActivity extends AppCompatActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+public class DeviceScanActivity extends BaseActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
 	private LeRecyclerAdapter mLeDeviceRecyclerAdapter;
 	private BluetoothAdapter mBluetoothAdapter;
@@ -77,7 +78,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 		initScanCallback();
 
 		initWidgets();
-		StatusBar.setImmersiveStatusBar(this, mToolbar, R.color.app_bar_color);
+//		StatusBar.setImmersiveStatusBar(this, R.color.app_bar_color);
 
 		mayRequestLocation();
 	}
@@ -175,7 +176,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 				if (tbScan.isChecked()) {
 					mSBScanString.setVisibility(View.INVISIBLE);//当点击搜索时，则隐藏文字
 					openBlueTooth();
-					Logger.i("DeviceScan蓝牙打开了？", mBluetoothAdapter.isEnabled() + "");
+					Logger.i("DeviceScan蓝牙打开了？"+mBluetoothAdapter.isEnabled());
 					if (!mBluetoothAdapter.isEnabled()) {
 						return;
 					}
@@ -223,7 +224,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 //
 //			case R.id.menu_scan:
 //				openBlueTooth();
-//				Logger.i("蓝牙是否打开了",mBluetoothAdapter.isEnabled()+"");
+//				Logger.i("蓝牙是否打开了"+mBluetoothAdapter.isEnabled());
 //				mLeDeviceRecyclerAdapter.clear();
 //				scanLeDevice(true);
 //				break;
@@ -283,7 +284,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 			mScanning = true;
 			mLeDeviceRecyclerAdapter.clear();
 			startScan();
-			Logger.i("DeviceScan", "开始扫描，蓝牙设备");
+			Logger.i("开始扫描，蓝牙设备");
 		} else {
 			mScanning = false;
 			stopScan();
@@ -332,7 +333,7 @@ public class DeviceScanActivity extends AppCompatActivity implements View.OnClic
 
 						@Override
 						public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
-							Logger.i("DeviceScan", "onLeScan");
+							Logger.i("DeviceScan onLeScan");
 							runOnUiThread(new Runnable() {
 								@Override
 								public void run() {

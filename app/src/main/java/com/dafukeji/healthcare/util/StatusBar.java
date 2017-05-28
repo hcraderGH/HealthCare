@@ -30,6 +30,7 @@ public class StatusBar {
 			tintManager = new SystemBarTintManager(activity);
 			tintManager.setStatusBarTintColor(activity.getResources().getColor(color));
 			tintManager.setStatusBarTintEnabled(true);
+			tintManager.setNavigationBarTintEnabled(true);
 		}
 	}
 

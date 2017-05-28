@@ -13,6 +13,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -28,9 +29,11 @@ import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.dafukeji.healthcare.BluetoothLeService;
+import com.dafukeji.healthcare.service.BatteryService;
+import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.viewpagercards.CardItem;
 import com.dafukeji.healthcare.viewpagercards.CardPagerAdapter;
 import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
@@ -51,8 +54,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	private int mRemindEle;
 	private int mCurrentTemp;
 
-	private String TAG ="测试HomeFragment";
-
 	private BluetoothAdapter mBluetoothLEAdapter;
 	private String mDeviceName;
 	private String mDeviceAddress;
@@ -65,7 +66,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 	private BlueToothBroadCast mBlueToothBroadCast;
 
-	private boolean biginingRemindBat=false;//当连接设备成功时，即提醒用户电量
+//	private boolean beginRemindBat =false;//当连接设备成功时，即提醒用户电量
 
 	private ViewPager mViewPager;
 	private CardPagerAdapter mCardAdapter;
@@ -105,7 +106,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		// selectively disable BLE-related features.
 		if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
 			Toast.makeText(getActivity(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
-			Logger.i(TAG, "onCreateView: "+R.string.ble_not_supported);
+			Logger.i("onCreateView: "+R.string.ble_not_supported);
 			getActivity().finish();
 		}
 
@@ -125,7 +126,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			mBluetoothLEAdapter.enable();  //打开蓝牙，需要BLUETOOTH_ADMIN权限
 		}
 		Intent gattServiceIntent = new Intent(getActivity(), BluetoothLeService.class);
-		Logger.d(TAG, "Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
+		Logger.d("Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		return mView;
 	}
@@ -157,6 +158,30 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		tvCurrentTemp= (TextView) mView.findViewById(R.id.tv_home_current_temp);
 
 		btnDeviceStatus.setOnClickListener(this);
+
+
+
+		//TODO 当没有连接设备时的测试
+//		final Handler handler = new Handler();
+//		Runnable runnable = new Runnable() {
+//			@Override
+//			public void run() {
+//				getActivity().runOnUiThread(new Runnable() {
+//					@Override
+//					public void run() {
+//						mRemindEle=(int)(Math.random() * 100);//TODO 测试用
+//						Intent intent=new Intent();
+//						intent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY,mRemindEle);
+//						intent.setAction(Constants.BATTERY_ELECTRIC_QUANTITY);
+//						getActivity().sendBroadcast(intent);
+//						JudgeEleSetWare(mRemindEle);
+//					}
+//				});
+//				handler.postDelayed(this, 1000);
+//			}
+//		};
+//		handler.postDelayed(runnable,1000);
+
 	}
 
 	@Override
@@ -164,7 +189,18 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		switch (v.getId()){
 			case R.id.btn_home_device_status:
 				if (mConnected){
-					byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB,0x00,0x00,0x00,0x00,0x00, (byte) 0xF5, (byte) 0xFE};
+					Logger.i("btn_home_device_status");
+					setDisplayStatus(!mConnected);
+
+//					int type=Constants.DEVICE_POWER_OFF;
+					int type=2;
+					int temp=0;
+					int intensity=0;
+					int time=0;
+					int frequency=0;
+					int crc=0xFA+0xFB+type+temp+intensity+time+frequency;
+					byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) type, (byte) temp
+							, (byte) intensity, (byte) time, (byte) frequency, (byte)crc, (byte) 0xFE};
 					mBluetoothLeService.WriteValue(setting);
 				}
 				break;
@@ -226,35 +262,49 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
-				Logger.i(TAG, "Only gatt, just wait");
+				Logger.i("Only gatt, just wait");
 //				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
 				Toasty.success(getActivity(),"连接设备成功",Toast.LENGTH_SHORT).show();
 
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				mConnected = false;
-				setDisplayStatus(mConnected);
+
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){ //可以开始干活了
 				mConnected = true;
 				Intent gattIntent=new Intent();
 				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
 				gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
 				getActivity().sendBroadcast(gattIntent);
-				setDisplayStatus(mConnected);
-				Logger.i(TAG, "In what we need");
+				getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						setDisplayStatus(mConnected);
+					}
+				});
+				Logger.i("In what we need");
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
-				Logger.i(TAG, "DATA");
-				byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				Logger.i("DATA");
+				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
 					//TODO 接收数据处理
-					Logger.i(TAG, "onReceive: "+ Arrays.toString(data));
-					mCurrentTemp=(int) data[3];//TODO int和byte之间的转换
-					tvCurrentTemp.setText(mCurrentTemp+"℃");
-					mRemindEle=(int)data[8];
+					Logger.i("onReceive: "+ Arrays.toString(data));
+//					mCurrentTemp=(int) data[3];//TODO int和byte之间的转换
+//					mRemindEle=(int)data[8];
+
+					//发送电量的广播
+					Intent batIntent=new Intent();
+					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY,mRemindEle);
+					getActivity().sendBroadcast(batIntent);
 
 //					mRemindEle=(int)(Math.random() * 100);//TODO 测试用
 
-					JudgeEleSetWare(mRemindEle);
-					tvCurrentTemp.setText(data[0]+"℃");
+					getActivity().runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							JudgeEleSetWare((int) Math.ceil(((ConvertUtils.byte2unsignedInt(data[8])/1023)*3.3*122)/(22*4.1)));
+							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3])+"℃");
+						}
+					});
 				}
 			}
 		}
@@ -269,30 +319,32 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 		mWaveLoadingView.setProgressValue(ele);
 		mWaveLoadingView.setCenterTitle(ele+"%");
-		if (ele>=30){
+		if (ele>=Constants.EXTRAS_BATTERY_WARN){
 			mWaveLoadingView.setCenterTitleColor(Color.parseColor("#cc000000"));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_normal));
-		}else if (ele<30&&ele>=15){
+		}else if (ele<Constants.EXTRAS_BATTERY_WARN&&ele>=Constants.EXTRAS_BATTERY_DANGER){
 			mWaveLoadingView.setCenterTitleColor(getResources().getColor(R.color.battery_electric_quantity_warn));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_warn));
 		}else{
-			if (!biginingRemindBat){
-				if (mMaterialDialog==null){//此处需要判断是否为空，求变量要为全局，否则，在对话框后，一直会new出新的对话框
-					mMaterialDialog=new MaterialDialog.Builder(getActivity())
-							.title("提示")
-							.positiveText("确定")
-							.onPositive(new MaterialDialog.SingleButtonCallback() {
-								            @Override
-								            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-									            biginingRemindBat=true;
-								            }
-							            }
-							).content("设备电量过低，请及时充电")
-							.iconRes(R.mipmap.ic_warn_red)
-							.maxIconSize(64).build();
-					mMaterialDialog.show();
-				}
-			}
+			Intent intent=new Intent(getActivity(), BatteryService.class);
+			getActivity().startService(intent);
+//			if (!beginRemindBat){
+//				if (mMaterialDialog==null){//此处需要判断是否为空，求变量要为全局，否则，在对话框后，一直会new出新的对话框
+//					mMaterialDialog=new MaterialDialog.Builder(getActivity())
+//							.title("提示")
+//							.positiveText("确定")
+//							.onPositive(new MaterialDialog.SingleButtonCallback() {
+//								            @Override
+//								            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+//									            beginRemindBat =true;
+//								            }
+//							            }
+//							).content("设备电量过低，请及时充电")
+//							.iconRes(R.mipmap.ic_warn_red)
+//							.maxIconSize(64).build();
+//					mMaterialDialog.show();
+//				}
+//			}
 			mWaveLoadingView.setCenterTitleColor(getResources().getColor(R.color.battery_electric_quantity_danger));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_danger));
 		}
@@ -306,11 +358,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		public void onServiceConnected(ComponentName componentName, IBinder service) {
 			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
 			if (!mBluetoothLeService.initialize()) {
-				Logger.i(TAG, "Unable to initialize Bluetooth");
+				Logger.i("Unable to initialize Bluetooth");
 				getActivity().finish();
 			}
 
-			Logger.i(TAG, "mBluetoothLeService is okay");
+			Logger.i("mBluetoothLeService is okay");
 			// Automatically connects to the device upon successful start-up initialization.
 			//mBluetoothLeService.connect(mDeviceAddress);
 		}
@@ -344,7 +396,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		if (mBluetoothLEAdapter != null) {
 			mBluetoothLEAdapter.disable();
 		}
-		Logger.d(TAG, "We are in destroy");
+		Logger.d("We are in destroy");
 	}
 
 	public void disConnect(){

@@ -16,11 +16,16 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 
+    //判断是否处于前台所需的权限
+    <uses-permission android:name="android.permission.GET_TASKS"/>
+
     //是否必须支持低功耗蓝牙，此处不必须(当正式使用时设置为true)
     <uses-feature android:name="android.hardware.bluetooth_le"
         android:required="false"/>
 
     <application
+        xmlns:tools="http://schemas.android.com/tools"
+        tools:replace="android:name"
         android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_tai_ji"
@@ -41,9 +46,11 @@
                 android:value=".ui.MainActivity"/>
 
         </activity>
-        <service android:name=".BluetoothLeService"
+        <activity android:name=".ui.ShareActivity"/>
+        <service android:name=".service.BluetoothLeService"
             android:enabled="true"/>
         <activity android:name=".ui.RunningActivity"/>
+        <service android:name=".service.BatteryService"/>
     </application>
 
 </manifest>

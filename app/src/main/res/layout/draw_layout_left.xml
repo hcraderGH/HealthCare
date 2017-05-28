@@ -6,6 +6,7 @@
     android:layout_width="250dp"
     android:layout_height="match_parent"
     android:layout_gravity="start"
+    android:clickable="true"
     android:background="@android:color/white"
     android:orientation="vertical">
 
@@ -15,9 +16,9 @@
 
 
         <LinearLayout
-            android:background="@drawable/material_design_2"
             android:layout_width="match_parent"
             android:layout_height="160dp"
+            android:background="@drawable/material_design_2"
             android:orientation="vertical">
 
             <LinearLayout
@@ -52,41 +53,77 @@
             android:id="@+id/mrl_home"
             android:layout_width="match_parent"
             android:layout_height="40dp"
-            android:layout_marginTop="5dp"
+            android:layout_marginTop="15dp"
             app:mrl_rippleAlpha="0.2"
             app:mrl_rippleColor="#0000ff"
             app:mrl_rippleHover="true"
             app:mrl_rippleOverlay="false">
 
             <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal">
-
-            <net.steamcrafted.materialiconlib.MaterialIconView
-                android:id="@+id/miv_home_icon"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="10dp"
-                android:scaleType="center"
-                app:materialIcon="home"
-                app:materialIconColor="@color/draw_layout_item_logo_color"
-                app:materialIconSize="24dp"/>
-
-            <TextView
-                android:id="@+id/tv_home_text"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:layout_gravity="center_vertical"
-                android:layout_marginLeft="10dp"
-                android:gravity="left|center_vertical"
-                android:text="首页"
-                android:textColor="@color/drawer_text"/>
+                android:orientation="horizontal">
 
-        </LinearLayout>
+                <net.steamcrafted.materialiconlib.MaterialIconView
+                    android:id="@+id/miv_home_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="10dp"
+                    android:scaleType="center"
+                    app:materialIcon="home"
+                    app:materialIconColor="@color/draw_layout_item_logo_color"
+                    app:materialIconSize="24dp"/>
 
+                <TextView
+                    android:id="@+id/tv_home_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="10dp"
+                    android:gravity="left|center_vertical"
+                    android:text="首页"
+                    android:textColor="@color/drawer_text"/>
 
+            </LinearLayout>
+        </com.balysv.materialripple.MaterialRippleLayout>
+
+        <com.balysv.materialripple.MaterialRippleLayout
+            android:id="@+id/mrl_share"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            app:mrl_rippleAlpha="0.2"
+            app:mrl_rippleColor="#0000ff"
+            app:mrl_rippleHover="true"
+            app:mrl_rippleOverlay="false">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <net.steamcrafted.materialiconlib.MaterialIconView
+                    android:id="@+id/miv_share_icon"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="10dp"
+                    android:scaleType="center"
+                    app:materialIcon="share_variant"
+                    app:materialIconColor="@color/draw_layout_item_logo_color"
+                    app:materialIconSize="24dp"/>
+
+                <TextView
+                    android:id="@+id/tv_share_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_vertical"
+                    android:layout_marginLeft="10dp"
+                    android:gravity="left|center_vertical"
+                    android:text="分享"
+                    android:textColor="@color/drawer_text"/>
+
+            </LinearLayout>
         </com.balysv.materialripple.MaterialRippleLayout>
 
         <View
@@ -100,7 +137,7 @@
             android:background="@color/item_divider"/>
 
         <com.balysv.materialripple.MaterialRippleLayout
-            android:id="@+id/mrv_settings"
+            android:id="@+id/mrl_settings"
             android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_marginTop="5dp"
