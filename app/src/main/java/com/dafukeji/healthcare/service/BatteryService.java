@@ -59,7 +59,7 @@ public class BatteryService extends Service {
 		notifyIntent.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		PendingIntent pIntent = PendingIntent.getActivity(this,
 				requestCode, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		int smallIcon = R.mipmap.ic_tai_ji;
+		int smallIcon = R.mipmap.ic_launcher;
 		String ticker = "您有一条新通知";
 		String title = "温馨提醒";
 		String content = "连接的设备电量只剩下"+bat+"%，请及时充电";

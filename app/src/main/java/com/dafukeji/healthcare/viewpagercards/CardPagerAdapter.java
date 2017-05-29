@@ -7,11 +7,9 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -33,7 +31,7 @@ import es.dmoral.toasty.Toasty;
 
 public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.OnClickListener {
 
-	private Button btnCauterizeGrade, btnNeedleGrade, btnMedicalTemp;
+	private Button btnCauterizeGrade, btnNeedleGrade, btnMedicalGrade;
 	private Button btnCauterizeTime, btnNeedleTime, btnMedicalTime;
 	private Button btnCauterizeStart, btnNeedleStart, btnMedicalStart;
 	private Button btnNeedleFrequency;
@@ -50,10 +48,10 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 	private View mView;
 	private Context mContext;
 
-	private String[] mGrades=new String[]{"一档", "二档", "三档", "四档", "五档"};
+	private String[] mCauterizeGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档"};
 	private String[] mIntensity=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
 	private String[] mFrequency=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
-	private String[] mTemps=new String[]{"40℃", "42℃", "44℃", "46℃", "48℃", "50℃"};
+	private String[] mMedicine=new String[]{"一档", "二档", "三档", "四档", "五档"};
 
 	public CardPagerAdapter(Context context, FragmentManager fragmentManager) {
 		this.mFragmentManager = fragmentManager;
@@ -88,7 +86,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 
 	@Override
 	public Object instantiateItem(ViewGroup container, int position) {
-		int type=position+1;
+		int type=position+Constants.CURE_CAUTERIZE;//TODO 如果类型的常量改变了这边也要改变
 
 		Logger.i("instantiateItem: type"+type);
 
@@ -103,7 +101,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				btnCauterizeStart.setOnClickListener(this);
 
 				if (isSaved(type,Constants.SP_CURE_INTENSITY)){
-					btnCauterizeGrade.setText(mGrades[getSP(type,Constants.SP_CURE_INTENSITY)]);
+					btnCauterizeGrade.setText(mCauterizeGrades[getSP(type,Constants.SP_CURE_INTENSITY)]);
 				}
 
 				if (isSaved(type,Constants.SP_CURE_TIME)){
@@ -134,15 +132,15 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				break;
 			case 2:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_medicine, container, false);
-				btnMedicalTemp = (Button) mView.findViewById(R.id.btn_medical_temp);
+				btnMedicalGrade = (Button) mView.findViewById(R.id.btn_medical_grade);
 				btnMedicalTime = (Button) mView.findViewById(R.id.btn_medical_time);
 				btnMedicalStart = (Button) mView.findViewById(R.id.btn_medical_start);
-				btnMedicalTemp.setOnClickListener(this);
+				btnMedicalGrade.setOnClickListener(this);
 				btnMedicalTime.setOnClickListener(this);
 				btnMedicalStart.setOnClickListener(this);
 
-				if (isSaved(type,Constants.SP_CURE_TEMP)) {
-					btnMedicalTemp.setText(mTemps[getSP(type,Constants.SP_CURE_TEMP)]);
+				if (isSaved(type,Constants.SP_CURE_GRADE)) {
+					btnMedicalGrade.setText(mMedicine[getSP(type,Constants.SP_CURE_GRADE)]);
 				}
 				if (isSaved(type,Constants.SP_CURE_TIME)) {
 					btnMedicalTime.setText(getSP(type,Constants.SP_CURE_TIME)+"分钟");
@@ -178,7 +176,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 	public void onClick(View v) {
 		switch (v.getId()) {
 			case R.id.btn_cauterize_grade:
-				getGrade(mGrades,
+				getGrade(mCauterizeGrades,
 						btnCauterizeGrade, "请选择灸的强度",Constants.CURE_CAUTERIZE,Constants.SP_CURE_INTENSITY);
 				break;
 			case R.id.btn_needle_grade:
@@ -191,9 +189,9 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 						btnNeedleFrequency, "请选择针的频率",Constants.CURE_NEEDLE,Constants.SP_CURE_FREQUENCY);
 				break;
 
-			case R.id.btn_medical_temp://温度相当于强度
-				getGrade(mTemps,
-						btnMedicalTemp, "请选择药的加热温度",Constants.CURE_MEDICINE,Constants.SP_CURE_TEMP);
+			case R.id.btn_medical_grade://温度相当于强度
+				getGrade(mMedicine,
+						btnMedicalGrade, "请选择药的加热温度",Constants.CURE_MEDICINE,Constants.SP_CURE_GRADE);
 				break;
 			case R.id.btn_cauterize_time:
 				getSustainTime(btnCauterizeTime,Constants.CURE_CAUTERIZE);
@@ -225,8 +223,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					int frequency=0;
 					settings=setSettingData(type,temp,intensity,time,frequency);
 					Logger.i("onClick: setting btn_cauterize_start"+ Arrays.toString(settings));
-
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
+
 					Intent intent = new Intent(mContext, RunningActivity.class);
 					Logger.i("onClick: originalTime btn_cauterize_start" + getSP(type,Constants.SP_CURE_TIME));
 					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_CAUTERIZE);
@@ -276,7 +274,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				} else {
 					byte[] settings;
 					int type=Constants.CURE_MEDICINE;
-					int temp=getSP(type,Constants.SP_CURE_TEMP);
+					int temp=getSP(type,Constants.SP_CURE_GRADE);
 					int intensity=0;
 					int time=getSP(type,Constants.SP_CURE_TIME);//传递的时间单位为分钟
 					int frequency=0;
@@ -405,7 +403,6 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 		}
 		return value;
 	}
-
 
 	private void setSPOfType(int type, String keyName, int keyValue){
 

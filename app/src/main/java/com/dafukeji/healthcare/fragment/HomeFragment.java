@@ -157,6 +157,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		tvTempStatus= (TextView) mView.findViewById(R.id.tv_home_current_temp_status);
 		tvCurrentTemp= (TextView) mView.findViewById(R.id.tv_home_current_temp);
 
+		btnDeviceStatus.setClickable(true);
 		btnDeviceStatus.setOnClickListener(this);
 
 
@@ -191,6 +192,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 				if (mConnected){
 					Logger.i("btn_home_device_status");
 					setDisplayStatus(!mConnected);
+					mConnected=false;//在此处强制设为false
 
 //					int type=Constants.DEVICE_POWER_OFF;
 					int type=2;
@@ -217,7 +219,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			ivTempLogo.setBackgroundResource(R.mipmap.ic_circle_yellow);
 
 			btnDeviceStatus.setBackground(getResources().getDrawable(R.drawable.selector_power_off));
-			btnDeviceStatus.setClickable(true);
 
 			tvDeviceStatus.setTextColor(getResources().getColor(R.color.connect_status));
 			tvTempStatus.setTextColor(getResources().getColor(R.color.connect_status));
@@ -228,8 +229,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			ivTempLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
 
 			btnDeviceStatus.setBackgroundResource(R.mipmap.ic_device_disconnect);
-			btnDeviceStatus.setClickable(false);
-
 			tvDeviceStatus.setTextColor(getResources().getColor(R.color.disconnect_status));
 			tvTempStatus.setTextColor(getResources().getColor(R.color.disconnect_status));
 			tvCurrentTemp.setTextColor(getResources().getColor(R.color.disconnect_status));
@@ -267,8 +266,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 				Toasty.success(getActivity(),"连接设备成功",Toast.LENGTH_SHORT).show();
 
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
-				mConnected = false;
-
+				if (mConnected){
+					getActivity().runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							setDisplayStatus(!mConnected);
+						}
+					});
+				}
+				mConnected=false;
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){ //可以开始干活了
 				mConnected = true;
 				Intent gattIntent=new Intent();
@@ -301,7 +307,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							JudgeEleSetWare((int) Math.ceil(((ConvertUtils.byte2unsignedInt(data[8])/1023)*3.3*122)/(22*4.1)));
+							JudgeEleSetWare((int) Math.ceil(((ConvertUtils.byte2unsignedInt(data[7])*100))));
 							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3])+"℃");
 						}
 					});
@@ -380,7 +386,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	public static BluetoothLeService getBluetoothLeService(){
 		return mBluetoothLeService;
 	}
-
 
 	@Override
 	public void onDestroyView() {

@@ -21,9 +21,9 @@ public class Constants {
 
 
 	public static final String CURE_TYPE="cure_type";
-	public static final int CURE_CAUTERIZE=1;
-	public static final int CURE_NEEDLE=2;
-	public static final int CURE_MEDICINE=3;
+	public static final int CURE_CAUTERIZE=3;
+	public static final int CURE_NEEDLE=4;
+	public static final int CURE_MEDICINE=5;
 	public static final int DEVICE_POWER_OFF=0;
 
 	public static final String SP_CURE_CAUTERIZE="sp_cure_cauterize";
@@ -31,7 +31,7 @@ public class Constants {
 	public static final String SP_CURE_MEDICINE="sp_cure_medicine";
 
 	public static final String SP_CURE_TIME="sp_cure_time";
-	public static final String SP_CURE_TEMP="sp_cure_temp";
+	public static final String SP_CURE_GRADE ="sp_cure_grade";
 	public static final String SP_CURE_INTENSITY="sp_cure_intensity";
 	public static final String SP_CURE_FREQUENCY="sp_cure_frequency";
 

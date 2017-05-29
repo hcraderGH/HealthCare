@@ -34,7 +34,7 @@
 
                 <TextView
                     style="@style/subtitle"
-                    android:text="加热温度："/>
+                    android:text="加热强度："/>
 
                 <View
                     android:layout_width="0dp"
@@ -44,9 +44,9 @@
 
                 <Button
                     android:background="@drawable/selector_button_background"
-                    android:id="@+id/btn_medical_temp"
+                    android:id="@+id/btn_medical_grade"
                     style="@style/subtitle_select_item"
-                    android:text="40℃"/>
+                    android:text="一档"/>
 
 
             </LinearLayout>

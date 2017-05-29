@@ -14,6 +14,7 @@ import com.afollestad.materialdialogs.MaterialDialog;
 import com.dafukeji.healthcare.bean.Battery;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.StatusBar;
+import com.umeng.message.PushAgent;
 
 public class BaseActivity extends AppCompatActivity {
 
@@ -28,13 +29,15 @@ public class BaseActivity extends AppCompatActivity {
         MyApplication.getInstance().addActivity(this);
         StatusBar.setImmersiveStatusBar(this,R.color.app_bar_color);//沉浸式状态栏
 
-
         //TODO 是否可以采用当处于MainActivity时使用对话框，处于其他Activity可以使用Notification
         //注册接受蓝牙电量的广播
         mBlueToothBroadCast=new BlueToothBroadCast();
         IntentFilter filter=new IntentFilter();
         filter.addAction(Constants.BATTERY_ELECTRIC_QUANTITY);
         registerReceiver(mBlueToothBroadCast,filter);
+
+        //Umeng统计应用启动数据
+        PushAgent.getInstance(this).onAppStart();
     }
 
     @Override
