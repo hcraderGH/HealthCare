@@ -82,5 +82,5 @@ dependencies {
     // ripple effect
     compile 'com.balysv:material-ripple:1.0.2'
     compile project(':notifyutil')
-    compile project(':PushSDK')
+    compile project(':pushsdk')
 }

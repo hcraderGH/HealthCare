@@ -6,7 +6,10 @@
       <module fileurl="file://$PROJECT_DIR$/PushSDK/PushSDK.iml" filepath="$PROJECT_DIR$/PushSDK/PushSDK.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/daogenerator/daogenerator.iml" filepath="$PROJECT_DIR$/daogenerator/daogenerator.iml" />
+      <module fileurl="file://$PROJECT_DIR$/daogenerator/daogenerator.iml" filepath="$PROJECT_DIR$/daogenerator/daogenerator.iml" />
       <module fileurl="file://$PROJECT_DIR$/notifyutil/notifyutil.iml" filepath="$PROJECT_DIR$/notifyutil/notifyutil.iml" />
+      <module fileurl="file://$PROJECT_DIR$/notifyutil/notifyutil.iml" filepath="$PROJECT_DIR$/notifyutil/notifyutil.iml" />
+      <module fileurl="file://$PROJECT_DIR$/pushsdk/pushsdk.iml" filepath="$PROJECT_DIR$/pushsdk/pushsdk.iml" />
     </modules>
   </component>
 </project>

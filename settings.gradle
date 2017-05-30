@@ -1,1 +1,1 @@
-include ':app', ':daogenerator', ':notifyutil', ':PushSDK'
+include ':app', ':daogenerator', ':notifyutil', ':pushsdk'
