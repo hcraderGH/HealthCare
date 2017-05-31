@@ -19,6 +19,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.ui.RunningActivity;
+import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.SPUtils;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.orhanobut.logger.Logger;
@@ -47,6 +48,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 	private float mBaseElevation;
 	private View mView;
 	private Context mContext;
+
+	private static String TAG="测试CardPagerAdapter";
 
 	private String[] mCauterizeGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档"};
 	private String[] mIntensity=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
@@ -222,11 +225,11 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					int time=getSP(type,Constants.SP_CURE_TIME);
 					int frequency=0;
 					settings=setSettingData(type,temp,intensity,time,frequency);
-					Logger.i("onClick: setting btn_cauterize_start"+ Arrays.toString(settings));
+					LogUtil.i(TAG,"onClick: setting btn_cauterize_start"+ Arrays.toString(settings));
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 
 					Intent intent = new Intent(mContext, RunningActivity.class);
-					Logger.i("onClick: originalTime btn_cauterize_start" + getSP(type,Constants.SP_CURE_TIME));
+					LogUtil.i(TAG,"originalTime btn_cauterize_start" + getSP(type,Constants.SP_CURE_TIME));
 					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_CAUTERIZE);
 					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));
 					mContext.startActivity(intent);
@@ -251,11 +254,11 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					int time=getSP(type,Constants.SP_CURE_TIME);
 					int frequency=getSP(type,Constants.SP_CURE_FREQUENCY);
 					settings=setSettingData(type,temp,intensity,time,frequency);
-					Logger.i("onClick: setting btn_needle_start"+ Arrays.toString(settings));
+					LogUtil.i(TAG,"onClick: setting btn_needle_start"+ Arrays.toString(settings));
 
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 					Intent intent = new Intent(mContext, RunningActivity.class);
-					Logger.i("onClick: originalTime btn_needle_start" + getSP(type,Constants.SP_CURE_TIME));
+					LogUtil.i(TAG,"onClick: originalTime btn_needle_start" + getSP(type,Constants.SP_CURE_TIME));
 					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_NEEDLE);
 					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));
 					mContext.startActivity(intent);
@@ -279,11 +282,11 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 					int time=getSP(type,Constants.SP_CURE_TIME);//传递的时间单位为分钟
 					int frequency=0;
 					settings=setSettingData(type,temp,intensity,time,frequency);
-					Logger.i("onClick: setting btn_medical_start"+ Arrays.toString(settings));
+					LogUtil.i(TAG,"onClick: setting btn_medical_start"+ Arrays.toString(settings));
 
 					HomeFragment.getBluetoothLeService().WriteValue(settings);
 					Intent intent = new Intent(mContext, RunningActivity.class);
-					Logger.i("onClick: originalTime btn_medical_start" + getSP(type,Constants.SP_CURE_TIME));
+					LogUtil.i(TAG,"onClick: originalTime btn_medical_start" + getSP(type,Constants.SP_CURE_TIME));
 					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_MEDICINE);
 					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));//传递的时间单位为分钟
 					mContext.startActivity(intent);

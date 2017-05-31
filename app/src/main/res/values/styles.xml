@@ -55,4 +55,8 @@
         <item name="android:maxHeight">?attr/actionBarSize</item>
     </style>
 
+    <style name="switchStyle" parent="Base.Widget.AppCompat.CompoundButton.Switch">
+        <item name="colorControlActivated">@color/setting_title_color</item>
+    </style>
+
 </resources>

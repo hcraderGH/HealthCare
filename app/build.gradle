@@ -83,4 +83,7 @@ dependencies {
     compile 'com.balysv:material-ripple:1.0.2'
     compile project(':notifyutil')
     compile project(':pushsdk')
+
+    // ripple effect
+    compile 'com.github.traex.rippleeffect:library:1.3'
 }

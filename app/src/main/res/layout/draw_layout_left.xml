@@ -57,6 +57,7 @@
             app:mrl_rippleAlpha="0.2"
             app:mrl_rippleColor="#0000ff"
             app:mrl_rippleHover="true"
+            app:mrl_rippleDuration="@integer/mrl_ripple_duration"
             app:mrl_rippleOverlay="false">
 
             <LinearLayout
@@ -95,6 +96,7 @@
             app:mrl_rippleAlpha="0.2"
             app:mrl_rippleColor="#0000ff"
             app:mrl_rippleHover="true"
+            app:mrl_rippleDuration="@integer/mrl_ripple_duration"
             app:mrl_rippleOverlay="false">
 
             <LinearLayout
@@ -144,6 +146,7 @@
             app:mrl_rippleAlpha="0.2"
             app:mrl_rippleColor="#0000ff"
             app:mrl_rippleHover="true"
+            app:mrl_rippleDuration="@integer/mrl_ripple_duration"
             app:mrl_rippleOverlay="false">
 
             <LinearLayout
@@ -184,6 +187,7 @@
             app:mrl_rippleAlpha="0.2"
             app:mrl_rippleColor="#0000ff"
             app:mrl_rippleHover="true"
+            app:mrl_rippleDuration="@integer/mrl_ripple_duration"
             app:mrl_rippleOverlay="false">
 
             <LinearLayout

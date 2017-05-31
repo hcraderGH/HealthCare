@@ -26,4 +26,6 @@
     <string name="dialog_cancel">取消</string>
 
     <string name="title_share">分享</string>
+    <string name="title_setting">设置</string>
+    <string name="title_about_software">关于软件</string>
 </resources>

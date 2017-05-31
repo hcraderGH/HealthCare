@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:orientation="vertical"
-              android:clipToPadding="true"
-              android:fitsSystemWindows="true"
               android:layout_width="match_parent"
               android:layout_height="match_parent">
+
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar"
@@ -28,35 +27,10 @@
             android:layout_centerInParent="true"
             android:layout_gravity="center"
             android:gravity="center"
-            android:text="@string/title_share"
+            android:text="@string/title_about_software"
             android:textColor="#FFFFFF"
             android:textSize="20sp"/>
 
     </android.support.v7.widget.Toolbar>
-
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ImageView
-            android:id="@+id/iv_qr_code"
-            android:longClickable="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:background="@mipmap/ic_qr_code"/>
-
-        <TextView
-            android:text="扫一扫二维码即可下载APP"
-            android:layout_marginTop="10dp"
-            android:textSize="14sp"
-            android:layout_centerHorizontal="true"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/iv_qr_code"/>
-
-    </RelativeLayout>
-
-
 
 </LinearLayout>

@@ -138,6 +138,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 	private void initViews() {
 
+		rbHome= (RadioButton) findViewById(R.id.rb_home);
+		rbRecord= (RadioButton) findViewById(R.id.rb_record);
+		mTvTitle= (TextView) findViewById(R.id.tv_toolbar_title);
+
+		rgTab= (RadioGroup) findViewById(R.id.rg_tab);
+
+		mToolbar= (Toolbar) findViewById(R.id.toolbar);
+
+
 		mDrawer = (DrawerLayout) findViewById(R.id.draw_layout);
 		//设置左上角导航抽屉图标
 		mDrawerToggle=new ActionBarDrawerToggle(this, mDrawer,mToolbar
@@ -165,15 +174,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		};
 		mDrawer.setDrawerListener(mDrawerToggle);
 
-
-		rbHome= (RadioButton) findViewById(R.id.rb_home);
-		rbRecord= (RadioButton) findViewById(R.id.rb_record);
-		mTvTitle= (TextView) findViewById(R.id.tv_toolbar_title);
-
-		rgTab= (RadioGroup) findViewById(R.id.rg_tab);
-
-		mToolbar= (Toolbar) findViewById(R.id.toolbar);
-
 		mBmbController = (BoomMenuButton) findViewById(R.id.boom);
 		mBmbController.setButtonBottomMargin(400);
 		mBmbController.setDotRadius(0);//BoomMenuButton上的点大小设置为0，则表示不显示
@@ -189,7 +189,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 		ReinitializeBoom();
 
-
 		mrlExit= (MaterialRippleLayout)mDrawer.findViewById(R.id.mrl_exit);
 		mrlHome= (MaterialRippleLayout)mDrawer.findViewById(R.id.mrl_home);
 		mrlShare= (MaterialRippleLayout) mDrawer.findViewById(R.id.mrl_share);
@@ -199,7 +198,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	private void setListeners() {
 		rbHome.setOnClickListener(this);
 		rbRecord.setOnClickListener(this);
-
 
 		mrlExit.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -227,7 +225,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		mrlSetting.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-
+				startActivity(new Intent(MainActivity.this,SettingActivity.class));
 			}
 		});
 		mrlShare.setOnClickListener(new View.OnClickListener() {

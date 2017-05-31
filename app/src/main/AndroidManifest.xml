@@ -52,7 +52,13 @@
         <service android:name=".service.BluetoothLeService"
             android:enabled="true"/>
         <activity android:name=".ui.RunningActivity"/>
+        <activity android:name=".ui.SettingActivity"/>
+        <activity android:name=".ui.AboutSoftwareActivity"/>
         <service android:name=".service.BatteryService"/>
+
+
+
+
         <activity
             android:name="com.tencent.bugly.beta.ui.BetaActivity"
             android:configChanges="keyboardHidden|orientation|screenSize|locale"

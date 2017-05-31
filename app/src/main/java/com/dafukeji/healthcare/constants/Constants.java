@@ -24,7 +24,7 @@ public class Constants {
 	public static final int CURE_CAUTERIZE=3;
 	public static final int CURE_NEEDLE=4;
 	public static final int CURE_MEDICINE=5;
-	public static final int DEVICE_POWER_OFF=0;
+	public static final int DEVICE_POWER_OFF=2;
 
 	public static final String SP_CURE_CAUTERIZE="sp_cure_cauterize";
 	public static final String SP_CURE_NEEDLE="sp_cure_needle";

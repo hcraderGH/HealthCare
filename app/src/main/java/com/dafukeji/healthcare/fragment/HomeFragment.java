@@ -19,6 +19,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -34,6 +35,7 @@ import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.ConvertUtils;
+import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.viewpagercards.CardItem;
 import com.dafukeji.healthcare.viewpagercards.CardPagerAdapter;
 import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
@@ -73,6 +75,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	private ShadowTransformer mCardShadowTransformer;
 
 	private MaterialDialog mMaterialDialog;
+	private static String TAG="测试HomeFragment";
 	@Override
 	public void onAttach(Context context) {
 		//注册接受蓝牙信息的广播
@@ -106,7 +109,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		// selectively disable BLE-related features.
 		if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
 			Toast.makeText(getActivity(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
-			Logger.i("onCreateView: "+R.string.ble_not_supported);
+			LogUtil.i(TAG,"onCreateView: "+R.string.ble_not_supported);
 			getActivity().finish();
 		}
 
@@ -126,7 +129,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			mBluetoothLEAdapter.enable();  //打开蓝牙，需要BLUETOOTH_ADMIN权限
 		}
 		Intent gattServiceIntent = new Intent(getActivity(), BluetoothLeService.class);
-		Logger.d("Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
+		LogUtil.i(TAG,"Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		return mView;
 	}
@@ -194,8 +197,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 					setDisplayStatus(!mConnected);
 					mConnected=false;//在此处强制设为false
 
-//					int type=Constants.DEVICE_POWER_OFF;
-					int type=2;
+					int type=Constants.DEVICE_POWER_OFF;
 					int temp=0;
 					int intensity=0;
 					int time=0;
@@ -203,6 +205,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 					int crc=0xFA+0xFB+type+temp+intensity+time+frequency;
 					byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) type, (byte) temp
 							, (byte) intensity, (byte) time, (byte) frequency, (byte)crc, (byte) 0xFE};
+					Log.i(TAG, "onClick: off"+Arrays.toString(setting));
 					mBluetoothLeService.WriteValue(setting);
 				}
 				break;
@@ -223,6 +226,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			tvDeviceStatus.setTextColor(getResources().getColor(R.color.connect_status));
 			tvTempStatus.setTextColor(getResources().getColor(R.color.connect_status));
 			tvCurrentTemp.setTextColor(Color.parseColor("#FFFFFF"));
+
+			Toasty.success(getActivity(),"连接设备成功",Toast.LENGTH_SHORT).show();
 
 		}else{
 			ivDeviceStatusLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
@@ -261,9 +266,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
-				Logger.i("Only gatt, just wait");
+				LogUtil.i(TAG,"Only gatt, just wait");
 //				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
-				Toasty.success(getActivity(),"连接设备成功",Toast.LENGTH_SHORT).show();
 
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				if (mConnected){
@@ -287,9 +291,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 						setDisplayStatus(mConnected);
 					}
 				});
-				Logger.i("In what we need");
+				LogUtil.i(TAG,"In what we need");
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
-				Logger.i("DATA");
+				LogUtil.i(TAG,"DATA");
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
 					//TODO 接收数据处理
@@ -364,11 +368,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		public void onServiceConnected(ComponentName componentName, IBinder service) {
 			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
 			if (!mBluetoothLeService.initialize()) {
-				Logger.i("Unable to initialize Bluetooth");
+				LogUtil.i(TAG,"Unable to initialize Bluetooth");
 				getActivity().finish();
 			}
 
-			Logger.i("mBluetoothLeService is okay");
+			LogUtil.i(TAG,"mBluetoothLeService is okay");
 			// Automatically connects to the device upon successful start-up initialization.
 			//mBluetoothLeService.connect(mDeviceAddress);
 		}
@@ -401,7 +405,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		if (mBluetoothLEAdapter != null) {
 			mBluetoothLEAdapter.disable();
 		}
-		Logger.d("We are in destroy");
+		LogUtil.i(TAG,"We are in destroy");
 	}
 
 	public void disConnect(){
