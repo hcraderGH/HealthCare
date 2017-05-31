@@ -93,7 +93,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的信息
 			mDeviceAddress= intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
-			Logger.i("HomeFragment", "onActivityResult:mDeviceAddress "+mDeviceAddress);
+			LogUtil.i("HomeFragment", "onActivityResult:mDeviceAddress "+mDeviceAddress);
 			mBluetoothLeService.connect(mDeviceAddress);
 		}
 	}
@@ -297,7 +297,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
 					//TODO 接收数据处理
-					Logger.i("onReceive: "+ Arrays.toString(data));
+					LogUtil.i(TAG,"onReceive: "+ Arrays.toString(data));
 //					mCurrentTemp=(int) data[3];//TODO int和byte之间的转换
 //					mRemindEle=(int)data[8];
 

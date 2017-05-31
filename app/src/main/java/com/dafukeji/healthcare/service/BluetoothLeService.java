@@ -84,21 +84,17 @@ public class BluetoothLeService extends Service {
         mBluetoothGatt.writeCharacteristic(write);
     }
 
-    public void findService(List<BluetoothGattService> gattServices)
-    {
+    public void findService(List<BluetoothGattService> gattServices) {
         Log.i(TAG, "Count is:" + gattServices.size());
-        for (BluetoothGattService gattService : gattServices)
-        {
+        for (BluetoothGattService gattService : gattServices) {
             Log.i(TAG, gattService.getUuid().toString());
             Log.i(TAG, UUID_SERVICE.toString());
-            if(gattService.getUuid().toString().equalsIgnoreCase(UUID_SERVICE.toString()))
-            {
+            if(gattService.getUuid().toString().equalsIgnoreCase(UUID_SERVICE.toString())) {
                 List<BluetoothGattCharacteristic> gattCharacteristics =
                         gattService.getCharacteristics();
                 Log.i(TAG, "Count is:" + gattCharacteristics.size());
                 for (BluetoothGattCharacteristic gattCharacteristic :
-                        gattCharacteristics)
-                {
+                        gattCharacteristics) {
                     if(gattCharacteristic.getUuid().toString().equalsIgnoreCase(UUID_NOTIFY.toString())) {
                         Log.i(TAG, gattCharacteristic.getUuid().toString());
                         Log.i(TAG, UUID_NOTIFY.toString());

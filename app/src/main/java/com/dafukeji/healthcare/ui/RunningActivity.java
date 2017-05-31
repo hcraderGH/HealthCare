@@ -33,6 +33,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.ColorArcProgressBar;
 import com.dafukeji.healthcare.util.ConvertUtils;
+import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.TimeUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
@@ -106,6 +107,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private List<PointValue> mPointValueList = new ArrayList<>();
 	private List<Line> mLinesList = new ArrayList<>();
 	private List<AxisValue> mAxisValues = new ArrayList<>();
+	private static String TAG="测试RunningActivity";
 
 	private DaoMaster mMaster;
 	private DaoSession mSession;
@@ -335,7 +337,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
-				Logger.i( "Only gatt, just wait");
+				LogUtil.i(TAG,"Only gatt, just wait");
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				mConnected = false;
 				//TODO 断开连接处理
@@ -343,14 +345,14 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 				mConnected = true;
-				Logger.i( "In what we need");
+				LogUtil.i(TAG, "In what we need");
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
-				Logger.i( "DATA");
+				LogUtil.i(TAG, "DATA");
 				mData = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (mData != null) {
 					//TODO 接收数据处理
 
-					Logger.e( "RunningActivity onReceive: mData" + Arrays.toString(mData));//TODO 将接受到的数据显示在图表中
+					LogUtil.i(TAG,"RunningActivity onReceive: mData" + Arrays.toString(mData));//TODO 将接受到的数据显示在图表中
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					if (!(mData[0] + mData[1] + mData[2] + mData[3] + mData[4] + mData[5] + mData[6] + mData[7]== mData[8])) {
@@ -566,7 +568,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 //			mBluetoothLEAdapter.disable();
 //		}
 
-		Logger.d( "We are in destroy");
+		LogUtil.i(TAG,"We are in destroy");
 	}
 
 	@Override

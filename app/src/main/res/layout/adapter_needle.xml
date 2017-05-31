@@ -25,87 +25,48 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/subtitle"
-                    android:text="频率："/>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
-
-                <Button
-                    android:background="@drawable/selector_button_background"
-                    android:id="@+id/btn_needle_frequency"
-                    style="@style/subtitle_select_item"
-                    android:text="一档"/>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/subtitle"
-                    android:text="强度："/>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
-
-                <Button
-                    android:background="@drawable/selector_button_background"
-                    android:id="@+id/btn_needle_grade"
-                    style="@style/subtitle_select_item"
-                    android:text="一档"/>
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/subtitle"
-                    android:text="持续时间："/>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
-
-                <Button
-                    android:id="@+id/btn_needle_time"
-                    style="@style/subtitle_select_item"
-                    android:background="@drawable/selector_button_background"
-                    android:text="@string/default_time"/>
-            </LinearLayout>
-
-            <RelativeLayout
+            <RadioGroup
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:layout_marginTop="20dp">
 
-                <Button
-                    android:layout_alignParentBottom="true"
-                    android:id="@+id/btn_needle_start"
-                    style="@style/ButtonStyle"
-                    android:layout_width="match_parent"
+                <android.support.v7.widget.AppCompatRadioButton
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="开始"/>
-            </RelativeLayout>
+                    android:textColor="#cdcdcd"
+                    android:checked="false"
+                    android:paddingLeft="20dp"
+                    android:textSize="@dimen/subtitle_text_size"
+                    android:text="左旋"/>
+
+                <android.support.v7.widget.AppCompatRadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#cdcdcd"
+                    android:checked="false"
+                    android:paddingLeft="20dp"
+                    android:textSize="@dimen/subtitle_text_size"
+                    android:text="右旋"/>
+
+                <android.support.v7.widget.AppCompatRadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#cdcdcd"
+                    android:checked="false"
+                    android:paddingLeft="20dp"
+                    android:textSize="@dimen/subtitle_text_size"
+                    android:text="提    "/>
+
+                <android.support.v7.widget.AppCompatRadioButton
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:textSize="@dimen/subtitle_text_size"
+                    android:paddingLeft="20dp"
+                    android:text="按    "/>
+            </RadioGroup>
 
         </LinearLayout>
 

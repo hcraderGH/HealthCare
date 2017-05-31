@@ -2,7 +2,6 @@ package com.dafukeji.healthcare.viewpagercards;
 
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.PagerAdapter;
 import android.support.v7.app.AlertDialog;
@@ -12,23 +11,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.codetroopers.betterpickers.radialtimepicker.RadialTimePickerDialogFragment;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
-import com.dafukeji.healthcare.fragment.HomeFragment;
-import com.dafukeji.healthcare.ui.RunningActivity;
-import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.SPUtils;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import es.dmoral.toasty.Toasty;
 
 public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.OnClickListener {
 
@@ -96,12 +88,12 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 		switch (position) {
 			case 0:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_cauterize, container, false);
-				btnCauterizeGrade = (Button) mView.findViewById(R.id.btn_cauterize_grade);
-				btnCauterizeTime = (Button) mView.findViewById(R.id.btn_cauterize_time);
-				btnCauterizeStart = (Button) mView.findViewById(R.id.btn_cauterize_start);
-				btnCauterizeGrade.setOnClickListener(this);
-				btnCauterizeTime.setOnClickListener(this);
-				btnCauterizeStart.setOnClickListener(this);
+//				btnCauterizeGrade = (Button) mView.findViewById(R.id.btn_cauterize_grade);
+//				btnCauterizeTime = (Button) mView.findViewById(R.id.btn_cauterize_time);
+//				btnCauterizeStart = (Button) mView.findViewById(R.id.btn_cauterize_start);
+//				btnCauterizeGrade.setOnClickListener(this);
+//				btnCauterizeTime.setOnClickListener(this);
+//				btnCauterizeStart.setOnClickListener(this);
 
 				if (isSaved(type,Constants.SP_CURE_INTENSITY)){
 					btnCauterizeGrade.setText(mCauterizeGrades[getSP(type,Constants.SP_CURE_INTENSITY)]);
@@ -117,7 +109,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				btnNeedleGrade = (Button) mView.findViewById(R.id.btn_needle_grade);
 				btnNeedleTime = (Button) mView.findViewById(R.id.btn_needle_time);
 				btnNeedleStart = (Button) mView.findViewById(R.id.btn_needle_start);
-				btnNeedleFrequency= (Button) mView.findViewById(R.id.btn_needle_frequency);
+				btnNeedleFrequency= (Button) mView.findViewById(R.id.btn_knead_frequency);
 				btnNeedleFrequency.setOnClickListener(this);
 				btnNeedleGrade.setOnClickListener(this);
 				btnNeedleTime.setOnClickListener(this);
@@ -134,6 +126,9 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				}
 				break;
 			case 2:
+
+				break;
+			case 3:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_medicine, container, false);
 				btnMedicalGrade = (Button) mView.findViewById(R.id.btn_medical_grade);
 				btnMedicalTime = (Button) mView.findViewById(R.id.btn_medical_time);
@@ -187,7 +182,7 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 						btnNeedleGrade, "请选择针的强度",Constants.CURE_NEEDLE,Constants.SP_CURE_INTENSITY);
 				break;
 
-			case R.id.btn_needle_frequency:
+			case R.id.btn_knead_frequency:
 				getGrade(mFrequency,
 						btnNeedleFrequency, "请选择针的频率",Constants.CURE_NEEDLE,Constants.SP_CURE_FREQUENCY);
 				break;
@@ -205,93 +200,93 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 			case R.id.btn_medical_time:
 				getSustainTime(btnMedicalTime,Constants.CURE_MEDICINE);
 				break;
-			case R.id.btn_cauterize_start:
-
-				if (!HomeFragment.getBlueToothStatus()) {
-//					ToastUtil.showToast(mContext, "请连接设备", 1000);
-					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
-					return;
-				}
-
-				if (btnCauterizeTime.getText().toString().equals("0分钟")) {
-					ToastUtil.showToast(mContext, "请设定持续时间", 1000);
-					return;
-				} else {
-					//TODO　目前只是发档位并不是发真实的频率、温度值等
-					byte[] settings;
-					int type=Constants.CURE_CAUTERIZE;
-					int temp=getSP(type,Constants.SP_CURE_INTENSITY);
-					int intensity=0;
-					int time=getSP(type,Constants.SP_CURE_TIME);
-					int frequency=0;
-					settings=setSettingData(type,temp,intensity,time,frequency);
-					LogUtil.i(TAG,"onClick: setting btn_cauterize_start"+ Arrays.toString(settings));
-					HomeFragment.getBluetoothLeService().WriteValue(settings);
-
-					Intent intent = new Intent(mContext, RunningActivity.class);
-					LogUtil.i(TAG,"originalTime btn_cauterize_start" + getSP(type,Constants.SP_CURE_TIME));
-					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_CAUTERIZE);
-					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));
-					mContext.startActivity(intent);
-				}
-
-				break;
-			case R.id.btn_needle_start:
-				if (!HomeFragment.getBlueToothStatus()) {
-//					ToastUtil.showToast(mContext, "请连接设备", 1000);
-					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
-					return;
-				}
-
-				if (btnNeedleTime.getText().toString().equals("0分钟")) {
-					ToastUtil.showToast(mContext, "请设定持续时间", 1000);
-					return;
-				} else {
-					byte[] settings;
-					int type=Constants.CURE_NEEDLE;
-					int temp=0;
-					int intensity=getSP(type,Constants.SP_CURE_INTENSITY);
-					int time=getSP(type,Constants.SP_CURE_TIME);
-					int frequency=getSP(type,Constants.SP_CURE_FREQUENCY);
-					settings=setSettingData(type,temp,intensity,time,frequency);
-					LogUtil.i(TAG,"onClick: setting btn_needle_start"+ Arrays.toString(settings));
-
-					HomeFragment.getBluetoothLeService().WriteValue(settings);
-					Intent intent = new Intent(mContext, RunningActivity.class);
-					LogUtil.i(TAG,"onClick: originalTime btn_needle_start" + getSP(type,Constants.SP_CURE_TIME));
-					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_NEEDLE);
-					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));
-					mContext.startActivity(intent);
-				}
-				break;
-			case R.id.btn_medical_start:
-				if (!HomeFragment.getBlueToothStatus()) {
-//					ToastUtil.showToast(mContext, "请连接设备", 1000);
-					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
-					return;
-				}
-
-				if (btnMedicalTime.getText().toString().equals("0分钟")) {
-					ToastUtil.showToast(mContext, "请设定持续时间", 1000);
-					return;
-				} else {
-					byte[] settings;
-					int type=Constants.CURE_MEDICINE;
-					int temp=getSP(type,Constants.SP_CURE_GRADE);
-					int intensity=0;
-					int time=getSP(type,Constants.SP_CURE_TIME);//传递的时间单位为分钟
-					int frequency=0;
-					settings=setSettingData(type,temp,intensity,time,frequency);
-					LogUtil.i(TAG,"onClick: setting btn_medical_start"+ Arrays.toString(settings));
-
-					HomeFragment.getBluetoothLeService().WriteValue(settings);
-					Intent intent = new Intent(mContext, RunningActivity.class);
-					LogUtil.i(TAG,"onClick: originalTime btn_medical_start" + getSP(type,Constants.SP_CURE_TIME));
-					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_MEDICINE);
-					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));//传递的时间单位为分钟
-					mContext.startActivity(intent);
-				}
-				break;
+//			case R.id.btn_cauterize_start:
+//
+//				if (!HomeFragment.getBlueToothStatus()) {
+////					ToastUtil.showToast(mContext, "请连接设备", 1000);
+//					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
+//					return;
+//				}
+//
+//				if (btnCauterizeTime.getText().toString().equals("0分钟")) {
+//					ToastUtil.showToast(mContext, "请设定持续时间", 1000);
+//					return;
+//				} else {
+//					//TODO　目前只是发档位并不是发真实的频率、温度值等
+//					byte[] settings;
+//					int type=Constants.CURE_CAUTERIZE;
+//					int temp=getSP(type,Constants.SP_CURE_INTENSITY);
+//					int intensity=0;
+//					int time=getSP(type,Constants.SP_CURE_TIME);
+//					int frequency=0;
+//					settings=setSettingData(type,temp,intensity,time,frequency);
+//					LogUtil.i(TAG,"onClick: setting btn_cauterize_start"+ Arrays.toString(settings));
+//					HomeFragment.getBluetoothLeService().WriteValue(settings);
+//
+//					Intent intent = new Intent(mContext, RunningActivity.class);
+//					LogUtil.i(TAG,"originalTime btn_cauterize_start" + getSP(type,Constants.SP_CURE_TIME));
+//					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_CAUTERIZE);
+//					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));
+//					mContext.startActivity(intent);
+//				}
+//
+//				break;
+//			case R.id.btn_needle_start:
+//				if (!HomeFragment.getBlueToothStatus()) {
+////					ToastUtil.showToast(mContext, "请连接设备", 1000);
+//					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
+//					return;
+//				}
+//
+//				if (btnNeedleTime.getText().toString().equals("0分钟")) {
+//					ToastUtil.showToast(mContext, "请设定持续时间", 1000);
+//					return;
+//				} else {
+//					byte[] settings;
+//					int type=Constants.CURE_NEEDLE;
+//					int temp=0;
+//					int intensity=getSP(type,Constants.SP_CURE_INTENSITY);
+//					int time=getSP(type,Constants.SP_CURE_TIME);
+//					int frequency=getSP(type,Constants.SP_CURE_FREQUENCY);
+//					settings=setSettingData(type,temp,intensity,time,frequency);
+//					LogUtil.i(TAG,"onClick: setting btn_needle_start"+ Arrays.toString(settings));
+//
+//					HomeFragment.getBluetoothLeService().WriteValue(settings);
+//					Intent intent = new Intent(mContext, RunningActivity.class);
+//					LogUtil.i(TAG,"onClick: originalTime btn_needle_start" + getSP(type,Constants.SP_CURE_TIME));
+//					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_NEEDLE);
+//					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));
+//					mContext.startActivity(intent);
+//				}
+//				break;
+//			case R.id.btn_medical_start:
+//				if (!HomeFragment.getBlueToothStatus()) {
+////					ToastUtil.showToast(mContext, "请连接设备", 1000);
+//					Toasty.warning(mContext,"请连接设备", Toast.LENGTH_SHORT).show();
+//					return;
+//				}
+//
+//				if (btnMedicalTime.getText().toString().equals("0分钟")) {
+//					ToastUtil.showToast(mContext, "请设定持续时间", 1000);
+//					return;
+//				} else {
+//					byte[] settings;
+//					int type=Constants.CURE_MEDICINE;
+//					int temp=getSP(type,Constants.SP_CURE_GRADE);
+//					int intensity=0;
+//					int time=getSP(type,Constants.SP_CURE_TIME);//传递的时间单位为分钟
+//					int frequency=0;
+//					settings=setSettingData(type,temp,intensity,time,frequency);
+//					LogUtil.i(TAG,"onClick: setting btn_medical_start"+ Arrays.toString(settings));
+//
+//					HomeFragment.getBluetoothLeService().WriteValue(settings);
+//					Intent intent = new Intent(mContext, RunningActivity.class);
+//					LogUtil.i(TAG,"onClick: originalTime btn_medical_start" + getSP(type,Constants.SP_CURE_TIME));
+//					intent.putExtra(Constants.CURE_TYPE, Constants.CURE_MEDICINE);
+//					intent.putExtra(Constants.ORIGINAL_TIME, getSP(type,Constants.SP_CURE_TIME));//传递的时间单位为分钟
+//					mContext.startActivity(intent);
+//				}
+//				break;
 		}
 	}
 

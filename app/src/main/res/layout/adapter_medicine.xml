@@ -19,11 +19,11 @@
             android:padding="24dp">
 
             <TextView
-                android:layout_gravity="center_horizontal"
                 android:id="@+id/titleTextView"
                 style="@style/TextAppearance.AppCompat.Title"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"/>
 
 
             <LinearLayout
@@ -43,9 +43,9 @@
 
 
                 <Button
-                    android:background="@drawable/selector_button_background"
                     android:id="@+id/btn_medical_grade"
                     style="@style/subtitle_select_item"
+                    android:background="@drawable/selector_button_background"
                     android:text="一档"/>
 
 
@@ -60,6 +60,7 @@
                 <TextView
                     style="@style/subtitle"
                     android:text="持续时间："/>
+
                 <View
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -72,20 +73,6 @@
                     android:text="@string/default_time"/>
             </LinearLayout>
 
-
-            <RelativeLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <Button
-                    android:layout_alignParentBottom="true"
-                    android:id="@+id/btn_medical_start"
-                    style="@style/ButtonStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="开始"/>
-            </RelativeLayout>
-
         </LinearLayout>
 
         <ImageView
@@ -95,7 +82,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
             android:layout_marginTop="-5dp"
-            android:src="@drawable/ic_bookmark_24dp" />
+            android:src="@drawable/ic_bookmark_24dp"/>
 
     </FrameLayout>
 
