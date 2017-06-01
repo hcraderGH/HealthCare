@@ -27,15 +27,19 @@ import com.orhanobut.logger.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.OnClickListener,AdapterView.OnItemSelectedListener {
+public class CardPagerAdapter extends PagerAdapter implements CardAdapter,AdapterView.OnItemSelectedListener {
 
-	private Button btnCauterizeGrade, btnKneadGrade, btnMedicalGrade;
-	private Button btnCauterizeTime, btnNeedleTime, btnMedicalTime;
-//	private Button btnCauterizeStart, btnNeedleStart, btnMedicalStart;
-	private Button btnKneadFrequency;
-	private Button btnNeedleType;
+//	private Button btnCauterizeGrade, btnKneadGrade, btnMedicalGrade;
+//	private Button btnCauterizeTime, btnNeedleTime, btnMedicalTime;
+////	private Button btnCauterizeStart, btnNeedleStart, btnMedicalStart;
+//	private Button btnKneadFrequency;
+//	private Button btnNeedleType;
 
-	private Spinner spnCauterizeGrade;
+
+	private Spinner spnCauterizeGrade,spnKneadGrade,spnMedicineGrade;
+	private Spinner spnCauterizeTimeGrade,spnMedicineimeGrade;
+	private Spinner spnKneadFrequency;
+	private Spinner spnNeedleType;
 
 
 	private int[] sustainTime = new int[2];
@@ -52,10 +56,13 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 	private static String TAG="测试CardPagerAdapter";
 
 	private String[] mCauterizeGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档"};
-	private String[] mKneadGrade=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
-	private String[] mKneadFrequency=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
+	private String[] mKneadGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
+	private String[] mKneadFrequencys=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
 	private String[] mMedicineGrade =new String[]{"一档", "二档", "三档", "四档", "五档"};
 
+	private String[] mNeedleTypes=new String[]{"左旋","右旋","提","拉"};
+	private String[] mCauterizeTimeGrades=new String[]{"一档", "二档", "三档"};
+	private String[] mMedicineTimeGrades=new String[]{"一档", "二档", "三档", "四档", "五档"};
 	public CardPagerAdapter(Context context, FragmentManager fragmentManager) {
 		this.mFragmentManager = fragmentManager;
 		this.mContext = context;
@@ -97,19 +104,9 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 			case 0:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_cauterize, container, false);
 				spnCauterizeGrade= (Spinner) mView.findViewById(R.id.spn_cauterize_grade);
-				ArrayAdapter<String> adapter=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mCauterizeGrades);
-				spnCauterizeGrade.setAdapter(adapter);
-				spnCauterizeGrade.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-					@Override
-					public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-						ToastUtil.showToast(mContext,mCauterizeGrades[position],Toast.LENGTH_LONG);
-					}
-
-					@Override
-					public void onNothingSelected(AdapterView<?> parent) {
-
-					}
-				});
+				ArrayAdapter<String> adapter0=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mCauterizeGrades);
+				spnCauterizeGrade.setAdapter(adapter0);
+				spnCauterizeGrade.setOnItemSelectedListener(this);
 //				btnCauterizeGrade = (Button) mView.findViewById(R.id.btn_cauterize_grade);
 //				btnCauterizeTime = (Button) mView.findViewById(R.id.btn_cauterize_time);
 //				btnCauterizeStart = (Button) mView.findViewById(R.id.btn_cauterize_start);
@@ -128,6 +125,10 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 				break;
 			case 1:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_needle, container, false);
+				spnNeedleType= (Spinner) mView.findViewById(R.id.spn_needle_type);
+				ArrayAdapter<String> adapter1=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleTypes);
+				spnNeedleType.setAdapter(adapter1);
+				spnNeedleType.setOnItemSelectedListener(this);
 //				btnKneadGrade = (Button) mView.findViewById(R.id.btn_knead_grade);
 //				btnNeedleTime = (Button) mView.findViewById(R.id.btn_knead_time);
 //				btnNeedleStart = (Button) mView.findViewById(R.id.btn_needle_start);
@@ -148,10 +149,33 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 //				}
 				break;
 			case 2:
+				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_knead, container, false);
+				spnKneadGrade= (Spinner) mView.findViewById(R.id.spn_knead_grade);
+				spnKneadFrequency= (Spinner) mView.findViewById(R.id.spn_knead_frequency);
+
+				ArrayAdapter<String> adapter2=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mKneadGrades);
+				spnKneadGrade.setAdapter(adapter2);
+				spnKneadGrade.setOnItemSelectedListener(this);
+
+				ArrayAdapter<String> adapter21=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mKneadFrequencys);
+				spnKneadFrequency.setAdapter(adapter21);
+				spnKneadFrequency.setOnItemSelectedListener(this);
 
 				break;
 			case 3:
-//				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_medicine, container, false);
+				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_medicine, container, false);
+
+				spnMedicineGrade= (Spinner) mView.findViewById(R.id.spn_medical_grade);
+				spnMedicineimeGrade= (Spinner) mView.findViewById(R.id.spn_medical_time_grade);
+
+				ArrayAdapter<String> adapter3=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mMedicineGrade);
+				spnMedicineGrade.setAdapter(adapter3);
+				spnMedicineGrade.setOnItemSelectedListener(this);
+
+				ArrayAdapter<String> adapter31=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mMedicineTimeGrades);
+				spnMedicineimeGrade.setAdapter(adapter31);
+				spnMedicineimeGrade.setOnItemSelectedListener(this);
+
 //				btnMedicalGrade = (Button) mView.findViewById(R.id.btn_medical_grade);
 //				btnMedicalTime = (Button) mView.findViewById(R.id.btn_medical_time);
 //				btnMedicalStart = (Button) mView.findViewById(R.id.btn_medical_start);
@@ -192,9 +216,9 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 		titleTextView.setText(item.getTitle());
 	}
 
-	@Override
-	public void onClick(View v) {
-		switch (v.getId()) {
+//	@Override
+//	public void onClick(View v) {
+//		switch (v.getId()) {
 //			case R.id.btn_cauterize_grade:
 //				getGrade(mCauterizeGrades,
 //						btnCauterizeGrade, "请选择灸的强度",Constants.CURE_CAUTERIZE,Constants.SP_CURE_INTENSITY);
@@ -309,8 +333,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 //					mContext.startActivity(intent);
 //				}
 //				break;
-		}
-	}
+//		}
+//	}
 
 
 	/**
@@ -427,8 +451,8 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 		return spUtils.getInt(keyName);
 	}
 
-	private int mWhich;
 
+	private int mWhich;
 	@Override
 	public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
 

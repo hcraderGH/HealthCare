@@ -41,11 +41,16 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"/>
 
-                <Button
-                    android:background="@drawable/selector_button_background"
-                    android:id="@+id/btn_knead_frequency"
-                    style="@style/subtitle_select_item"
-                    android:text="一档"/>
+                <android.support.v7.widget.AppCompatSpinner
+                    android:id="@+id/spn_knead_frequency"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <!--<Button-->
+                    <!--android:background="@drawable/selector_button_background"-->
+                    <!--android:id="@+id/btn_knead_frequency"-->
+                    <!--style="@style/subtitle_select_item"-->
+                    <!--android:text="一档"/>-->
 
             </LinearLayout>
 
@@ -64,35 +69,46 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"/>
 
-                <Button
-                    android:background="@drawable/selector_button_background"
-                    android:id="@+id/btn_knead_grade"
-                    style="@style/subtitle_select_item"
-                    android:text="一档"/>
+
+                <android.support.v7.widget.AppCompatSpinner
+                    android:id="@+id/spn_knead_grade"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+                <!--<Button-->
+                    <!--android:background="@drawable/selector_button_background"-->
+                    <!--android:id="@+id/btn_knead_grade"-->
+                    <!--style="@style/subtitle_select_item"-->
+                    <!--android:text="一档"/>-->
 
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:orientation="horizontal">
+            <!--<LinearLayout-->
+                <!--android:layout_width="wrap_content"-->
+                <!--android:layout_height="wrap_content"-->
+                <!--android:layout_marginTop="15dp"-->
+                <!--android:orientation="horizontal">-->
 
-                <TextView
-                    style="@style/subtitle"
-                    android:text="持续时间："/>
+                <!--<TextView-->
+                    <!--style="@style/subtitle"-->
+                    <!--android:text="持续时间："/>-->
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
+                <!--<View-->
+                    <!--android:layout_width="0dp"-->
+                    <!--android:layout_height="match_parent"-->
+                    <!--android:layout_weight="1"/>-->
 
-                <Button
-                    android:id="@+id/btn_knead_time"
-                    style="@style/subtitle_select_item"
-                    android:background="@drawable/selector_button_background"
-                    android:text="@string/default_time"/>
-            </LinearLayout>
+
+                <!--<android.support.v7.widget.AppCompatSpinner-->
+                    <!--android:id="@+id/spn_knead_time_grade"-->
+                    <!--android:layout_width="wrap_content"-->
+                    <!--android:layout_height="wrap_content"/>-->
+
+                <!--&lt;!&ndash;<Button&ndash;&gt;-->
+                    <!--&lt;!&ndash;android:id="@+id/btn_knead_time"&ndash;&gt;-->
+                    <!--&lt;!&ndash;style="@style/subtitle_select_item"&ndash;&gt;-->
+                    <!--&lt;!&ndash;android:background="@drawable/selector_button_background"&ndash;&gt;-->
+                    <!--&lt;!&ndash;android:text="@string/default_time"/>&ndash;&gt;-->
+            <!--</LinearLayout>-->
 
         </LinearLayout>
 

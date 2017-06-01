@@ -43,7 +43,6 @@
 
                 <android.support.v7.widget.AppCompatSpinner
                     android:id="@+id/spn_cauterize_grade"
-                    android:gravity="end"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"/>
 
@@ -70,11 +69,16 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"/>
 
-                <Button
-                    android:id="@+id/btn_cauterize_time"
-                    style="@style/subtitle_select_item"
-                    android:background="@drawable/selector_button_background"
-                    android:text="@string/default_time"/>
+                <android.support.v7.widget.AppCompatSpinner
+                    android:id="@+id/spn_cauterize_time_grade"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <!--<Button-->
+                    <!--android:id="@+id/btn_cauterize_time"-->
+                    <!--style="@style/subtitle_select_item"-->
+                    <!--android:background="@drawable/selector_button_background"-->
+                    <!--android:text="@string/default_time"/>-->
             </LinearLayout>
 
         </LinearLayout>

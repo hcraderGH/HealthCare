@@ -143,13 +143,14 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		mCardAdapter=new CardPagerAdapter(getActivity(),getActivity().getSupportFragmentManager());
 		mCardAdapter.addCardItem(new CardItem(R.string.cauterize));
 		mCardAdapter.addCardItem(new CardItem(R.string.needle));
+		mCardAdapter.addCardItem(new CardItem(R.string.knead));
 		mCardAdapter.addCardItem(new CardItem(R.string.medical));
 
 		mCardShadowTransformer = new ShadowTransformer(mViewPager, mCardAdapter);
 		mCardShadowTransformer.enableScaling(true);
 		mViewPager.setAdapter(mCardAdapter);
 		mViewPager.setPageTransformer(false, mCardShadowTransformer);
-		mViewPager.setOffscreenPageLimit(3);
+		mViewPager.setOffscreenPageLimit(4);
 
 		mWaveLoadingView= (WaveLoadingView) mView.findViewById(R.id.wlv_reminder_electric_quantity);
 

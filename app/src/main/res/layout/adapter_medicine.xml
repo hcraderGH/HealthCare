@@ -29,7 +29,7 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -42,11 +42,10 @@
                     android:layout_weight="1"/>
 
 
-                <Button
-                    android:id="@+id/btn_medical_grade"
-                    style="@style/subtitle_select_item"
-                    android:background="@drawable/selector_button_background"
-                    android:text="一档"/>
+                <android.support.v7.widget.AppCompatSpinner
+                    android:id="@+id/spn_medical_grade"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
 
 
             </LinearLayout>
@@ -54,7 +53,7 @@
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
+                android:layout_marginTop="5dp"
                 android:orientation="horizontal">
 
                 <TextView
@@ -66,11 +65,16 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"/>
 
-                <Button
-                    android:id="@+id/btn_medical_time"
-                    style="@style/subtitle_select_item"
-                    android:background="@drawable/selector_button_background"
-                    android:text="@string/default_time"/>
+                <android.support.v7.widget.AppCompatSpinner
+                    android:id="@+id/spn_medical_time_grade"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"/>
+
+                <!--<Button-->
+                    <!--android:id="@+id/btn_medical_time"-->
+                    <!--style="@style/subtitle_select_item"-->
+                    <!--android:background="@drawable/selector_button_background"-->
+                    <!--android:text="@string/default_time"/>-->
             </LinearLayout>
 
         </LinearLayout>

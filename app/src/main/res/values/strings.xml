@@ -2,6 +2,7 @@
     <string name="app_name">太极圭</string>
     <string name="cauterize">灸处方</string>
     <string name="needle">针处方</string>
+    <string name="knead">按摩</string>
     <string name="medical">药处方</string>
     <string name="warm">加热</string>
     <string name="default_time">0分钟</string>
