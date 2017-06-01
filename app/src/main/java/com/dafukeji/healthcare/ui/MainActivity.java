@@ -202,6 +202,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		mrlExit.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				mDrawer.closeDrawers();
 				new MaterialDialog.Builder(MainActivity.this)
 						.title("提示")
 						.content("确定退出本程序吗？")
@@ -225,6 +226,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		mrlSetting.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
+				mDrawer.closeDrawers();
 				startActivity(new Intent(MainActivity.this,SettingActivity.class));
 			}
 		});
