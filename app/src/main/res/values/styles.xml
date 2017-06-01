@@ -59,4 +59,9 @@
         <item name="colorControlActivated">@color/setting_title_color</item>
     </style>
 
+    <style name="SpinnerStyle" parent="Base.Widget.AppCompat.Spinner">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">20dp</item>
+    </style>
+
 </resources>

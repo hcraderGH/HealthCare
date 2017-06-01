@@ -16,12 +16,12 @@
 
     <dimen name="running_cardView_size">100dp</dimen>
 
-    <dimen name="card_padding">60dp</dimen>
+    <dimen name="card_padding">55dp</dimen>
 
     <dimen name="button_width">60dp</dimen>
     <dimen name="button_height">24dp</dimen>
 
-    <dimen name="card_pager_first_margin_top">15dp</dimen>
-    <dimen name="card_pager_item_margin_top">10dp</dimen>
+    <dimen name="card_pager_first_margin_top">12dp</dimen>
+    <dimen name="card_pager_item_margin_top">7dp</dimen>
 
 </resources>

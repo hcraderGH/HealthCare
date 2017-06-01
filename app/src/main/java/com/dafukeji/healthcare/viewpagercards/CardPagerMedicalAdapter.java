@@ -27,7 +27,7 @@ import com.orhanobut.logger.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CardPagerAdapter extends PagerAdapter implements CardAdapter,AdapterView.OnItemSelectedListener {
+public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter,AdapterView.OnItemSelectedListener {
 
 //	private Button btnCauterizeGrade, btnKneadGrade, btnMedicalGrade;
 //	private Button btnCauterizeTime, btnNeedleTime, btnMedicalTime;
@@ -36,10 +36,9 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter,Adapte
 //	private Button btnNeedleType;
 
 
-	private Spinner spnCauterizeGrade,spnKneadGrade,spnMedicineGrade;
-	private Spinner spnCauterizeTimeGrade,spnMedicineimeGrade;
-	private Spinner spnKneadFrequency;
-	private Spinner spnNeedleType;
+	private Spinner spnCauterizeGrade,spnCauterizeTimeGrade,spnMedicineGrade;
+	private Spinner spnNeedleOrientation,spnNeedleType,spnNeedleGrade,spnNeedleFrequency;
+	private Spinner spnMedicineTimeGrade;
 
 
 	private int[] sustainTime = new int[2];
@@ -56,14 +55,16 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter,Adapte
 	private static String TAG="测试CardPagerAdapter";
 
 	private String[] mCauterizeGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档"};
-	private String[] mKneadGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
-	private String[] mKneadFrequencys=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
-	private String[] mMedicineGrade =new String[]{"一档", "二档", "三档", "四档", "五档"};
-
-	private String[] mNeedleTypes=new String[]{"左旋","右旋","提","拉"};
 	private String[] mCauterizeTimeGrades=new String[]{"一档", "二档", "三档"};
-	private String[] mMedicineTimeGrades=new String[]{"一档", "二档", "三档", "四档", "五档"};
-	public CardPagerAdapter(Context context, FragmentManager fragmentManager) {
+
+	private String[] mNeedleOrientations=new String[]{"左旋","右旋"};
+	private String[] mNeedleTypes=new String[]{"提","按"};
+	private String[] mNeedleGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
+	private String[] mNeedleFrequencys=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
+
+	private String[] mMedicineTimeGrades =new String[]{"一档", "二档", "三档", "四档", "五档"};
+
+	public CardPagerMedicalAdapter(Context context, FragmentManager fragmentManager) {
 		this.mFragmentManager = fragmentManager;
 		this.mContext = context;
 		mData = new ArrayList<>();
@@ -107,6 +108,11 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter,Adapte
 				ArrayAdapter<String> adapter0=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mCauterizeGrades);
 				spnCauterizeGrade.setAdapter(adapter0);
 				spnCauterizeGrade.setOnItemSelectedListener(this);
+
+				spnCauterizeTimeGrade= (Spinner) mView.findViewById(R.id.spn_cauterize_time_grade);
+				ArrayAdapter<String> adapter01=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mCauterizeTimeGrades);
+				spnCauterizeTimeGrade.setAdapter(adapter01);
+				spnCauterizeTimeGrade.setOnItemSelectedListener(this);
 //				btnCauterizeGrade = (Button) mView.findViewById(R.id.btn_cauterize_grade);
 //				btnCauterizeTime = (Button) mView.findViewById(R.id.btn_cauterize_time);
 //				btnCauterizeStart = (Button) mView.findViewById(R.id.btn_cauterize_start);
@@ -125,10 +131,28 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter,Adapte
 				break;
 			case 1:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_needle, container, false);
+
+
+				spnNeedleOrientation= (Spinner) mView.findViewById(R.id.spn_needle_orientation);
+				ArrayAdapter<String> adapter1=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleOrientations);
+				spnNeedleOrientation.setAdapter(adapter1);
+				spnNeedleOrientation.setOnItemSelectedListener(this);
+
+
 				spnNeedleType= (Spinner) mView.findViewById(R.id.spn_needle_type);
-				ArrayAdapter<String> adapter1=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleTypes);
-				spnNeedleType.setAdapter(adapter1);
+				ArrayAdapter<String> adapter11=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleTypes);
+				spnNeedleType.setAdapter(adapter11);
 				spnNeedleType.setOnItemSelectedListener(this);
+
+				spnNeedleGrade= (Spinner) mView.findViewById(R.id.spn_needle_grade);
+				ArrayAdapter<String> adapter12=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleGrades);
+				spnNeedleGrade.setAdapter(adapter12);
+				spnNeedleGrade.setOnItemSelectedListener(this);
+
+				spnNeedleFrequency= (Spinner) mView.findViewById(R.id.spn_needle_frequency);
+				ArrayAdapter<String> adapter13=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleFrequencys);
+				spnNeedleFrequency.setAdapter(adapter13);
+				spnNeedleFrequency.setOnItemSelectedListener(this);
 //				btnKneadGrade = (Button) mView.findViewById(R.id.btn_knead_grade);
 //				btnNeedleTime = (Button) mView.findViewById(R.id.btn_knead_time);
 //				btnNeedleStart = (Button) mView.findViewById(R.id.btn_needle_start);
@@ -148,33 +172,13 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter,Adapte
 //					btnKneadFrequency.setText(mKneadFrequency[getSP(type,Constants.SP_CURE_FREQUENCY)]);
 //				}
 				break;
+
 			case 2:
-				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_knead, container, false);
-				spnKneadGrade= (Spinner) mView.findViewById(R.id.spn_knead_grade);
-				spnKneadFrequency= (Spinner) mView.findViewById(R.id.spn_knead_frequency);
-
-				ArrayAdapter<String> adapter2=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mKneadGrades);
-				spnKneadGrade.setAdapter(adapter2);
-				spnKneadGrade.setOnItemSelectedListener(this);
-
-				ArrayAdapter<String> adapter21=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mKneadFrequencys);
-				spnKneadFrequency.setAdapter(adapter21);
-				spnKneadFrequency.setOnItemSelectedListener(this);
-
-				break;
-			case 3:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_medicine, container, false);
-
-				spnMedicineGrade= (Spinner) mView.findViewById(R.id.spn_medical_grade);
-				spnMedicineimeGrade= (Spinner) mView.findViewById(R.id.spn_medical_time_grade);
-
-				ArrayAdapter<String> adapter3=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mMedicineGrade);
-				spnMedicineGrade.setAdapter(adapter3);
-				spnMedicineGrade.setOnItemSelectedListener(this);
-
-				ArrayAdapter<String> adapter31=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mMedicineTimeGrades);
-				spnMedicineimeGrade.setAdapter(adapter31);
-				spnMedicineimeGrade.setOnItemSelectedListener(this);
+				spnMedicineTimeGrade= (Spinner) mView.findViewById(R.id.spn_medical_time_grade);
+				ArrayAdapter<String> adapter3=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mMedicineTimeGrades);
+				spnMedicineTimeGrade.setAdapter(adapter3);
+				spnMedicineTimeGrade.setOnItemSelectedListener(this);
 
 //				btnMedicalGrade = (Button) mView.findViewById(R.id.btn_medical_grade);
 //				btnMedicalTime = (Button) mView.findViewById(R.id.btn_medical_time);

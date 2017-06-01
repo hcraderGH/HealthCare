@@ -12,77 +12,6 @@
         android:layout_height="wrap_content">
 
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="24dp">
-
-            <TextView
-                android:layout_gravity="center_horizontal"
-                android:id="@+id/titleTextView"
-                style="@style/TextAppearance.AppCompat.Title"
-                android:text="Title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/subtitle"
-                    android:text="强度："/>
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
-
-                <android.support.v7.widget.AppCompatSpinner
-                    android:id="@+id/spn_cauterize_grade"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-                <!--<Button-->
-                    <!--android:background="@drawable/selector_button_background"-->
-                    <!--android:id="@+id/btn_cauterize_grade"-->
-                    <!--style="@style/subtitle_select_item"-->
-                    <!--android:text="一档"/>-->
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="15dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/subtitle"
-                    android:text="持续时间："/>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
-
-                <android.support.v7.widget.AppCompatSpinner
-                    android:id="@+id/spn_cauterize_time_grade"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-                <!--<Button-->
-                    <!--android:id="@+id/btn_cauterize_time"-->
-                    <!--style="@style/subtitle_select_item"-->
-                    <!--android:background="@drawable/selector_button_background"-->
-                    <!--android:text="@string/default_time"/>-->
-            </LinearLayout>
-
-        </LinearLayout>
-
         <ImageView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -91,6 +20,75 @@
             android:layout_marginRight="8dp"
             android:layout_marginTop="-5dp"
             android:src="@drawable/ic_bookmark_24dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="24dp">
+
+            <TextView
+                android:textSize="16sp"
+                android:id="@+id/titleTextView"
+                style="@style/TextAppearance.AppCompat.Title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:text="Title"/>
+
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/subtitle"
+                    android:text="强度："/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"/>
+
+                <android.support.v7.widget.AppCompatSpinner
+                    android:id="@+id/spn_cauterize_grade"
+                    style="@style/SpinnerStyle"/>
+                <!--<Button-->
+                <!--android:background="@drawable/selector_button_background"-->
+                <!--android:id="@+id/btn_cauterize_grade"-->
+                <!--style="@style/subtitle_select_item"-->
+                <!--android:text="一档"/>-->
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/subtitle"
+                    android:text="时间："/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"/>
+
+                <android.support.v7.widget.AppCompatSpinner
+                    android:id="@+id/spn_cauterize_time_grade"
+                    style="@style/SpinnerStyle"/>
+
+                <!--<Button-->
+                <!--android:id="@+id/btn_cauterize_time"-->
+                <!--style="@style/subtitle_select_item"-->
+                <!--android:background="@drawable/selector_button_background"-->
+                <!--android:text="@string/default_time"/>-->
+            </LinearLayout>
+        </LinearLayout>
 
     </FrameLayout>
 

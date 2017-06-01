@@ -20,45 +20,21 @@
 
             <TextView
                 android:id="@+id/titleTextView"
+                android:textSize="16sp"
                 style="@style/TextAppearance.AppCompat.Title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"/>
 
-
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="@dimen/card_pager_first_margin_top"
                 android:orientation="horizontal">
 
                 <TextView
                     style="@style/subtitle"
-                    android:text="加热强度："/>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
-
-
-                <android.support.v7.widget.AppCompatSpinner
-                    android:id="@+id/spn_medical_grade"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="5dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/subtitle"
-                    android:text="持续时间："/>
+                    android:text="时间："/>
 
                 <View
                     android:layout_width="0dp"
@@ -67,8 +43,7 @@
 
                 <android.support.v7.widget.AppCompatSpinner
                     android:id="@+id/spn_medical_time_grade"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    style="@style/SpinnerStyle"/>
 
                 <!--<Button-->
                     <!--android:id="@+id/btn_medical_time"-->

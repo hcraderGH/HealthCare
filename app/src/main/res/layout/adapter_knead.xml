@@ -20,97 +20,152 @@
 
             <TextView
                 android:id="@+id/titleTextView"
-                android:layout_gravity="center_horizontal"
+                android:textSize="16sp"
                 style="@style/TextAppearance.AppCompat.Title"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-
-            <LinearLayout
-                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/subtitle"
-                    android:text="频率："/>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
-
-                <android.support.v7.widget.AppCompatSpinner
-                    android:id="@+id/spn_knead_frequency"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-
-                <!--<Button-->
-                    <!--android:background="@drawable/selector_button_background"-->
-                    <!--android:id="@+id/btn_knead_frequency"-->
-                    <!--style="@style/subtitle_select_item"-->
-                    <!--android:text="一档"/>-->
-
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/subtitle"
-                    android:text="强度："/>
-
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
+                android:layout_gravity="center_horizontal"/>
 
 
-                <android.support.v7.widget.AppCompatSpinner
-                    android:id="@+id/spn_knead_grade"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
-                <!--<Button-->
-                    <!--android:background="@drawable/selector_button_background"-->
-                    <!--android:id="@+id/btn_knead_grade"-->
-                    <!--style="@style/subtitle_select_item"-->
-                    <!--android:text="一档"/>-->
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-            </LinearLayout>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-            <!--<LinearLayout-->
-                <!--android:layout_width="wrap_content"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:layout_marginTop="15dp"-->
-                <!--android:orientation="horizontal">-->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_first_margin_top"
+                        android:orientation="horizontal">
 
-                <!--<TextView-->
-                    <!--style="@style/subtitle"-->
-                    <!--android:text="持续时间："/>-->
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="旋向："/>
 
-                <!--<View-->
-                    <!--android:layout_width="0dp"-->
-                    <!--android:layout_height="match_parent"-->
-                    <!--android:layout_weight="1"/>-->
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
 
 
-                <!--<android.support.v7.widget.AppCompatSpinner-->
-                    <!--android:id="@+id/spn_knead_time_grade"-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"/>-->
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_orientation"
+                            style="@style/SpinnerStyle"/>
 
-                <!--&lt;!&ndash;<Button&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:id="@+id/btn_knead_time"&ndash;&gt;-->
-                    <!--&lt;!&ndash;style="@style/subtitle_select_item"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:background="@drawable/selector_button_background"&ndash;&gt;-->
-                    <!--&lt;!&ndash;android:text="@string/default_time"/>&ndash;&gt;-->
-            <!--</LinearLayout>-->
 
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="类型："/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
+
+
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_type"
+                            style="@style/SpinnerStyle"/>
+
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="强度："/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
+
+
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_grade"
+                            style="@style/SpinnerStyle"/>
+                        <!--<Button-->
+                        <!--android:background="@drawable/selector_button_background"-->
+                        <!--android:id="@+id/btn_knead_grade"-->
+                        <!--style="@style/subtitle_select_item"-->
+                        <!--android:text="一档"/>-->
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="频率："/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
+
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_frequency"
+                            style="@style/SpinnerStyle"/>
+
+                        <!--<Button-->
+                        <!--android:background="@drawable/selector_button_background"-->
+                        <!--android:id="@+id/btn_knead_frequency"-->
+                        <!--style="@style/subtitle_select_item"-->
+                        <!--android:text="一档"/>-->
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="时间："/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
+
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_time_grade"
+                            style="@style/SpinnerStyle"/>
+
+                        <!--<Button-->
+                        <!--android:background="@drawable/selector_button_background"-->
+                        <!--android:id="@+id/btn_knead_frequency"-->
+                        <!--style="@style/subtitle_select_item"-->
+                        <!--android:text="一档"/>-->
+
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
         </LinearLayout>
+
 
         <ImageView
             android:layout_width="wrap_content"
@@ -119,7 +174,7 @@
             android:layout_marginEnd="8dp"
             android:layout_marginRight="8dp"
             android:layout_marginTop="-5dp"
-            android:src="@drawable/ic_bookmark_24dp" />
+            android:src="@drawable/ic_bookmark_24dp"/>
 
     </FrameLayout>
 

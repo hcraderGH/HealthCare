@@ -19,81 +19,124 @@
             android:padding="24dp">
 
             <TextView
+                android:textSize="16sp"
                 android:id="@+id/titleTextView"
                 android:layout_gravity="center_horizontal"
                 style="@style/TextAppearance.AppCompat.Title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:orientation="horizontal">
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-                <TextView
-                    style="@style/subtitle"
-                    android:text="类型："/>
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_first_margin_top"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="旋向："/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
 
 
-                <android.support.v7.widget.AppCompatSpinner
-                    android:id="@+id/spn_needle_type"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_orientation"
+                            style="@style/SpinnerStyle"/>
 
 
-            </LinearLayout>
+                    </LinearLayout>
 
-            <!--<RadioGroup-->
-                <!--android:layout_width="match_parent"-->
-                <!--android:layout_height="wrap_content"-->
-                <!--android:gravity="center_horizontal"-->
-                <!--android:orientation="vertical"-->
-                <!--android:layout_marginTop="20dp">-->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                        android:orientation="horizontal">
 
-                <!--<android.support.v7.widget.AppCompatRadioButton-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:textColor="#cdcdcd"-->
-                    <!--android:checked="false"-->
-                    <!--android:clickable="false"-->
-                    <!--android:paddingLeft="20dp"-->
-                    <!--android:textSize="@dimen/subtitle_text_size"-->
-                    <!--android:text="左旋"/>-->
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="类型："/>
 
-                <!--<android.support.v7.widget.AppCompatRadioButton-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:textColor="#cdcdcd"-->
-                    <!--android:checked="false"-->
-                    <!--android:paddingLeft="20dp"-->
-                    <!--android:clickable="false"-->
-                    <!--android:textSize="@dimen/subtitle_text_size"-->
-                    <!--android:text="右旋"/>-->
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
 
-                <!--<android.support.v7.widget.AppCompatRadioButton-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:textColor="#cdcdcd"-->
-                    <!--android:checked="false"-->
-                    <!--android:clickable="false"-->
-                    <!--android:paddingLeft="20dp"-->
-                    <!--android:textSize="@dimen/subtitle_text_size"-->
-                    <!--android:text="提    "/>-->
 
-                <!--<android.support.v7.widget.AppCompatRadioButton-->
-                    <!--android:layout_width="wrap_content"-->
-                    <!--android:layout_height="wrap_content"-->
-                    <!--android:checked="true"-->
-                    <!--android:textSize="@dimen/subtitle_text_size"-->
-                    <!--android:paddingLeft="20dp"-->
-                    <!--android:text="按    "/>-->
-            <!--</RadioGroup>-->
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_type"
+                            style="@style/SpinnerStyle"/>
+
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="强度："/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
+
+
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_grade"
+                            style="@style/SpinnerStyle"/>
+                        <!--<Button-->
+                        <!--android:background="@drawable/selector_button_background"-->
+                        <!--android:id="@+id/btn_knead_grade"-->
+                        <!--style="@style/subtitle_select_item"-->
+                        <!--android:text="一档"/>-->
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="频率："/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
+
+                        <android.support.v7.widget.AppCompatSpinner
+                            android:id="@+id/spn_needle_frequency"
+                            style="@style/SpinnerStyle"/>
+
+                        <!--<Button-->
+                        <!--android:background="@drawable/selector_button_background"-->
+                        <!--android:id="@+id/btn_knead_frequency"-->
+                        <!--style="@style/subtitle_select_item"-->
+                        <!--android:text="一档"/>-->
+
+                    </LinearLayout>
+                </LinearLayout>
+            </ScrollView>
+
 
         </LinearLayout>
 

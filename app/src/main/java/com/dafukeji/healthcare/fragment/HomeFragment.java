@@ -13,22 +13,21 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
-import android.support.v4.view.ViewPager;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
@@ -36,9 +35,6 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
-import com.dafukeji.healthcare.viewpagercards.CardItem;
-import com.dafukeji.healthcare.viewpagercards.CardPagerAdapter;
-import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
 import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
@@ -56,6 +52,13 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	private int mRemindEle;
 	private int mCurrentTemp;
 
+
+	private MedicalFragment mMedicalFragment;
+	private PhysicalFragment mPhysicalFragment;
+	private FragmentManager mManager;
+	private RadioButton rbMedical;
+	private RadioButton rbPhysical;
+
 	private BluetoothAdapter mBluetoothLEAdapter;
 	private String mDeviceName;
 	private String mDeviceAddress;
@@ -69,10 +72,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	private BlueToothBroadCast mBlueToothBroadCast;
 
 //	private boolean beginRemindBat =false;//当连接设备成功时，即提醒用户电量
-
-	private ViewPager mViewPager;
-	private CardPagerAdapter mCardAdapter;
-	private ShadowTransformer mCardShadowTransformer;
 
 	private MaterialDialog mMaterialDialog;
 	private static String TAG="测试HomeFragment";
@@ -104,6 +103,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		mView =inflater.inflate(R.layout.fragment_home,container,false);
 		initViews();
+		mManager=getActivity().getSupportFragmentManager();
+
+		setTabSelection(0);
 
 		// Use this check to determine whether BLE is supported on the device.  Then you can
 		// selectively disable BLE-related features.
@@ -137,21 +139,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 	private void initViews() {
 
-		//初始化ViewPagerCard
-		mViewPager = (ViewPager)mView.findViewById(R.id.vp_cure);
-
-		mCardAdapter=new CardPagerAdapter(getActivity(),getActivity().getSupportFragmentManager());
-		mCardAdapter.addCardItem(new CardItem(R.string.cauterize));
-		mCardAdapter.addCardItem(new CardItem(R.string.needle));
-		mCardAdapter.addCardItem(new CardItem(R.string.knead));
-		mCardAdapter.addCardItem(new CardItem(R.string.medical));
-
-		mCardShadowTransformer = new ShadowTransformer(mViewPager, mCardAdapter);
-		mCardShadowTransformer.enableScaling(true);
-		mViewPager.setAdapter(mCardAdapter);
-		mViewPager.setPageTransformer(false, mCardShadowTransformer);
-		mViewPager.setOffscreenPageLimit(4);
-
 		mWaveLoadingView= (WaveLoadingView) mView.findViewById(R.id.wlv_reminder_electric_quantity);
 
 		ivDeviceStatusLogo= (ImageView) mView.findViewById(R.id.iv_home_device_status_logo);
@@ -165,6 +152,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		btnDeviceStatus.setOnClickListener(this);
 
 
+		rbMedical= (RadioButton) mView.findViewById(R.id.rb_medical);
+		rbPhysical= (RadioButton) mView.findViewById(R.id.rb_physical);
+		rbMedical.setOnClickListener(this);
+		rbPhysical.setOnClickListener(this);
 
 		//TODO 当没有连接设备时的测试
 //		final Handler handler = new Handler();
@@ -210,6 +201,58 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 					mBluetoothLeService.WriteValue(setting);
 				}
 				break;
+			case R.id.rb_medical:
+				setTabSelection(0);
+				break;
+			case R.id.rb_physical:
+				setTabSelection(1);
+				break;
+		}
+	}
+
+
+	/**
+	 * 根据传入的index参数来设置选中的tab页。
+	 * @param index
+	 * 每个tab页对应的下标。
+	 */
+	private void setTabSelection(int index){
+		// 开启一个Fragment事务
+		FragmentTransaction transaction=mManager.beginTransaction();
+		// 先隐藏掉所有的Fragment，以防止有多个Fragment显示在界面上的情况
+		hideFragments(transaction);
+		switch (index){
+			case 0:
+				if (mMedicalFragment==null){
+					mMedicalFragment=new MedicalFragment();
+					transaction.add(R.id.fl_cure_content,mMedicalFragment);
+				}else{
+					transaction.show(mMedicalFragment);
+				}
+				break;
+			case 1:
+				if (mPhysicalFragment==null){
+					mPhysicalFragment=new PhysicalFragment();
+					transaction.add(R.id.fl_cure_content,mPhysicalFragment);
+				}else{
+					transaction.show(mPhysicalFragment);
+				}
+				break;
+		}
+		transaction.commit();
+	}
+
+	/**
+	 * 将所有的Fragment都置为隐藏状态。
+	 * @param transaction
+	 * 用于对Fragment执行操作的事务
+	 */
+	private void hideFragments(FragmentTransaction transaction) {
+		if (mMedicalFragment != null) {
+			transaction.hide(mMedicalFragment);
+		}
+		if (mPhysicalFragment != null) {
+			transaction.hide(mPhysicalFragment);
 		}
 	}
 
