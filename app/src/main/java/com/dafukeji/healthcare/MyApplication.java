@@ -47,15 +47,15 @@ public class MyApplication extends Application {
 		}
 
 		//TODO 通过推送透传或者升级的方式将关于Cure的配置清空
-		if (!isClearSP){//现在默认每次启动APP都清空
-			isClearSP=true;
-			SPUtils spUtils1=new SPUtils(Constants.SP_CURE_CAUTERIZE,this);
-			spUtils1.clear();
-			SPUtils spUtils2=new SPUtils(Constants.SP_CURE_NEEDLE,this);
-			spUtils2.clear();
-			SPUtils spUtils3=new SPUtils(Constants.SP_CURE_MEDICINE,this);
-			spUtils3.clear();
-		}
+//		if (!isClearSP){//现在默认每次启动APP都清空
+//			isClearSP=true;
+//			SPUtils spUtils1=new SPUtils(Constants.SP_CURE_CAUTERIZE,this);
+//			spUtils1.clear();
+//			SPUtils spUtils2=new SPUtils(Constants.SP_CURE_NEEDLE,this);
+//			spUtils2.clear();
+//			SPUtils spUtils3=new SPUtils(Constants.SP_CURE_MEDICINE,this);
+//			spUtils3.clear();
+//		}
 
 		//初始化Umeng
 		initUmeng();

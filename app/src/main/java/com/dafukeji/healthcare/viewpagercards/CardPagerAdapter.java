@@ -9,9 +9,12 @@ import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.codetroopers.betterpickers.radialtimepicker.RadialTimePickerDialogFragment;
 import com.dafukeji.healthcare.R;
@@ -24,7 +27,7 @@ import com.orhanobut.logger.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.OnClickListener {
+public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.OnClickListener,AdapterView.OnItemSelectedListener {
 
 	private Button btnCauterizeGrade, btnKneadGrade, btnMedicalGrade;
 	private Button btnCauterizeTime, btnNeedleTime, btnMedicalTime;
@@ -93,6 +96,20 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 		switch (position) {
 			case 0:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_cauterize, container, false);
+				spnCauterizeGrade= (Spinner) mView.findViewById(R.id.spn_cauterize_grade);
+				ArrayAdapter<String> adapter=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mCauterizeGrades);
+				spnCauterizeGrade.setAdapter(adapter);
+				spnCauterizeGrade.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+					@Override
+					public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+						ToastUtil.showToast(mContext,mCauterizeGrades[position],Toast.LENGTH_LONG);
+					}
+
+					@Override
+					public void onNothingSelected(AdapterView<?> parent) {
+
+					}
+				});
 //				btnCauterizeGrade = (Button) mView.findViewById(R.id.btn_cauterize_grade);
 //				btnCauterizeTime = (Button) mView.findViewById(R.id.btn_cauterize_time);
 //				btnCauterizeStart = (Button) mView.findViewById(R.id.btn_cauterize_start);
@@ -411,6 +428,16 @@ public class CardPagerAdapter extends PagerAdapter implements CardAdapter, View.
 	}
 
 	private int mWhich;
+
+	@Override
+	public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+
+	}
+
+	@Override
+	public void onNothingSelected(AdapterView<?> parent) {
+
+	}
 //	private void getGrade(final String[] grade, final Button btn, String reminder
 //			, final int type, final String keyName) {
 //
