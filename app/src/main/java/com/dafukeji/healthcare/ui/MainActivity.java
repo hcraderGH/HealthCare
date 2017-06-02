@@ -36,6 +36,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.fragment.RecordFragment;
+import com.dafukeji.healthcare.service.ScanService;
 import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
@@ -330,7 +331,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 								case 1:
 									//断开蓝牙的连接
 									if (homeFragment!=null){
-										homeFragment.disConnect();
+										HomeFragment.disConnect();
 									}
 									break;
 							}
@@ -397,8 +398,19 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 				tExit.schedule(task, 2000);
 			} else {
 				ToastUtil.cancelToast();
+
+				HomeFragment.disConnect();
+
+				//当退出程序的时候，关闭蓝牙扫描服务
+				Intent intent=new Intent(this, ScanService.class);
+				stopService(intent);
+
+				//关闭蓝牙
+				if (mBluetoothLEAdapter != null&&mBluetoothLEAdapter.isEnabled()) {
+					mBluetoothLEAdapter.disable();
+				}
+
 				MyApplication.getInstance().exit();
-	//			homeFragment.unBindService();
 			}
 		}
 

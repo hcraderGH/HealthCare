@@ -1,28 +1,24 @@
 package com.dafukeji.healthcare.viewpagercards;
 
 import android.content.Context;
-import android.content.DialogInterface;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.PagerAdapter;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.CardView;
+import android.support.v7.widget.SwitchCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.codetroopers.betterpickers.radialtimepicker.RadialTimePickerDialogFragment;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.SPUtils;
-import com.dafukeji.healthcare.util.ToastUtil;
-import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,14 +32,12 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 //	private Button btnNeedleType;
 
 
-	private Spinner spnCauterizeGrade,spnCauterizeTimeGrade,spnMedicineGrade;
-	private Spinner spnNeedleOrientation,spnNeedleType,spnNeedleGrade,spnNeedleFrequency;
+	private Spinner spnCauterizeGrade, spnCauterizeTimeGrade;
+	private Spinner spnNeedleType, spnNeedleGrade, spnNeedleFrequency;
 	private Spinner spnMedicineTimeGrade;
 
+	private SwitchCompat scStimulate;
 
-	private int[] sustainTime = new int[2];
-	private int originalTime=1;//不能默认为0否则出错之后被除数会为0
-	private String selectGrade;
 	private FragmentManager mFragmentManager;
 
 	private List<CardView> mViews;
@@ -52,17 +46,16 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 	private View mView;
 	private Context mContext;
 
-	private static String TAG="测试CardPagerAdapter";
+	private static String TAG = "测试CardPagerMedicalAdapter";
 
-	private String[] mCauterizeGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档"};
-	private String[] mCauterizeTimeGrades=new String[]{"一档", "二档", "三档"};
+	private String[] mCauterizeGrades = new String[]{"一档", "二档", "三档", "四档", "五档"};
+	private String[] mCauterizeTimeGrades = new String[]{"10分钟", "20分钟", "30分钟"};
 
-	private String[] mNeedleOrientations=new String[]{"左旋","右旋"};
-	private String[] mNeedleTypes=new String[]{"提","按"};
-	private String[] mNeedleGrades=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
-	private String[] mNeedleFrequencys=new String[]{"一档", "二档", "三档", "四档", "五档","六档", "七档", "八档", "九档"};
+	private String[] mNeedleTypes = new String[]{"按", "提", "左旋按", "右旋按", "左旋提", "右旋提"};
+	private String[] mNeedleGrades = new String[]{"一档", "二档", "三档", "四档", "五档", "六档", "七档", "八档", "九档"};
+	private String[] mNeedleFrequencies = new String[]{"一档", "二档", "三档", "四档", "五档", "六档", "七档", "八档", "九档"};
 
-	private String[] mMedicineTimeGrades =new String[]{"一档", "二档", "三档", "四档", "五档"};
+	private String[] mMedicineTimeGrades = new String[]{"10分钟", "15分钟", "20分钟", "25分钟", "30分钟"};
 
 	public CardPagerMedicalAdapter(Context context, FragmentManager fragmentManager) {
 		this.mFragmentManager = fragmentManager;
@@ -97,102 +90,81 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 
 	@Override
 	public Object instantiateItem(ViewGroup container, int position) {
-		int type=position+Constants.CURE_CAUTERIZE;//TODO 如果类型的常量改变了这边也要改变
+		int type = position + Constants.CURE_CAUTERIZE;//TODO 如果类型的常量改变了这边也要改变
 
-		Logger.i("instantiateItem: type"+type);
+		LogUtil.i(TAG, "instantiateItem: type" + type);
 
 		switch (position) {
 			case 0:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_cauterize, container, false);
-				spnCauterizeGrade= (Spinner) mView.findViewById(R.id.spn_cauterize_grade);
-				ArrayAdapter<String> adapter0=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mCauterizeGrades);
+				spnCauterizeGrade = (Spinner) mView.findViewById(R.id.spn_cauterize_grade);
+				ArrayAdapter<String> adapter0 = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mCauterizeGrades);
 				spnCauterizeGrade.setAdapter(adapter0);
 				spnCauterizeGrade.setOnItemSelectedListener(this);
 
-				spnCauterizeTimeGrade= (Spinner) mView.findViewById(R.id.spn_cauterize_time_grade);
-				ArrayAdapter<String> adapter01=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mCauterizeTimeGrades);
+				if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_GRADE,mContext)) {
+					spnCauterizeGrade.setSelection(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE,mContext));
+				}
+
+				spnCauterizeTimeGrade = (Spinner) mView.findViewById(R.id.spn_cauterize_time_grade);
+				ArrayAdapter<String> adapter01 = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mCauterizeTimeGrades);
 				spnCauterizeTimeGrade.setAdapter(adapter01);
 				spnCauterizeTimeGrade.setOnItemSelectedListener(this);
-//				btnCauterizeGrade = (Button) mView.findViewById(R.id.btn_cauterize_grade);
-//				btnCauterizeTime = (Button) mView.findViewById(R.id.btn_cauterize_time);
-//				btnCauterizeStart = (Button) mView.findViewById(R.id.btn_cauterize_start);
-//				btnCauterizeGrade.setOnClickListener(this);
-//				btnCauterizeTime.setOnClickListener(this);
-//				btnCauterizeStart.setOnClickListener(this);
+				if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_TIME_GRADE,mContext)) {
+					spnCauterizeTimeGrade.setSelection(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE,mContext));
+				}
 
-//				if (isSaved(type,Constants.SP_CURE_INTENSITY)){
-//					btnCauterizeGrade.setText(mCauterizeGrades[getSP(type,Constants.SP_CURE_INTENSITY)]);
-//				}
-//
-//				if (isSaved(type,Constants.SP_CURE_TIME)){
-//					btnCauterizeTime.setText(getSP(type,Constants.SP_CURE_TIME)+"分钟");
-//				}
+				scStimulate = (SwitchCompat) mView.findViewById(R.id.switch_stimulate);
+				scStimulate.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+					@Override
+					public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+							CureSPUtil.setSP(Constants.SP_MEDICAL_STIMULATE, isChecked ? 1 : 0,mContext);
+					}
+				});
+				if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE,mContext)){
+					scStimulate.setChecked(CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE,mContext)==1);
+				}
 
 				break;
 			case 1:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_needle, container, false);
 
-
-				spnNeedleOrientation= (Spinner) mView.findViewById(R.id.spn_needle_orientation);
-				ArrayAdapter<String> adapter1=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleOrientations);
-				spnNeedleOrientation.setAdapter(adapter1);
-				spnNeedleOrientation.setOnItemSelectedListener(this);
-
-
-				spnNeedleType= (Spinner) mView.findViewById(R.id.spn_needle_type);
-				ArrayAdapter<String> adapter11=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleTypes);
-				spnNeedleType.setAdapter(adapter11);
+				spnNeedleType = (Spinner) mView.findViewById(R.id.spn_needle_type);
+				ArrayAdapter<String> adapter1 = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mNeedleTypes);
+				spnNeedleType.setAdapter(adapter1);
 				spnNeedleType.setOnItemSelectedListener(this);
+				if (CureSPUtil.isSaved(Constants.SP_NEEDLE_TYPE,mContext)) {
+					spnNeedleType.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE,mContext));
+				}
 
-				spnNeedleGrade= (Spinner) mView.findViewById(R.id.spn_needle_grade);
-				ArrayAdapter<String> adapter12=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleGrades);
-				spnNeedleGrade.setAdapter(adapter12);
+				spnNeedleGrade = (Spinner) mView.findViewById(R.id.spn_needle_grade);
+				ArrayAdapter<String> adapter11 = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mNeedleGrades);
+				spnNeedleGrade.setAdapter(adapter11);
 				spnNeedleGrade.setOnItemSelectedListener(this);
+				if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE,mContext)) {
+					spnNeedleGrade.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE,mContext));
+				}
 
-				spnNeedleFrequency= (Spinner) mView.findViewById(R.id.spn_needle_frequency);
-				ArrayAdapter<String> adapter13=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mNeedleFrequencys);
-				spnNeedleFrequency.setAdapter(adapter13);
+				spnNeedleFrequency = (Spinner) mView.findViewById(R.id.spn_needle_frequency);
+				ArrayAdapter<String> adapter12 = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mNeedleFrequencies);
+				spnNeedleFrequency.setAdapter(adapter12);
 				spnNeedleFrequency.setOnItemSelectedListener(this);
-//				btnKneadGrade = (Button) mView.findViewById(R.id.btn_knead_grade);
-//				btnNeedleTime = (Button) mView.findViewById(R.id.btn_knead_time);
-//				btnNeedleStart = (Button) mView.findViewById(R.id.btn_needle_start);
-//				btnKneadFrequency = (Button) mView.findViewById(R.id.btn_knead_frequency);
-//				btnKneadFrequency.setOnClickListener(this);
-//				btnKneadGrade.setOnClickListener(this);
-//				btnNeedleTime.setOnClickListener(this);
-//				btnNeedleStart.setOnClickListener(this);
-//
-//				if (isSaved(type,Constants.SP_CURE_INTENSITY)) {
-//					btnKneadGrade.setText(mKneadGrade[getSP(type,Constants.SP_CURE_INTENSITY)]);
-//				}
-//				if (isSaved(type,Constants.SP_CURE_TIME)) {
-//					btnNeedleTime.setText(getSP(type,Constants.SP_CURE_TIME)+"分钟");
-//				}
-//				if (isSaved(type,Constants.SP_CURE_FREQUENCY)) {
-//					btnKneadFrequency.setText(mKneadFrequency[getSP(type,Constants.SP_CURE_FREQUENCY)]);
-//				}
+				if (CureSPUtil.isSaved(Constants.SP_NEEDLE_FREQUENCY,mContext)) {
+					spnNeedleFrequency.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY,mContext));
+				}
+
 				break;
 
 			case 2:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_medicine, container, false);
-				spnMedicineTimeGrade= (Spinner) mView.findViewById(R.id.spn_medical_time_grade);
-				ArrayAdapter<String> adapter3=new ArrayAdapter<>(mContext,android.R.layout.simple_list_item_1,mMedicineTimeGrades);
+				spnMedicineTimeGrade = (Spinner) mView.findViewById(R.id.spn_medical_time_grade);
+				ArrayAdapter<String> adapter3 = new ArrayAdapter<>(mContext, android.R.layout.simple_list_item_1, mMedicineTimeGrades);
 				spnMedicineTimeGrade.setAdapter(adapter3);
 				spnMedicineTimeGrade.setOnItemSelectedListener(this);
+				if (CureSPUtil.isSaved(Constants.SP_MEDICINE_TIME_GRADE,mContext)) {
+					spnMedicineTimeGrade.setSelection(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE,mContext));
+				}
 
-//				btnMedicalGrade = (Button) mView.findViewById(R.id.btn_medical_grade);
-//				btnMedicalTime = (Button) mView.findViewById(R.id.btn_medical_time);
-//				btnMedicalStart = (Button) mView.findViewById(R.id.btn_medical_start);
-//				btnMedicalGrade.setOnClickListener(this);
-//				btnMedicalTime.setOnClickListener(this);
-//				btnMedicalStart.setOnClickListener(this);
-//
-//				if (isSaved(type,Constants.SP_CURE_GRADE)) {
-//					btnMedicalGrade.setText(mMedicineGrade[getSP(type,Constants.SP_CURE_GRADE)]);
-//				}
-//				if (isSaved(type,Constants.SP_CURE_TIME)) {
-//					btnMedicalTime.setText(getSP(type,Constants.SP_CURE_TIME)+"分钟");
-//				}
 				break;
 		}
 
@@ -207,6 +179,37 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 		cardView.setMaxCardElevation(mBaseElevation * MAX_ELEVATION_FACTOR);
 		mViews.set(position, cardView);
 		return mView;
+	}
+
+
+	@Override
+	public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+		switch (parent.getId()) {
+			case R.id.spn_cauterize_grade:
+				CureSPUtil.setSP(Constants.SP_CAUTERIZE_GRADE, position,mContext);
+				break;
+			case R.id.spn_cauterize_time_grade:
+				CureSPUtil.setSP(Constants.SP_CAUTERIZE_TIME_GRADE, position,mContext);
+				break;
+
+			case R.id.spn_needle_type:
+				CureSPUtil.setSP(Constants.SP_NEEDLE_TYPE, position,mContext);//0表示无，所以在此处+1
+				break;
+			case R.id.spn_needle_grade:
+				CureSPUtil.setSP(Constants.SP_NEEDLE_GRADE, position,mContext);//0表示无，所以在此处+1,一共9档
+				break;
+			case R.id.spn_needle_frequency:
+				CureSPUtil.setSP(Constants.SP_NEEDLE_FREQUENCY, position,mContext);//0表示无，所以在此处+1,一共9档
+				break;
+
+			case R.id.spn_medical_time_grade:
+				CureSPUtil.setSP(Constants.SP_MEDICINE_TIME_GRADE, position,mContext);
+		}
+	}
+
+	@Override
+	public void onNothingSelected(AdapterView<?> parent) {
+
 	}
 
 	@Override
@@ -341,168 +344,34 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 //	}
 
 
-	/**
-	 * 设置发送的数据
-	 * @param type
-	 * @return
-	 */
-	private byte[] setSettingData(int type,int temp,int intensity,int time,int frequency){
-		byte[] s=new byte[9];
-		s[0]= (byte) 0xFA;
-		s[1]= (byte) 0xFB;
-		s[2]= (byte) type;
-		s[3]= (byte) temp;
-		s[4]= (byte) intensity;
-		s[5]= (byte) time;
-		s[6]= (byte) frequency;
-
-		s[7]= (byte) (s[0]+s[1]+s[2]+s[3]+s[4]+s[5]+s[6]);
-		s[8]= (byte) 0xFE;
-		return s;
-	}
-
-	private String displayTime(int[] time) {
-		String displayTime;
-		int hour = time[0];
-		int minute = time[1];
-
-		//显示为00时00分钟
-//		if (hour == 0) {
-//			displayTime = minute + "分钟";
-//		} else if (minute < 10) {
-//			displayTime = hour + "小时" + "0" + minute + "分钟";
-//		} else {
-//			displayTime = hour + "小时" + minute + "分钟";
-//		}
-
-		//显示为00分钟
-		if (hour == 0) {
-			displayTime = minute + "分钟";
-		} else {
-			displayTime=(hour*60+minute)+"分钟";
-		}
-		return displayTime;
-	}
-
-	private void getSustainTime(final Button btnTime, final String keyName) {
-
-		RadialTimePickerDialogFragment rtpd = new RadialTimePickerDialogFragment()
-				.setOnTimeSetListener(new RadialTimePickerDialogFragment.OnTimeSetListener() {
-					@Override
-					public void onTimeSet(RadialTimePickerDialogFragment dialog, int hourOfDay, int minute) {
-
-						sustainTime[0] = hourOfDay;
-						sustainTime[1] = minute;
-						Logger.i("onPositiveActionClicked: sustainTime" + sustainTime[0] + "   " + sustainTime[1]);
-						originalTime = sustainTime[0] * 60 + sustainTime[1];
-
-						setSP(keyName,originalTime);//保存的时间单位为分钟
-
-						LogUtil.i(TAG,"getSustainTime: originalTime"+originalTime);
-						btnTime.setText(displayTime(sustainTime));
-
-//						ToastUtil.showToast(mContext, "您选择的持续时间是" + hourOfDay + "小时" + minute + "分钟", 1500);
-						ToastUtil.showToast(mContext, "您选择的持续时间是" + (hourOfDay *60+ minute) + "分钟", 1500);
-					}
-				})
-				.setStartTime(00, 00)
-				.setDoneText("确定")
-				.setCancelText("取消")
-				.setThemeLight();
-		rtpd.show(mFragmentManager, "timePickerDialogFragment");
-
-	}
-
-
-	/**
-	 * 属性是否设置了
-	 * @return
-	 */
-//	private boolean isSaved(String keyName){
-//		SPUtils spUtils;
-//		boolean isExist = false;
-//		switch (type){
-//			case Constants.CURE_CAUTERIZE:
-//				spUtils=new SPUtils(Constants.SP_CURE_CAUTERIZE,mContext);
-//				isExist=spUtils.contains(keyName);
-//				break;
-//			case Constants.CURE_NEEDLE:
-//				spUtils=new SPUtils(Constants.SP_CURE_NEEDLE,mContext);
-//				isExist=spUtils.contains(keyName);
-//				break;
-//			case Constants.CURE_MEDICINE:
-//				spUtils=new SPUtils(Constants.SP_CURE_MEDICINE,mContext);
-//				isExist=spUtils.contains(keyName);
-//		}
-//		return isExist;
-//	}
-
-
-	/**
-	 * 偏好设置选择的参数
-	 * @param keyName
-	 * @param keyValue
-	 */
-	private void setSP(String keyName, int keyValue){
-		SPUtils spUtils=new SPUtils(Constants.SP_CURE,mContext);
-		spUtils.put(keyName,keyValue);
-
-	}
-
-
-	private int getSP(String spName, String keyName){
-		SPUtils spUtils=new SPUtils(spName,mContext);
-		return spUtils.getInt(keyName);
-	}
-
-
-	private int mWhich;
-	@Override
-	public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
-	}
-
-	@Override
-	public void onNothingSelected(AdapterView<?> parent) {
-
-	}
-//	private void getGrade(final String[] grade, final Button btn, String reminder
-//			, final int type, final String keyName) {
+//	private void getSustainTime(final Button btnTime, final String keyName) {
 //
-//		int checkedItem;
-//		if (isSaved(type,keyName)){
-//			checkedItem=getSP(type,keyName);
-//		}else{
-//			checkedItem=0;
-//		}
-//
-//
-//		AlertDialog.Builder builder = new AlertDialog.Builder(mContext)
-//				.setTitle(reminder)
-//				.setSingleChoiceItems(grade, checkedItem , new DialogInterface.OnClickListener() {//0表示的是默认的第一个选项
+//		RadialTimePickerDialogFragment rtpd = new RadialTimePickerDialogFragment()
+//				.setOnTimeSetListener(new RadialTimePickerDialogFragment.OnTimeSetListener() {
 //					@Override
-//					public void onClick(DialogInterface dialog, int which) {
-//						selectGrade = grade[which];
-//						mWhich=which;
+//					public void onTimeSet(RadialTimePickerDialogFragment dialog, int hourOfDay, int minute) {
 //
+//						sustainTime[0] = hourOfDay;
+//						sustainTime[1] = minute;
+//						Logger.i("onPositiveActionClicked: sustainTime" + sustainTime[0] + "   " + sustainTime[1]);
+//						originalTime = sustainTime[0] * 60 + sustainTime[1];
+//
+//						setSP(keyName,originalTime);//保存的时间单位为分钟
+//
+//						LogUtil.i(TAG,"getSustainTime: originalTime"+originalTime);
+//						btnTime.setText(displayTime(sustainTime));
+//
+////						ToastUtil.showToast(mContext, "您选择的持续时间是" + hourOfDay + "小时" + minute + "分钟", 1500);
+//						ToastUtil.showToast(mContext, "您选择的持续时间是" + (hourOfDay *60+ minute) + "分钟", 1500);
 //					}
 //				})
-//				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-//					@Override
-//					public void onClick(DialogInterface dialog, int which) {
-//						setSPOfType(type,keyName,mWhich);
-//						Logger.i("onClick: getSP"+getSP(type,keyName));
+//				.setStartTime(00, 00)
+//				.setDoneText("确定")
+//				.setCancelText("取消")
+//				.setThemeLight();
+//		rtpd.show(mFragmentManager, "timePickerDialogFragment");
 //
-//						btn.setText(selectGrade);
-//						dialog.dismiss();
-//					}
-//				})
-//				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-//					@Override
-//					public void onClick(DialogInterface dialog, int which) {
-//						dialog.dismiss();
-//					}
-//				});
-//		builder.create().show();
 //	}
+
 }
+

@@ -10,6 +10,10 @@
         <item name="windowActionBar">false</item>
     </style>
     
+    <style name="WelcomeTheme" parent="AppTheme">
+        <item name="android:windowBackground">@mipmap/ic_welcome</item>
+    </style>
+    
     <!--功能选项卡中主标题的样式-->
     <style name="MainTitle">
         <item name="android:layout_width">wrap_content</item>

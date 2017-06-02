@@ -88,6 +88,31 @@
                 <!--android:background="@drawable/selector_button_background"-->
                 <!--android:text="@string/default_time"/>-->
             </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                android:orientation="horizontal">
+
+                <TextView
+                    style="@style/subtitle"
+                    android:text="强刺激："/>
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"/>
+
+                <android.support.v7.widget.SwitchCompat
+                    android:id="@+id/switch_stimulate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:theme="@style/switchStyle"
+                    android:clickable="true" />
+
+            </LinearLayout>
         </LinearLayout>
 
     </FrameLayout>

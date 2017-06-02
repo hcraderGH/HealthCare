@@ -31,6 +31,7 @@ import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.LeRecyclerAdapter;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.orhanobut.logger.Logger;
@@ -56,9 +57,11 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	// Device scan callback.
 	private BluetoothAdapter.LeScanCallback mLeScanCallback;
 
-	// Stops scanning after 10 seconds.
-	private static final long SCAN_PERIOD = 3000;
+	// Stops scanning after SCAN_PERIOD seconds.
+	private static final long SCAN_PERIOD = 2000;
 	public static final int REQUEST_ENABLE_BT = 1;
+
+	private static String TAG="测试DeviceScanActivity";
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
@@ -76,10 +79,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		mBluetoothAdapter = bluetoothManager.getAdapter();
 
 		initScanCallback();
-
 		initWidgets();
-//		StatusBar.setImmersiveStatusBar(this, R.color.app_bar_color);
-
 		mayRequestLocation();
 	}
 
@@ -276,7 +276,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					if (mScanning) {
 						mScanning = false;
 						stopScan();
-//						invalidateOptionsMenu();
 					}
 				}
 			}, SCAN_PERIOD);
@@ -318,13 +317,16 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					new ScanCallback() {
 						@Override
 						public void onScanResult(int callbackType, final ScanResult result) {
-							runOnUiThread(new Runnable() {
-								@Override
-								public void run() {
-									mLeDeviceRecyclerAdapter.addDevice(result.getDevice());
-									mHandler.sendEmptyMessage(1);
-								}
-							});
+
+							if (result.getDevice().getName().equals(Constants.MATCH_DEVICE_NAME)) {
+								runOnUiThread(new Runnable() {
+									@Override
+									public void run() {
+										mLeDeviceRecyclerAdapter.addDevice(result.getDevice());
+										mHandler.sendEmptyMessage(1);
+									}
+								});
+							}
 						}
 					};
 		}else{
@@ -333,14 +335,16 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 						@Override
 						public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
-							Logger.i("DeviceScan onLeScan");
-							runOnUiThread(new Runnable() {
-								@Override
-								public void run() {
-									mLeDeviceRecyclerAdapter.addDevice(device);
-									mHandler.sendEmptyMessage(1);
-								}
-							});
+
+							if (device.getName().equals(Constants.MATCH_DEVICE_NAME)) {
+								runOnUiThread(new Runnable() {
+									@Override
+									public void run() {
+										mLeDeviceRecyclerAdapter.addDevice(device);
+										mHandler.sendEmptyMessage(1);
+									}
+								});
+							}
 						}
 					};
 		}

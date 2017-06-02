@@ -44,29 +44,6 @@
 
                         <TextView
                             style="@style/subtitle"
-                            android:text="旋向："/>
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"/>
-
-
-                        <android.support.v7.widget.AppCompatSpinner
-                            android:id="@+id/spn_needle_orientation"
-                            style="@style/SpinnerStyle"/>
-
-
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            style="@style/subtitle"
                             android:text="类型："/>
 
                         <View
@@ -76,7 +53,7 @@
 
 
                         <android.support.v7.widget.AppCompatSpinner
-                            android:id="@+id/spn_needle_type"
+                            android:id="@+id/spn_knead_type"
                             style="@style/SpinnerStyle"/>
 
 
@@ -99,7 +76,7 @@
 
 
                         <android.support.v7.widget.AppCompatSpinner
-                            android:id="@+id/spn_needle_grade"
+                            android:id="@+id/spn_knead_grade"
                             style="@style/SpinnerStyle"/>
                         <!--<Button-->
                         <!--android:background="@drawable/selector_button_background"-->
@@ -125,7 +102,7 @@
                             android:layout_weight="1"/>
 
                         <android.support.v7.widget.AppCompatSpinner
-                            android:id="@+id/spn_needle_frequency"
+                            android:id="@+id/spn_knead_frequency"
                             style="@style/SpinnerStyle"/>
 
                         <!--<Button-->
@@ -152,7 +129,7 @@
                             android:layout_weight="1"/>
 
                         <android.support.v7.widget.AppCompatSpinner
-                            android:id="@+id/spn_needle_time_grade"
+                            android:id="@+id/spn_knead_time_grade"
                             style="@style/SpinnerStyle"/>
 
                         <!--<Button-->
@@ -162,6 +139,32 @@
                         <!--android:text="一档"/>-->
 
                     </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/card_pager_item_margin_top"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            style="@style/subtitle"
+                            android:text="强刺激："/>
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_weight="1"/>
+
+                        <android.support.v7.widget.SwitchCompat
+                            android:id="@+id/switch_stimulate_knead"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="@null"
+                            android:theme="@style/switchStyle"
+                            android:clickable="true" />
+
+                    </LinearLayout>
+
                 </LinearLayout>
             </ScrollView>
         </LinearLayout>

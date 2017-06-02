@@ -1,9 +1,13 @@
 package com.dafukeji.healthcare.fragment;
 
+import android.Manifest;
+import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -12,12 +16,15 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,6 +40,7 @@ import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.service.ScanService;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.orhanobut.logger.Logger;
@@ -60,7 +68,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	private RadioButton rbPhysical;
 
 	private BluetoothAdapter mBluetoothLEAdapter;
-	private String mDeviceName;
 	private String mDeviceAddress;
 	private static BluetoothLeService mBluetoothLeService;
 	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<>();
@@ -73,7 +80,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 //	private boolean beginRemindBat =false;//当连接设备成功时，即提醒用户电量
 
-	private MaterialDialog mMaterialDialog;
 	private static String TAG="测试HomeFragment";
 	@Override
 	public void onAttach(Context context) {
@@ -82,6 +88,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		IntentFilter filter=new IntentFilter();
 		filter.addAction(Constants.RECEIVE_BLUETOOTH_INFO);
 		getActivity().registerReceiver(mBlueToothBroadCast,filter);
+
 		super.onAttach(context);
 	}
 
@@ -92,7 +99,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的信息
 			mDeviceAddress= intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
-			LogUtil.i("HomeFragment", "onActivityResult:mDeviceAddress "+mDeviceAddress);
+			LogUtil.i(TAG, "onActivityResult:mDeviceAddress "+mDeviceAddress);
 			mBluetoothLeService.connect(mDeviceAddress);
 		}
 	}
@@ -103,6 +110,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
 		mView =inflater.inflate(R.layout.fragment_home,container,false);
 		initViews();
+
 		mManager=getActivity().getSupportFragmentManager();
 
 		setTabSelection(0);
@@ -129,13 +137,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		// 若蓝牙没打开
 		if (!mBluetoothLEAdapter.isEnabled()) {
 			mBluetoothLEAdapter.enable();  //打开蓝牙，需要BLUETOOTH_ADMIN权限
+
 		}
 		Intent gattServiceIntent = new Intent(getActivity(), BluetoothLeService.class);
 		LogUtil.i(TAG,"Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+
+//		getActivity().startService(new Intent(getActivity(), ScanService.class));//开始时候开启扫描服务 TODO
+
 		return mView;
 	}
-
 
 	private void initViews() {
 
@@ -156,28 +167,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		rbPhysical= (RadioButton) mView.findViewById(R.id.rb_physical);
 		rbMedical.setOnClickListener(this);
 		rbPhysical.setOnClickListener(this);
-
-		//TODO 当没有连接设备时的测试
-//		final Handler handler = new Handler();
-//		Runnable runnable = new Runnable() {
-//			@Override
-//			public void run() {
-//				getActivity().runOnUiThread(new Runnable() {
-//					@Override
-//					public void run() {
-//						mRemindEle=(int)(Math.random() * 100);//TODO 测试用
-//						Intent intent=new Intent();
-//						intent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY,mRemindEle);
-//						intent.setAction(Constants.BATTERY_ELECTRIC_QUANTITY);
-//						getActivity().sendBroadcast(intent);
-//						JudgeEleSetWare(mRemindEle);
-//					}
-//				});
-//				handler.postDelayed(this, 1000);
-//			}
-//		};
-//		handler.postDelayed(runnable,1000);
-
 	}
 
 	@Override
@@ -185,18 +174,24 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		switch (v.getId()){
 			case R.id.btn_home_device_status:
 				if (mConnected){
-					Logger.i("btn_home_device_status");
 					setDisplayStatus(!mConnected);
 					mConnected=false;//在此处强制设为false
 
-					int type=Constants.DEVICE_POWER_OFF;
-					int temp=0;
-					int intensity=0;
-					int time=0;
-					int frequency=0;
-					int crc=0xFA+0xFB+type+temp+intensity+time+frequency;
-					byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) type, (byte) temp
-							, (byte) intensity, (byte) time, (byte) frequency, (byte)crc, (byte) 0xFE};
+					int stimulate=3;//关机标志
+					int stimulateGrade=0;
+					int stimulateFrequency=0;
+					int cauterizeGrade=0;
+					int cauterizeTime=0;
+					int needleType=0;
+					int needleGrade=0;
+					int needleFrequency=0;
+					int medicineTime=0;
+					int crc=stimulate+stimulateGrade+stimulateFrequency+cauterizeGrade+cauterizeTime
+							+needleType+needleGrade+needleFrequency+medicineTime;
+
+					byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
+							, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
+					,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
 					Log.i(TAG, "onClick: off"+Arrays.toString(setting));
 					mBluetoothLeService.WriteValue(setting);
 				}
@@ -341,24 +336,22 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
 					//TODO 接收数据处理
-					LogUtil.i(TAG,"onReceive: "+ Arrays.toString(data));
-//					mCurrentTemp=(int) data[3];//TODO int和byte之间的转换
-//					mRemindEle=(int)data[8];
-
-					//发送电量的广播
-					Intent batIntent=new Intent();
-					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY,mRemindEle);
-					getActivity().sendBroadcast(batIntent);
-
-//					mRemindEle=(int)(Math.random() * 100);//TODO 测试用
-
-					getActivity().runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							JudgeEleSetWare((int) Math.ceil(((ConvertUtils.byte2unsignedInt(data[7])*100))));
-							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3])+"℃");
-						}
-					});
+//					LogUtil.i(TAG,"onReceive: "+ Arrays.toString(data));
+//					mCurrentTemp=(int) data[11];
+//					mRemindEle=(int)data[12];
+//
+//					//发送电量的广播
+//					Intent batIntent=new Intent();
+//					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY,mRemindEle);
+//					getActivity().sendBroadcast(batIntent);
+//
+//					getActivity().runOnUiThread(new Runnable() {
+//						@Override
+//						public void run() {
+//							JudgeEleSetWare((int) Math.ceil(((ConvertUtils.byte2unsignedInt(data[12])*100))));//TODO 电量公式
+//							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[11])+"℃");
+//						}
+//					});
 				}
 			}
 		}
@@ -417,6 +410,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			}
 
 			LogUtil.i(TAG,"mBluetoothLeService is okay");
+
 			// Automatically connects to the device upon successful start-up initialization.
 			//mBluetoothLeService.connect(mDeviceAddress);
 		}
@@ -452,7 +446,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		LogUtil.i(TAG,"We are in destroy");
 	}
 
-	public void disConnect(){
+	public static void disConnect(){
 
 		if (mBluetoothLeService != null) {
 			mBluetoothLeService.close();
