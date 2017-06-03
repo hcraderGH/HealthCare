@@ -263,8 +263,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 //			mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_1);
 //		}
 
-		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
-		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
+//		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
+//		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
 
 		int[] normalColor=new int[]{Color.parseColor("#4CAF50"),Color.parseColor("#ff0000")};//设置子控件的颜色
 		int[] highLightedColor=new int[]{Color.parseColor("#70bf73"),Color.parseColor("#ff5c5c")};//设置子控件点击后的背景颜色
@@ -329,7 +329,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 								case 1:
 									//断开蓝牙的连接
 									if (homeFragment!=null){
-										homeFragment.disConnect();
+										homeFragment.disableBlueTooth();
 									}
 									break;
 							}

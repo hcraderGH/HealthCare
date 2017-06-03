@@ -59,7 +59,7 @@ public class PhysicalFragment extends Fragment {
 //		IntentFilter filter=new IntentFilter();
 //		filter.addAction(Constants.RECEIVE_GATT_STATUS);
 //		getActivity().registerReceiver(mBlueToothBroadCast,filter);
-//		super.onAttach(context);
+		super.onAttach(context);
 
 		LogUtil.i(TAG,"onAttach()");
 	}

@@ -299,6 +299,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 //				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
 
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
+				LogUtil.i(TAG,"mGattUpdateReceiver断开了连接");
 //				if (mConnected){
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
@@ -471,6 +472,13 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 		if (mBluetoothLEAdapter != null) {
 			mBluetoothLEAdapter.disable();
+		}
+	}
+
+	public void disableBlueTooth(){
+		if (mBluetoothLeService != null) {
+			mBluetoothLeService.close();
+			mBluetoothLeService = null;
 		}
 	}
 }
