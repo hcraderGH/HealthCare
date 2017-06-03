@@ -12,13 +12,10 @@ import com.dafukeji.daogenerator.Cure;
 import com.dafukeji.healthcare.util.TimeUtil;
 import com.orhanobut.logger.Logger;
 
-import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Locale;
 
-import static com.dafukeji.healthcare.constants.Constants.CURE_CAUTERIZE;
-import static com.dafukeji.healthcare.constants.Constants.CURE_MEDICINE;
-import static com.dafukeji.healthcare.constants.Constants.CURE_NEEDLE;
+import static com.dafukeji.healthcare.constants.Constants.CURE_MEDICAL;
+import static com.dafukeji.healthcare.constants.Constants.CURE_PHYSICAL;
 
 /**
  * Created by DevCheng on 2017/5/23.
@@ -65,7 +62,9 @@ public class RecordRecyclerAdapter extends RecyclerView.Adapter<RecordRecyclerAd
 
 		String startTime=TimeUtil.date2String(cure.getStartTime(),"HH′mm′ss″");
 		Logger.i("onBindViewHolder: startTime"+startTime);
+
 		String stopTime=TimeUtil.date2String(cure.getStopTime(),"HH′mm′ss″");
+
 		Logger.i("onBindViewHolder: stopTime"+cure.getStopTime());
 		String[] wholeTime=TimeUtil.getSubtractedString(cure.getStopTime(),cure.getStartTime());
 		holder.tvDate.setText(date);
@@ -75,14 +74,11 @@ public class RecordRecyclerAdapter extends RecyclerView.Adapter<RecordRecyclerAd
 
 		int cureType=cure.getCureType();
 		switch (cureType){
-			case CURE_CAUTERIZE:
-				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_cauterize_orange));
+			case CURE_MEDICAL:
+				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_cure_type_medical));
 				break;
-			case CURE_NEEDLE:
-				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_needle_blue));
-				break;
-			case CURE_MEDICINE:
-				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_record_medicine_purple));
+			case CURE_PHYSICAL:
+				holder.ivType.setBackground(mContext.getResources().getDrawable(R.mipmap.ic_cure_type_physical));
 				break;
 		}
 		holder.tvOrder.setText(String.valueOf(position+1));

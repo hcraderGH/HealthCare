@@ -24,4 +24,7 @@
     <dimen name="card_pager_first_margin_top">12dp</dimen>
     <dimen name="card_pager_item_margin_top">7dp</dimen>
 
+    <dimen name="setting_item_padding_top_bottom">8dp</dimen>
+    <dimen name="setting_item_padding_right_left">16dp</dimen>
+
 </resources>

@@ -16,6 +16,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -28,13 +29,14 @@ import com.dafukeji.daogenerator.DaoSession;
 import com.dafukeji.daogenerator.Point;
 import com.dafukeji.daogenerator.PointDao;
 import com.dafukeji.healthcare.BaseActivity;
+import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.ColorArcProgressBar;
 import com.dafukeji.healthcare.util.ConvertUtils;
+import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
-import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.TimeUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.orhanobut.logger.Logger;
@@ -73,7 +75,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private long mOriginalTime;
 
 	private Toolbar mToolbar;
-	private ImageView mIvPause, mIvContinue, mIvOver;
+	private ImageView mIvAgain, mIvSpace, mIvOver;
 	private ImageView mIvBack;
 	private TextView mTvCurrentTemp, mTvReminderTime, mTvToolbarTitle;
 	private ColorArcProgressBar mColorArcProgressBar;
@@ -103,12 +105,12 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	float[][] randomNumbersTab = new float[maxNumberOfLines][numberOfPoints]; //将线上的点放在一个数组中
 
 	private int dataCount = 0;//接受到的数据的个数
-	private boolean mIsFinish = false;
 	private List<PointValue> mPointValueList = new ArrayList<>();
 	private List<Line> mLinesList = new ArrayList<>();
 	private List<AxisValue> mAxisValues = new ArrayList<>();
 	private static String TAG="测试RunningActivity";
 
+	private List<Point> points=new ArrayList<>();
 	private DaoMaster mMaster;
 	private DaoSession mSession;
 	private DaoMaster.DevOpenHelper mHelper;
@@ -123,6 +125,15 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private long mCurrentTime;
 
+
+	private int mStimulate;//强刺激的类型，3表示关机
+	private int mCauterizeGrade = 40;//初始的一档对应的温度
+	private int mCauterizeTime = 10;//初始的加热时间
+	private int mNeedleType = 1;//默认为按功能
+	private int mNeedleGrade = 1;//默认为1档
+	private int mNeedleFrequency = 1;//默认为1档
+	private int mMedicineTime = 20;//默认为3档20分钟
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -132,7 +143,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		getDb();
 
 		mOriginalTime = (long)(getIntent().getIntExtra(Constants.ORIGINAL_TIME, 0)*60*1000);//获取的是int类型的分钟数，则需要强转
-		Logger.i("onCreate: mOriginalTime"+mOriginalTime);
+		LogUtil.i(TAG,"onCreate: mOriginalTime"+mOriginalTime);
 
 		//获取运行时的时间
 		mStartTime = System.currentTimeMillis();
@@ -155,9 +166,10 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						break;
 					case 1:
 						isOver = true;
-						mIvPause.setVisibility(View.INVISIBLE);
-						mIvContinue.setVisibility(View.VISIBLE);
-						mIvOver.setVisibility(View.VISIBLE);
+						saveData();//保存数据
+						sendStopSettingData();//为了防止与设备之间疗程时间的不同步，在此直接结束疗程
+						mIvSpace.setVisibility(View.INVISIBLE);
+						mIvAgain.setVisibility(View.VISIBLE);
 						stopTimer();
 						break;
 
@@ -168,8 +180,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					case 3://显示图表
 						dynamicDataDisplay(mCurrentTime, msg.arg1);
 						break;
-
-
 				}
 			}
 		};
@@ -200,15 +210,16 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		mTvToolbarTitle = (TextView) findViewById(R.id.tv_toolbar_title);
 		mTvToolbarTitle.setText(getCureTypeString(mCureType));
 
-		mIvPause = (ImageView) findViewById(R.id.iv_pause);
-		mIvContinue = (ImageView) findViewById(R.id.iv_continue);
+		mIvAgain = (ImageView) findViewById(R.id.iv_again);
+		mIvSpace = (ImageView) findViewById(R.id.iv_space);
 		mIvOver = (ImageView) findViewById(R.id.iv_over);
+
 		mIvBack = (ImageView) findViewById(R.id.iv_back);
 		mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
-		mIvPause.setOnClickListener(this);
-		mIvContinue.setOnClickListener(this);
+		mIvAgain.setOnClickListener(this);
 		mIvOver.setOnClickListener(this);
+
 		mIvBack.setOnClickListener(this);
 
 		mColorArcProgressBar = (ColorArcProgressBar) findViewById(R.id.cpb_reminder_pre);
@@ -233,14 +244,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private String getCureTypeString(int cureType) {
 		String type = null;
 		switch (cureType) {
-			case Constants.CURE_CAUTERIZE:
-				type = getString(R.string.cure_cauterize);
+			case Constants.CURE_MEDICAL:
+				type = getString(R.string.cure_medical);
 				break;
-			case Constants.CURE_NEEDLE:
-				type = getString(R.string.cure_needle);
-				break;
-			case Constants.CURE_MEDICINE:
-				type = getString(R.string.cure_medicine);
+			case Constants.CURE_PHYSICAL:
+				type = getString(R.string.cure_physical);
 				break;
 		}
 		return type;
@@ -262,18 +270,30 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private void insertPoint(long currentTime, float temp) {
 
-		if (mCure == null) {
-			mCure = new Cure();
-			mCure.setCureType(mCureType);
-			mCure.setStartTime(mStartTime);
-			mCureId = mCureDao.insert(mCure);
-		}
-
 		Point point = new Point();
 		point.setCurrentTime(currentTime);
 		point.setTemperature(temp);
-		point.setCureId(mCureId);
-		mPointDao.insert(point);
+		points.add(point);
+	}
+
+
+	private void saveData(){
+		if (points.size()>0){
+			mStopTime=System.currentTimeMillis();
+			if (mCure == null) {
+				mCure = new Cure();
+				mCure.setCureType(mCureType);
+				mCure.setStartTime(mStartTime);
+				mCure.setStopTime(mStopTime);
+				mCureId = mCureDao.insert(mCure);
+
+				LogUtil.i(TAG,"当点击again时mCureID会改变"+mCureId);
+			}
+			for (Point point:points) {
+				point.setCureId(mCureId);
+				mPointDao.insert(point);
+			}
+		}
 	}
 
 	private void startTimer() {
@@ -355,12 +375,12 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					LogUtil.i(TAG,"RunningActivity onReceive: mData" + Arrays.toString(mData));//TODO 将接受到的数据显示在图表中
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(mData[0] + mData[1] + mData[2] + mData[3] + mData[4] + mData[5] + mData[6] + mData[7]== mData[8])) {
-						return;
-					}
+//					if (!(mData[2] + mData[3] + mData[4] + mData[5] + mData[6]+mData[7]== mData[8])) {
+//						return;
+//					}
 
 					mCurrentTime= System.currentTimeMillis();
-					insertPoint(mCurrentTime, mData[4]);
+					insertPoint(mCurrentTime, mData[3]);
 
 
 					int temp= ConvertUtils.byte2unsignedInt(mData[3]);//无符号位转换
@@ -388,66 +408,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			}
 		}
 	};
-
-//	private Timer tTimer=new Timer();
-//	private Random random=new Random();
-//	private int position=0;
-//	/**
-//	 * 视差使数据看起来为动态加载（心电图效果）
-//	 */
-//	private void dynamicDataDisplay() {
-//		mLineChartView.setInteractive(false);
-//		tTimer.schedule(new TimerTask() {
-//			@Override
-//			public void run() {
-//				if(!mIsFinish){
-////					PointValue value=new PointValue(dataCount,mData[0]);
-//
-//					PointValue value = new PointValue(position, 40 + random.nextInt(20));
-//					mPointValueList.add(value);
-//					mAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(System.currentTimeMillis(),"MM:ss")));
-//					dataCount++;
-//					float x=value.getX();
-//					Line line = new Line(mPointValueList);
-//					line.setColor(Color.RED);//设置线的颜色
-//					line.setStrokeWidth(2);//设置线的粗细
-//					line.setShape(pointsShape);                 //设置点的形状
-//					line.setPointRadius(3);
-//					line.setPointColor(Color.GREEN);
-//					line.setHasLines(true);               //设置是否显示线
-//					line.setHasPoints(true);             //设置是否显示节点
-//					line.setCubic(true);                     //设置线是否立体或其他效果
-//					line.setFilled(true);                   //设置是否填充线下方区域
-//					line.setHasLabels(false);       //设置是否显示节点标签
-//					//设置节点点击的效果
-//					line.setHasLabelsOnlyForSelected(true);
-//
-//					mLinesList.clear();
-//					mLinesList.add(line);
-//					mLineChartData = initDatas(mLinesList);
-//					mLineChartView.setLineChartData(mLineChartData);
-//					//根据点的横坐标实时变换坐标的视图范围
-//					Viewport port;
-//					if (x > mXDisplayCount) {
-//						port = initViewPort(x - mXDisplayCount, x);
-//					} else {
-//						port = initViewPort(0, mXDisplayCount);
-//					}
-//					mLineChartView.setCurrentViewport(port);//当前窗口
-//
-//					Viewport maPort = initMaxViewPort(x);
-//					mLineChartView.setMaximumViewport(maPort);//最大窗口
-//
-//					//TODO 测试
-//					position++;
-//					if (position > 50- 1) {
-//						mIsFinish = true;
-//						mLineChartView.setInteractive(true);
-//					}
-//				}
-//			}
-//		},300,300);
-//	}
 
 
 	private void dynamicDataDisplay(long currentTime, int temp) {
@@ -493,7 +453,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		}
 	}
 
-
 	private LineChartData initDatas(List<Line> lines) {
 		LineChartData lineData = new LineChartData(lines);
 		Axis axisX = new Axis();
@@ -511,7 +470,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private Viewport initViewPort(float left, float right) {
 		Viewport port = new Viewport();
-		port.top = 200;
+		port.top = 60;
 		port.bottom = 20;//y轴显示的最低值
 		port.left = left;
 		port.right = right;
@@ -520,34 +479,12 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private Viewport initMaxViewPort(float right) {
 		Viewport port = new Viewport();
-		port.top = 200;
+		port.top = 80;
 		port.bottom = 0;
 		port.left = 0;
 		port.right = right + 50;
 		return port;
 	}
-
-	// Code to manage Service lifecycle.
-//	private final ServiceConnection mServiceConnection = new ServiceConnection() {
-//
-//		@Override
-//		public void onServiceConnected(ComponentName componentName, IBinder service) {
-//			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-//			if (!mBluetoothLeService.initialize()) {
-//				Logger.e( "Unable to initialize Bluetooth");
-//				finish();
-//			}
-//
-//			Logger.e( "mBluetoothLeService is okay");
-//			// Automatically connects to the device upon successful start-up initialization.
-//			//mBluetoothLeService.connect(mDeviceAddress);
-//		}
-//
-//		@Override
-//		public void onServiceDisconnected(ComponentName componentName) {
-//			mBluetoothLeService = null;
-//		}
-//	};
 
 
 	@Override
@@ -574,22 +511,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
-			case R.id.iv_pause:
-				stopTimer();
-				mIvPause.setVisibility(View.INVISIBLE);
-				mIvContinue.setVisibility(View.VISIBLE);
-				mIvOver.setVisibility(View.VISIBLE);
-				break;
-			case R.id.iv_continue:
-				if (isOver) {
-					mRunningTime = 0;//当点击继续时从新开始
-					mColorArcProgressBar.setCurrentValues((float) Math.floor((mRunningTime * 100 / mOriginalTime)));
-					isOver = false;
-				}
-				startTimer();
-				mIvPause.setVisibility(View.VISIBLE);
-				mIvContinue.setVisibility(View.INVISIBLE);
-				mIvOver.setVisibility(View.INVISIBLE);
+			case R.id.iv_again:
+				mStartTime=System.currentTimeMillis();
+				isAgain();
 				break;
 			case R.id.iv_over://实现结束功能(当结束后则直接返回，如果疗程没有进行完则提示)
 				if (mRunningTime == mOriginalTime) {
@@ -604,6 +528,26 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		}
 	}
 
+	private void sendStopSettingData() {
+		int stimulate=2;//停止疗程标志
+		int stimulateGrade=0;
+		int stimulateFrequency=0;
+		int cauterizeGrade=0;
+		int cauterizeTime=0;
+		int needleType=0;
+		int needleGrade=0;
+		int needleFrequency=0;
+		int medicineTime=0;
+		int crc=stimulate+stimulateGrade+stimulateFrequency+cauterizeGrade+cauterizeTime
+				+needleType+needleGrade+needleFrequency+medicineTime;
+
+		byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
+				, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
+				,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
+		Log.i(TAG, "中途停止疗程"+Arrays.toString(setting));
+		HomeFragment.getBluetoothLeService().WriteValue(setting);
+	}
+
 
 	/**
 	 * 当点击返回时判断是否结束治疗
@@ -616,8 +560,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						stopTimer();
-						mCure.setStopTime(System.currentTimeMillis());//当结束的时候
-						mCureDao.insertOrReplace(mCure);
+
+						saveData();//此处保存的数据为未做完的
+						sendStopSettingData();//发送结束疗程的配置数据
 						dialog.dismiss();
 						finish();
 					}
@@ -629,6 +574,74 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					}
 				});
 		builder.create().show();
+	}
+
+	/**
+	 * 当点击再一次时判断是否重新开始治疗
+	 */
+	private void isAgain() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this)
+				.setTitle("温馨提示")
+				.setMessage("确定再进行一个疗程吗？")
+				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						mRunningTime = 0;//当点击新开始
+						mColorArcProgressBar.setCurrentValues((float) Math.floor((mRunningTime * 100 / mOriginalTime)));
+						isOver = false;
+						//重新发送配置的数据
+						sendAgainSettingData();
+						mCure=null;//设置为null,将会重新新建cure对象
+
+						dialog.dismiss();
+
+						mIvAgain.setVisibility(View.INVISIBLE);
+						mIvSpace.setVisibility(View.GONE);
+						mIvOver.setVisibility(View.VISIBLE);
+					}
+				})
+				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+					}
+				});
+		builder.create().show();
+	}
+
+	private void sendAgainSettingData() {
+		if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE,this)){
+			mStimulate = CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE,this);
+		}
+
+		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_GRADE,this)) {
+			mCauterizeGrade = CureSPUtil.getTempByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE,this));
+		}
+		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_TIME_GRADE,this)) {
+			mCauterizeTime = CureSPUtil.getCauterizeTimeByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE,this));
+		}
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_TYPE,this)) {
+			mNeedleType = CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE,this);
+		}
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE,this)) {
+			mNeedleGrade = CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE,this);
+		}
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_FREQUENCY,this)) {
+			mNeedleFrequency = CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY,this);
+		}
+		if (CureSPUtil.isSaved(Constants.SP_MEDICINE_TIME_GRADE,this)) {
+			mMedicineTime = CureSPUtil.getMedicineTimeByPosition(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE,this));
+		}
+
+		LogUtil.i(TAG, "发送的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
+				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime)));
+
+		if (HomeFragment.getBluetoothLeService()==null){
+			return;
+		}
+
+		HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
+				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime));
 	}
 
 

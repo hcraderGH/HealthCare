@@ -178,6 +178,7 @@ public class SPUtils {
 		return getBoolean(key, false);
 	}
 
+
 	/**
 	 * SP中读取boolean
 	 *

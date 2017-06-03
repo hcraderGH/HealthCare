@@ -8,7 +8,7 @@ android {
         applicationId "com.dafukeji.healthcare"
         minSdkVersion 18
         targetSdkVersion 25
-        versionCode 7
+        versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -91,4 +91,6 @@ dependencies {
     compile 'com.github.bumptech.glide:glide:4.0.0-RC0'
     compile 'com.android.support:support-v4:25.3.1'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.0.0-RC0'
+
+    compile 'com.blankj:utilcode:1.6.3'
 }

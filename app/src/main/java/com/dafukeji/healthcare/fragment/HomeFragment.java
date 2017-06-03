@@ -1,13 +1,9 @@
 package com.dafukeji.healthcare.fragment;
 
-import android.Manifest;
-import android.annotation.TargetApi;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
-import android.bluetooth.le.ScanCallback;
-import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -16,15 +12,12 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,15 +28,12 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.afollestad.materialdialogs.MaterialDialog;
-import com.dafukeji.healthcare.service.BatteryService;
-import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
-import com.dafukeji.healthcare.service.ScanService;
+import com.dafukeji.healthcare.service.BatteryService;
+import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
-import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -309,14 +299,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 //				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
 
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
-				if (mConnected){
+//				if (mConnected){
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							setDisplayStatus(!mConnected);
+//							setDisplayStatus(!mConnected);
+							setDisplayStatus(false);
 						}
 					});
-				}
+//				}
 				mConnected=false;
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){ //可以开始干活了
 				mConnected = true;
@@ -332,26 +323,33 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 				});
 				LogUtil.i(TAG,"In what we need");
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
-				LogUtil.i(TAG,"DATA");
+
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
 					//TODO 接收数据处理
-//					LogUtil.i(TAG,"onReceive: "+ Arrays.toString(data));
-//					mCurrentTemp=(int) data[11];
-//					mRemindEle=(int)data[12];
-//
-//					//发送电量的广播
-//					Intent batIntent=new Intent();
-//					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY,mRemindEle);
-//					getActivity().sendBroadcast(batIntent);
-//
-//					getActivity().runOnUiThread(new Runnable() {
-//						@Override
-//						public void run() {
-//							JudgeEleSetWare((int) Math.ceil(((ConvertUtils.byte2unsignedInt(data[12])*100))));//TODO 电量公式
-//							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[11])+"℃");
-//						}
-//					});
+
+					LogUtil.i(TAG,"onReceive: "+ Arrays.toString(data));
+
+					//当校验码前面的数据相加不等于校验码时表示数据错误
+//					if (!(data[2] + data[3] + data[4] + data[5] + data[6]+data[7]== data[8])) {//TODO 测试此处有错误
+//						return;
+//					}
+
+					mCurrentTemp=ConvertUtils.byte2unsignedInt(data[3]);
+					mRemindEle=ConvertUtils.byte2unsignedInt(data[7]);
+
+					//发送电量的广播
+					Intent batIntent=new Intent();
+					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY,mRemindEle);
+					getActivity().sendBroadcast(batIntent);
+
+					getActivity().runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							JudgeEleSetWare((int) Math.ceil(mRemindEle*10/4.3));//TODO 电量公式
+							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3])+"℃");
+						}
+					});
 				}
 			}
 		}
@@ -432,6 +430,37 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
+//		getActivity().unregisterReceiver(mBlueToothBroadCast);
+//		getActivity().unregisterReceiver(mGattUpdateReceiver);
+//		getActivity().unbindService(mServiceConnection);
+//		if (mBluetoothLeService != null) {
+//			mBluetoothLeService.close();
+//			mBluetoothLeService = null;
+//		}
+//
+//		if (mBluetoothLEAdapter != null) {
+//			mBluetoothLEAdapter.disable();
+//		}
+		LogUtil.i(TAG,"We are in destroy");
+	}
+
+	public void disConnect(){
+
+//		if (mConnected){
+			getActivity().runOnUiThread(new Runnable() {
+				@Override
+				public void run() {
+//					setDisplayStatus(!mConnected);
+					setDisplayStatus(false);
+				}
+			});
+			mConnected=false;
+//		}
+		if (mBluetoothLeService != null) {
+			mBluetoothLeService.close();
+			mBluetoothLeService = null;
+		}
+
 		getActivity().unregisterReceiver(mBlueToothBroadCast);
 		getActivity().unregisterReceiver(mGattUpdateReceiver);
 		getActivity().unbindService(mServiceConnection);
@@ -442,15 +471,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 		if (mBluetoothLEAdapter != null) {
 			mBluetoothLEAdapter.disable();
-		}
-		LogUtil.i(TAG,"We are in destroy");
-	}
-
-	public static void disConnect(){
-
-		if (mBluetoothLeService != null) {
-			mBluetoothLeService.close();
-			mBluetoothLeService = null;
 		}
 	}
 }

@@ -6,6 +6,8 @@ import android.app.Notification;
 import android.content.Context;
 import android.util.Log;
 
+import com.blankj.utilcode.util.CleanUtils;
+import com.blankj.utilcode.util.Utils;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.SPUtils;
@@ -23,6 +25,8 @@ import com.umeng.message.entity.UMessage;
 import java.util.ArrayList;
 import java.util.List;
 
+import static anet.channel.util.Utils.context;
+
 public class MyApplication extends Application {
 
 	private List<Activity> mList = new ArrayList<Activity>();
@@ -35,6 +39,10 @@ public class MyApplication extends Application {
 	@Override
 	public void onCreate() {
 		super.onCreate();
+
+		//初始化代码工具
+		Utils.init(this);
+
 		//初始化Bugly
 		Bugly.init(getApplicationContext(), "6e15e6f72b", isTest);//推荐测试时使用true，运行时使用false
 //		CrashReport.initCrashReport(getApplicationContext(),"6e15e6f72b",isTest);
@@ -44,21 +52,15 @@ public class MyApplication extends Application {
 //			LeakCanary.install(this);
 			//初始化日志
 //			initLogger();//不习惯使用
+
+			CleanUtils.cleanInternalDbByName(Constants.CURE_DB_NAME);//测试时删除数据库
 		}
 
 		//TODO 通过推送透传或者升级的方式将关于Cure的配置清空
-//		if (!isClearSP){//现在默认每次启动APP都清空
-//			isClearSP=true;
-//			SPUtils spUtils1=new SPUtils(Constants.SP_CURE_CAUTERIZE,this);
-//			spUtils1.clear();
-//			SPUtils spUtils2=new SPUtils(Constants.SP_CURE_NEEDLE,this);
-//			spUtils2.clear();
-//			SPUtils spUtils3=new SPUtils(Constants.SP_CURE_MEDICINE,this);
-//			spUtils3.clear();
-//		}
 
 		//初始化Umeng
 		initUmeng();
+
 	}
 
 	private void initUmeng() {

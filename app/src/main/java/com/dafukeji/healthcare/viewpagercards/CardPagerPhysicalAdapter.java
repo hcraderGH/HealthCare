@@ -84,9 +84,6 @@ public class CardPagerPhysicalAdapter extends PagerAdapter implements CardAdapte
 
 	@Override
 	public Object instantiateItem(ViewGroup container, int position) {
-		int type=position+Constants.CURE_CAUTERIZE;//TODO 如果类型的常量改变了这边也要改变
-
-		Logger.i("instantiateItem: type"+type);
 
 		switch (position) {
 

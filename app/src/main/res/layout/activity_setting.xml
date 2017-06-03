@@ -47,18 +47,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginLeft="16dp"
+                android:layout_marginLeft="@dimen/setting_item_padding_right_left"
                 android:layout_marginTop="16dp"
                 android:text="通知"
                 android:textColor="@color/setting_title_color"
                 android:textSize="14sp" />
 
             <LinearLayout
-                android:id="@+id/btn_notification"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="16dp"
+                style="@style/SettingItemStyle"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
@@ -78,10 +74,11 @@
                 </LinearLayout>
 
                 <android.support.v7.widget.SwitchCompat
-                    android:id="@+id/switch_notification"
+                    android:id="@+id/sc_notification"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@null"
+                    android:checked="true"
                     android:theme="@style/switchStyle"
                     android:clickable="true" />
 
@@ -90,12 +87,35 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
-                android:layout_marginLeft="16dp"
+                android:layout_marginLeft="@dimen/setting_item_padding_right_left"
                 android:layout_marginTop="16dp"
                 android:text="软件"
                 android:textColor="@color/setting_title_color"
                 android:textSize="14sp" />
+
+            <LinearLayout
+                style="@style/SettingItemStyle"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="自动检查更新"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"/>
+
+                <android.support.v7.widget.SwitchCompat
+                    android:id="@+id/sc_auto_update"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:checked="true"
+                    android:theme="@style/switchStyle"
+                    android:clickable="true" />
+
+            </LinearLayout>
 
             <com.andexert.library.RippleView
                 android:id="@+id/rv_about_software"
@@ -104,10 +124,7 @@
 
                 <LinearLayout
                     android:id="@+id/ll_about_software"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingLeft="16dp"
-                    android:paddingRight="16dp"
+                    style="@style/SettingItemStyle"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
@@ -116,8 +133,6 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:paddingBottom="16dp"
-                        android:paddingTop="16dp"
                         android:text="关于软件"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textSize="16sp"/>

@@ -37,6 +37,7 @@ import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.fragment.RecordFragment;
 import com.dafukeji.healthcare.service.ScanService;
+import com.dafukeji.healthcare.util.SPUtils;
 import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
@@ -71,7 +72,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	private boolean isBoomShowing=false;
 
 	private BluetoothAdapter mBluetoothLEAdapter;
-	private boolean isGATTConnected;
+	private boolean isGATTConnected=false;
 	private BlueToothBroadCast mBlueToothBroadCast;
 
 	private DrawerLayout mDrawer;
@@ -87,11 +88,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		Logger.i("能不能输出数字"+5);
-
 		initViews();
 		setListeners();
-//		StatusBar.setImmersiveStatusBar(this,mToolbar,R.color.app_bar_color);
 		initFragment();
 
 		registerGATTReceiver();
@@ -132,7 +130,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的服务连接
-			isGATTConnected= intent.getBooleanExtra(Constants.RECEIVE_GATT_STATUS,false);
+			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
 //			ReinitializeBoom();
 		}
 	}
@@ -331,7 +329,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 								case 1:
 									//断开蓝牙的连接
 									if (homeFragment!=null){
-										HomeFragment.disConnect();
+										homeFragment.disConnect();
 									}
 									break;
 							}
@@ -399,7 +397,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			} else {
 				ToastUtil.cancelToast();
 
-				HomeFragment.disConnect();
+				if (homeFragment!=null){
+					homeFragment.disConnect();
+				}
 
 				//当退出程序的时候，关闭蓝牙扫描服务
 				Intent intent=new Intent(this, ScanService.class);

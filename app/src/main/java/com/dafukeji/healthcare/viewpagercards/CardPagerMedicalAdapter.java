@@ -90,10 +90,6 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 
 	@Override
 	public Object instantiateItem(ViewGroup container, int position) {
-		int type = position + Constants.CURE_CAUTERIZE;//TODO 如果类型的常量改变了这边也要改变
-
-		LogUtil.i(TAG, "instantiateItem: type" + type);
-
 		switch (position) {
 			case 0:
 				mView = LayoutInflater.from(container.getContext()).inflate(R.layout.adapter_cauterize, container, false);
@@ -121,6 +117,7 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 							CureSPUtil.setSP(Constants.SP_MEDICAL_STIMULATE, isChecked ? 1 : 0,mContext);
 					}
 				});
+
 				if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE,mContext)){
 					scStimulate.setChecked(CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE,mContext)==1);
 				}

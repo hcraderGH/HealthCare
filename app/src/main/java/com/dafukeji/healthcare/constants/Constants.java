@@ -6,6 +6,8 @@ package com.dafukeji.healthcare.constants;
 
 public class Constants {
 
+	public static final String CURE_DB_NAME="treat.db";
+
 	public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
 	public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
@@ -24,11 +26,14 @@ public class Constants {
 
 	public static final String CURE_TYPE="cure_type";//指的是物理治疗还是药物治疗
 
-	public static final int CURE_CAUTERIZE=3;
-	public static final int CURE_NEEDLE=4;
-	public static final int CURE_MEDICINE=5;
-	public static final int CURE_KNEAD=6;
-	public static final int DEVICE_POWER_OFF=2;
+	public static final int CURE_MEDICAL=1;
+	public static final int CURE_PHYSICAL=2;
+
+//	public static final int CURE_CAUTERIZE=3;
+//	public static final int CURE_NEEDLE=4;
+//	public static final int CURE_MEDICINE=5;
+//	public static final int CURE_KNEAD=6;
+//	public static final int DEVICE_POWER_OFF=2;
 
 	public static final String SP_CURE="sp_cure";
 
@@ -55,6 +60,12 @@ public class Constants {
 
 	public static final int EXTRAS_BATTERY_WARN=30;
 	public static final int EXTRAS_BATTERY_DANGER=15;
+
+
+	public static final String SP_SETTING="sp_setting";
+	public static final String SP_SETTING_NOTIFICATION="sp_setting_notification";
+	public static final String SP_SETTING_AUTO_UPDATE="sp_setting_auto_update";
+
 
 
 }

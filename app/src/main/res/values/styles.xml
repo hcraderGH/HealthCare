@@ -68,4 +68,12 @@
         <item name="android:layout_height">20dp</item>
     </style>
 
+    <style name="SettingItemStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:paddingBottom">@dimen/setting_item_padding_top_bottom</item>
+        <item name="android:paddingTop">@dimen/setting_item_padding_top_bottom</item>
+        <item name="android:paddingRight">@dimen/setting_item_padding_right_left</item>
+        <item name="android:paddingLeft">@dimen/setting_item_padding_right_left</item>
+    </style>
 </resources>
