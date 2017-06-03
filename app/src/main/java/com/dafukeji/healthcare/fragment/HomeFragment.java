@@ -54,6 +54,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	private MedicalFragment mMedicalFragment;
 	private PhysicalFragment mPhysicalFragment;
 	private FragmentManager mManager;
+	private String[] fragmentNames;
+
+
 	private RadioButton rbMedical;
 	private RadioButton rbPhysical;
 
@@ -102,6 +105,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		initViews();
 
 		mManager=getActivity().getSupportFragmentManager();
+		fragmentNames=getResources().getStringArray(R.array.array_frag_name);
 
 		setTabSelection(0);
 
@@ -207,22 +211,43 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		// 先隐藏掉所有的Fragment，以防止有多个Fragment显示在界面上的情况
 		hideFragments(transaction);
 		switch (index){
+//			case 0:
+//				if (mMedicalFragment==null){
+//					mMedicalFragment=new MedicalFragment();
+//					transaction.add(R.id.fl_cure_content,mMedicalFragment);
+//				}else{
+//					transaction.show(mMedicalFragment);
+//				}
+//				break;
+//			case 1:
+//				if (mPhysicalFragment==null){
+//					mPhysicalFragment=new PhysicalFragment();
+//					transaction.add(R.id.fl_cure_content,mPhysicalFragment);
+//				}else{
+//					transaction.show(mPhysicalFragment);
+//				}
+//				break;
+
 			case 0:
 				if (mMedicalFragment==null){
 					mMedicalFragment=new MedicalFragment();
-					transaction.add(R.id.fl_cure_content,mMedicalFragment);
+					transaction.add(R.id.fl_cure_content,mMedicalFragment,fragmentNames[0]);
+					transaction.addToBackStack(fragmentNames[0]);
 				}else{
 					transaction.show(mMedicalFragment);
 				}
+
 				break;
 			case 1:
 				if (mPhysicalFragment==null){
 					mPhysicalFragment=new PhysicalFragment();
-					transaction.add(R.id.fl_cure_content,mPhysicalFragment);
+					transaction.add(R.id.fl_cure_content,mPhysicalFragment,fragmentNames[1]);
+					transaction.addToBackStack(fragmentNames[0]);
 				}else{
 					transaction.show(mPhysicalFragment);
 				}
 				break;
+
 		}
 		transaction.commit();
 	}
@@ -311,11 +336,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 //				}
 				mConnected=false;
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){ //可以开始干活了
+
 				mConnected = true;
-				Intent gattIntent=new Intent();
-				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
-				gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
-				getActivity().sendBroadcast(gattIntent);
 				getActivity().runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -327,8 +349,13 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
-					//TODO 接收数据处理
 
+					Intent gattIntent=new Intent();
+					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
+					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
+					getActivity().sendBroadcast(gattIntent);
+
+					//TODO 接收数据处理
 					LogUtil.i(TAG,"onReceive: "+ Arrays.toString(data));
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误

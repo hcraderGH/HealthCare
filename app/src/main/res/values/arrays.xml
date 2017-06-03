@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="array_frag_name">
+        <item>MedicalFragment</item>
+        <item>physicalFragment</item>
+    </string-array>
+</resources>
