@@ -20,6 +20,7 @@ import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.RadioButton;
@@ -50,6 +51,7 @@ import com.nightonke.boommenu.Piece.PiecePlaceEnum;
 import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -82,6 +84,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	private MaterialRippleLayout mrlShare;
 	private MaterialRippleLayout mrlSetting;
 	private MaterialRippleLayout mrlHome;
+	private static String TAG="测试MainActivity";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -203,13 +206,31 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			public void onClick(View v) {
 				mDrawer.closeDrawers();
 				new MaterialDialog.Builder(MainActivity.this)
-						.title("提示")
 						.content("确定退出本程序吗？")
 						.positiveText(R.string.dialog_ok)
 						.negativeText(R.string.dialog_cancel)
 						.onPositive(new MaterialDialog.SingleButtonCallback() {
 							@Override
 							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+								if (isGATTConnected){
+									int stimulate=3;//关机标志
+									int stimulateGrade=0;
+									int stimulateFrequency=0;
+									int cauterizeGrade=0;
+									int cauterizeTime=0;
+									int needleType=0;
+									int needleGrade=0;
+									int needleFrequency=0;
+									int medicineTime=0;
+									int crc=stimulate+stimulateGrade+stimulateFrequency+cauterizeGrade+cauterizeTime
+											+needleType+needleGrade+needleFrequency+medicineTime;
+
+									byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
+											, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
+											,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
+									Log.i(TAG, "onClick: off"+ Arrays.toString(setting));
+									HomeFragment.getBluetoothLeService().WriteValue(setting);
+								}
 								MyApplication.getInstance().exit();
 							}
 						}).show();

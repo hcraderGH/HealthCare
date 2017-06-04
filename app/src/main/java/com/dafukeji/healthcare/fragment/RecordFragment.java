@@ -74,9 +74,9 @@ public class RecordFragment extends Fragment{
 			@Override
 			public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
 				super.onScrolled(recyclerView, dx, dy);
-				if (dy>30){//当移动距离大于数值时则隐藏
+				if (dy>10){//当移动距离大于数值时则隐藏
 					mFabStatistic.hide(true);
-				}else{
+				}else if (dy<-10){
 					mFabStatistic.show(true);
 				}
 

@@ -5,6 +5,7 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.NetworkUtils;
 import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.R;
@@ -19,6 +20,8 @@ public class AboutSoftwareActivity extends BaseActivity implements View.OnClickL
 
 	private ImageView ivBack;
 	private TextView tvNewVersion;
+	private String versionName;
+	private int  versionCode;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -28,7 +31,14 @@ public class AboutSoftwareActivity extends BaseActivity implements View.OnClickL
 
 		if (NetworkUtils.isConnected()){
 			UpgradeInfo upgradeInfo=Beta.getUpgradeInfo();
-			tvNewVersion.setText("V"+upgradeInfo.versionName+"."+upgradeInfo.versionCode);
+			if (upgradeInfo!=null){//如果Bugly中没有发布新的版本，在此需要进行判断
+				versionName=upgradeInfo.versionName;
+				versionCode=upgradeInfo.versionCode;
+			}else{//用本地版本代替最新版本号
+				versionName= AppUtils.getAppVersionName();
+				versionCode=AppUtils.getAppVersionCode();
+			}
+			tvNewVersion.setText("V"+versionName+"."+versionCode);
 		}
 	}
 

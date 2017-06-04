@@ -182,6 +182,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					}
 					mRippleBackground.startRippleAnimation();
 					mLeDeviceRecyclerAdapter.clear();
+					mLeDeviceRecyclerAdapter.notifyDataSetChanged();
 					scanLeDevice(true);
 				} else {
 					mSBScanString.setVisibility(View.VISIBLE);

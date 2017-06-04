@@ -35,6 +35,15 @@ public class Constants {
 //	public static final int CURE_KNEAD=6;
 //	public static final int DEVICE_POWER_OFF=2;
 
+
+	//附属功能的配置信息
+	public static final String APP_SETTING ="app_setting";
+	public static final String SP_CLEARED="sp_cleared";
+	public static final String DB_CLEARED="db_cleared";
+	public static final String APP_SETTING_AUTO_UPDATE="app_setting_auto_update";
+	public static final String APP_SETTING_NOTIFICATION="app_setting_notification";
+	public static final String APP_SETTING_NO_DISTURBING ="app_no_disturbing";
+
 	public static final String SP_CURE="sp_cure";
 
 	public static final String SP_CAUTERIZE_GRADE="sp_cauterize_grade";
@@ -57,15 +66,7 @@ public class Constants {
 	public static final String BATTERY_ELECTRIC_QUANTITY="battery_electric_quantity";
 	public static final String EXTRAS_BATTERY_ELECTRIC_QUANTITY="extras_battery_electric_quantity";
 
-
 	public static final int EXTRAS_BATTERY_WARN=30;
 	public static final int EXTRAS_BATTERY_DANGER=15;
-
-
-	public static final String SP_SETTING="sp_setting";
-	public static final String SP_SETTING_NOTIFICATION="sp_setting_notification";
-	public static final String SP_SETTING_AUTO_UPDATE="sp_setting_auto_update";
-
-
 
 }

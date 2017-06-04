@@ -334,7 +334,13 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 						}
 					});
 //				}
+
 				mConnected=false;
+				Intent gattIntent=new Intent();
+				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
+				gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
+				getActivity().sendBroadcast(gattIntent);
+
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){ //可以开始干活了
 
 				mConnected = true;
@@ -387,6 +393,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	 * 根据电量来设置Ware的颜色
 	 */
 	private void JudgeEleSetWare(int ele) {
+		if (!mConnected){
+			return;
+		}
 
 		mWaveLoadingView.startAnimation();//当断开接连时,停止了动画，所以要开始动画
 

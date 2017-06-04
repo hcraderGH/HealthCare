@@ -50,21 +50,21 @@ public class PhysicalFragment extends Fragment {
 
 
 	private boolean isGATTConnected;
-	private BlueToothBroadCast2 mBlueToothBroadCast;
+	private BlueToothBroadCast mBlueToothBroadCast;
 
 	@Override
 	public void onAttach(Context context) {
-//		//注册接受蓝牙信息的广播
-//		mBlueToothBroadCast=new BlueToothBroadCast();
-//		IntentFilter filter=new IntentFilter();
-//		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-//		getActivity().registerReceiver(mBlueToothBroadCast,filter);
+		//注册接受蓝牙信息的广播
+		mBlueToothBroadCast=new BlueToothBroadCast();
+		IntentFilter filter=new IntentFilter();
+		filter.addAction(Constants.RECEIVE_GATT_STATUS);
+		getActivity().registerReceiver(mBlueToothBroadCast,filter);
 		super.onAttach(context);
 
 		LogUtil.i(TAG,"onAttach()");
 	}
 
-	class BlueToothBroadCast2 extends BroadcastReceiver {
+	class BlueToothBroadCast extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -74,18 +74,6 @@ public class PhysicalFragment extends Fragment {
 		}
 	}
 
-
-	@Override
-	public void onResume() {
-		//注册接受蓝牙信息的广播
-		mBlueToothBroadCast=new BlueToothBroadCast2();
-		IntentFilter filter=new IntentFilter();
-		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-		getActivity().registerReceiver(mBlueToothBroadCast,filter);
-		LogUtil.i(TAG,"onResume()");
-
-		super.onResume();
-	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
