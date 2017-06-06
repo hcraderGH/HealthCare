@@ -152,14 +152,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 		initViews();
 
-//		dynamicDataDisplay();//TODO 测试使用
 		mHandler = new Handler() {
 			@Override
 			public void handleMessage(Message msg) {
 				switch (msg.what) {
 					case 0:
-						Logger.d("handleMessage: mRunningTime" + mRunningTime);
-						Logger.d("handleMessage: pre" + (float) Math.floor((mRunningTime * 100 / mOriginalTime)));
 						if (mOriginalTime != 0) {
 							mColorArcProgressBar.setCurrentValues((float) Math.floor((mRunningTime * 100 / mOriginalTime)));
 						}
@@ -234,7 +231,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		mLineChartView.setViewportCalculationEnabled(false);
 		mLineChartView.setOnValueTouchListener(new ValueTouchListener());
 
-		dynamicDataDisplay(System.currentTimeMillis(),0);
+		dynamicDataDisplay(getIntent().getLongExtra(Constants.CURRENT_TIME,0),getIntent().getIntExtra(Constants.CURRENT_TEMP,0));
 	}
 
 
@@ -294,10 +291,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 						LogUtil.i(TAG,"当点击again时mCureID会改变"+mCureId);
 					}
-//					for (Point point:points) {
-//						point.setCureId(mCureId);
-//						mPointDao.insert(point);
-//					}
+
+
 					for (int i = 0; i <points.size() ; i++) {
 						points.get(i).setCureId(mCureId);
 						mPointDao.insert(points.get(i));
@@ -371,8 +366,25 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				LogUtil.i(TAG,"Only gatt, just wait");
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				mConnected = false;
+
+				Intent disConnectIntent=new Intent();
+				disConnectIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
+				disConnectIntent.setAction(Constants.RECEIVE_GATT_STATUS);
+				sendBroadcast(disConnectIntent);
+
 				//TODO 断开连接处理
-				Toasty.error(RunningActivity.this, "与设备断开连接", Toast.LENGTH_SHORT).show();
+//				Toasty.error(RunningActivity.this, "与设备断开连接", Toast.LENGTH_SHORT).show();
+				AlertDialog.Builder builder=new AlertDialog.Builder(RunningActivity.this)
+						.setMessage("已断开连接，请重新连接")
+						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								saveData();//需要在此保存数据
+								dialog.dismiss();
+								finish();
+							}
+						});
+				builder.create().show();
 				stopTimer();
 
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
@@ -389,9 +401,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					LogUtil.i(TAG,"RunningActivity onReceive: mData" + Arrays.toString(mData));//TODO 将接受到的数据显示在图表中
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-//					if (!(mData[2] + mData[3] + mData[4] + mData[5] + mData[6]+mData[7]== mData[8])) {
-//						return;
-//					}
+					if (!(mData[2] + mData[3] + mData[4] + mData[5] + mData[6]+mData[7]+mData[8]== ConvertUtils.byte2unsignedInt(mData[9]))) {
+						return;
+					}
 
 					int temp;
 

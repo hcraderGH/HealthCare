@@ -6,7 +6,7 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="270dp">
+        android:layout_height="230dp">
 
         <!--<View-->
         <!--android:layout_width="match_parent"-->
@@ -19,7 +19,7 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:overScrollMode="never"
-            android:paddingBottom="15dp"
+            android:paddingBottom="8dp"
             android:paddingEnd="@dimen/card_padding"
             android:paddingLeft="@dimen/card_padding"
             android:paddingRight="@dimen/card_padding"
@@ -28,21 +28,14 @@
 
     </RelativeLayout>
 
-    <RelativeLayout
-        android:id="@+id/rl_cure_start"
-        android:layout_width="match_parent"
-        android:layout_height="50dp">
-
         <Button
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
+            android:layout_gravity="center_horizontal"
             android:id="@+id/btn_physical_start"
             style="@style/ButtonStyle"
             android:layout_width="200dp"
             android:textSize="14sp"
-            android:layout_height="match_parent"
+            android:layout_height="50dp"
             android:text="开始"/>
-    </RelativeLayout>
 
 
 </LinearLayout>

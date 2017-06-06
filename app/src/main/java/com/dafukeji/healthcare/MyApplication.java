@@ -12,7 +12,9 @@ import com.blankj.utilcode.util.Utils;
 import com.dafukeji.healthcare.constants.Config;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.ui.MainActivity;
+import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.SPUtils;
+import com.dafukeji.healthcare.util.SettingManager;
 import com.orhanobut.logger.Logger;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.BuglyStrategy;
@@ -32,8 +34,8 @@ public class MyApplication extends Application {
 	private static MyApplication instance;
 
 	private static String TAG="测试";
-	private static boolean isClearSP=true;
-	private static boolean isClearDB=true;
+	private static boolean isClearSP=false;
+	private static boolean isClearDB=false;
 	private static boolean isTest=true;//TODO 当不处于测试的时候应该设置为false
 
 
@@ -76,8 +78,8 @@ public class MyApplication extends Application {
 		/**
 		 * true表示初始化时自动检查升级; false表示不会自动检查升级,需要手动调用Beta.checkUpgrade()方法;
 		 */
-		mSpUtils=new SPUtils(Constants.APP_SETTING,this);
-		Beta.autoCheckUpgrade = mSpUtils.getBoolean(Constants.APP_SETTING_AUTO_UPDATE,true);
+		LogUtil.i(TAG,"SettingManager.getInstance().isAUTO_UPDATE()"+SettingManager.getInstance().isAUTO_UPDATE());
+		Beta.autoCheckUpgrade = SettingManager.getInstance().isAUTO_UPDATE();
 
 		/**
 		 * 设置升级检查周期为60s(默认检查周期为0s)，60s内SDK不重复向后台请求策略);

@@ -167,6 +167,15 @@
                         android:textColor="?android:attr/textColorPrimary"
                         android:textSize="16sp"/>
 
+                    <TextView
+                        android:id="@+id/tv_version_info"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:textColor="@color/done_disabled_dark"
+                        android:layout_marginRight="5dp"
+                        android:textSize="14sp"/>
+
                     <ImageView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -229,6 +238,33 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:text="清除缓存"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@mipmap/ic_arrow_right_gray"/>
+
+                </LinearLayout>
+            </com.andexert.library.RippleView>
+
+            <com.andexert.library.RippleView
+                android:id="@+id/rv_clear_database"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/ll_clear_database"
+                    style="@style/SettingItemStyle"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="清空数据库"
                         android:textColor="?android:attr/textColorPrimary"
                         android:textSize="16sp"/>
 

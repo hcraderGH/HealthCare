@@ -16,7 +16,8 @@
 
     <dimen name="running_cardView_size">100dp</dimen>
 
-    <dimen name="card_padding">55dp</dimen>
+    <!--默认55dp-->
+    <dimen name="card_padding">45dp</dimen>
 
     <dimen name="button_width">60dp</dimen>
     <dimen name="button_height">24dp</dimen>

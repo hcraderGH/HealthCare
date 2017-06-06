@@ -34,6 +34,7 @@ import android.util.Log;
 
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.constants.GattAttributes;
+import com.dafukeji.healthcare.util.LogUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -117,7 +118,6 @@ public class BluetoothLeService extends Service {
         }
     }
 
-
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
@@ -164,13 +164,16 @@ public class BluetoothLeService extends Service {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
+
+
+            LogUtil.i(TAG,"onCharacteristicRead:"+characteristic.getValue());
         }
 
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt,
                                             BluetoothGattCharacteristic characteristic) {
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-            Log.e(TAG, "OnCharacteristicWrite");
+            Log.e(TAG, "OnCharacteristicChanged");
         }
 
         @Override

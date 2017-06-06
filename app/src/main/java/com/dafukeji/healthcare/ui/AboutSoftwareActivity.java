@@ -9,6 +9,7 @@ import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.NetworkUtils;
 import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.util.SettingManager;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.bugly.beta.UpgradeInfo;
 
@@ -19,9 +20,9 @@ import com.tencent.bugly.beta.UpgradeInfo;
 public class AboutSoftwareActivity extends BaseActivity implements View.OnClickListener {
 
 	private ImageView ivBack;
-	private TextView tvNewVersion;
-	private String versionName;
-	private int  versionCode;
+	private TextView tvNewVersion,tvCurrentVersion;
+	private String currentVersion;
+	private String newVersion;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -29,17 +30,6 @@ public class AboutSoftwareActivity extends BaseActivity implements View.OnClickL
 
 		initViews();
 
-		if (NetworkUtils.isConnected()){
-			UpgradeInfo upgradeInfo=Beta.getUpgradeInfo();
-			if (upgradeInfo!=null){//如果Bugly中没有发布新的版本，在此需要进行判断
-				versionName=upgradeInfo.versionName;
-				versionCode=upgradeInfo.versionCode;
-			}else{//用本地版本代替最新版本号
-				versionName= AppUtils.getAppVersionName();
-				versionCode=AppUtils.getAppVersionCode();
-			}
-			tvNewVersion.setText("V"+versionName+"."+versionCode);
-		}
 	}
 
 
@@ -48,6 +38,29 @@ public class AboutSoftwareActivity extends BaseActivity implements View.OnClickL
 		ivBack.setOnClickListener(this);
 
 		tvNewVersion= (TextView) findViewById(R.id.tv_new_version);
+		tvCurrentVersion= (TextView) findViewById(R.id.tv_current_version);
+
+		currentVersion=AppUtils.getAppVersionName()+"."+AppUtils.getAppVersionCode();
+		tvCurrentVersion.setText(currentVersion);
+
+		if (NetworkUtils.isConnected()){
+			UpgradeInfo upgradeInfo=Beta.getUpgradeInfo();
+			if (upgradeInfo!=null){//如果Bugly中没有发布新的版本，在此需要进行判断
+				newVersion=upgradeInfo.versionName+"."+upgradeInfo.versionCode;
+				SettingManager.getInstance().setNEW_VERSION(newVersion);
+			}else{//用本地版本代替最新版本号
+				newVersion=currentVersion;
+
+			}
+		}else {
+			if (SettingManager.getInstance().getNEW_VERSION(currentVersion).equals(currentVersion)){
+				newVersion=currentVersion;
+			}else{
+				newVersion=SettingManager.getInstance().getNEW_VERSION(currentVersion);
+			}
+
+		}
+		tvNewVersion.setText(newVersion);
 	}
 
 	@Override

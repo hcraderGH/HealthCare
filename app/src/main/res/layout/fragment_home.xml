@@ -9,8 +9,7 @@
     <RelativeLayout
         android:background="@color/app_bar_color"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_height="150dp">
 
         <me.itangqi.waveloadingview.WaveLoadingView
             android:id="@+id/wlv_reminder_electric_quantity"
@@ -171,10 +170,16 @@
         android:layout_height="1dp"
         android:background="@color/item_divider"/>
 
-    <FrameLayout
-        android:id="@+id/fl_cure_content"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="320dp"
-        android:layout_marginBottom="20dp"/>
+        android:layout_height="wrap_content">
+
+        <FrameLayout
+            android:id="@+id/fl_cure_content"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            android:layout_marginBottom="20dp"/>
+    </ScrollView>
+
 
 </LinearLayout>

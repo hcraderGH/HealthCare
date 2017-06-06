@@ -29,11 +29,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
+import com.dafukeji.healthcare.ui.RunningActivity;
 import com.dafukeji.healthcare.util.ConvertUtils;
+import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
+import com.dafukeji.healthcare.util.ToastUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,15 +45,19 @@ import java.util.Arrays;
 import es.dmoral.toasty.Toasty;
 import me.itangqi.waveloadingview.WaveLoadingView;
 
-public class HomeFragment extends Fragment implements View.OnClickListener{
+public class HomeFragment extends Fragment implements View.OnClickListener {
 
 	private WaveLoadingView mWaveLoadingView;
-	private ImageView ivDeviceStatusLogo,ivTempLogo;
+	private ImageView ivDeviceStatusLogo, ivTempLogo;
 	private Button btnDeviceStatus;
-	private TextView tvDeviceStatus,tvTempStatus,tvCurrentTemp;
+	private TextView tvDeviceStatus, tvTempStatus, tvCurrentTemp;
 	private int mRemindEle;
-	private int mCurrentTemp;
 
+	private int mCurrentTemp;
+	private boolean mSendNewCmdFlag;
+	private int mCurrentFrameId;
+	private int mPreFrameId;
+	private int mSendCmdCount;
 
 	private MedicalFragment mMedicalFragment;
 	private PhysicalFragment mPhysicalFragment;
@@ -66,46 +74,77 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<>();
 	private static boolean mConnected = false;
 
-	private int selectedGrade =1;//档位
 	private View mView;
 
 	private BlueToothBroadCast mBlueToothBroadCast;
+	private boolean isGATTConnected;
 
 //	private boolean beginRemindBat =false;//当连接设备成功时，即提醒用户电量
 
-	private static String TAG="测试HomeFragment";
+	private static String TAG = "测试HomeFragment";
+
+
+	private boolean isFirstGetPreFrameId = true;
+
 	@Override
 	public void onAttach(Context context) {
 		//注册接受蓝牙信息的广播
-		mBlueToothBroadCast=new BlueToothBroadCast();
-		IntentFilter filter=new IntentFilter();
+		mBlueToothBroadCast = new BlueToothBroadCast();
+		IntentFilter filter = new IntentFilter();
 		filter.addAction(Constants.RECEIVE_BLUETOOTH_INFO);
-		getActivity().registerReceiver(mBlueToothBroadCast,filter);
+		filter.addAction(Constants.RECEIVE_GATT_STATUS);
+		getActivity().registerReceiver(mBlueToothBroadCast, filter);
 
 		super.onAttach(context);
 	}
 
 
-	class BlueToothBroadCast extends BroadcastReceiver{
-
+	class BlueToothBroadCast extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的信息
-			mDeviceAddress= intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
-			LogUtil.i(TAG, "onActivityResult:mDeviceAddress "+mDeviceAddress);
+			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
+			LogUtil.i(TAG, "onReceive:mDeviceAddress " + mDeviceAddress);
 			mBluetoothLeService.connect(mDeviceAddress);
+
+			isGATTConnected=intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
+			if (!isGATTConnected){
+				setDisplayStatus(false);
+			}
 		}
 	}
+
+	// Code to manage Service lifecycle.
+	public final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+		@Override
+		public void onServiceConnected(ComponentName componentName, IBinder service) {
+			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+			if (!mBluetoothLeService.initialize()) {
+				LogUtil.i(TAG, "Unable to initialize Bluetooth");
+				getActivity().finish();
+			}
+
+			LogUtil.i(TAG, "mBluetoothLeService is okay");
+			// Automatically connects to the device upon successful start-up initialization.
+			//mBluetoothLeService.connect(mDeviceAddress);
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName componentName) {
+			mBluetoothLeService = null;
+		}
+	};
 
 
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-		mView =inflater.inflate(R.layout.fragment_home,container,false);
+		mView = inflater.inflate(R.layout.fragment_home, container, false);
 		initViews();
 
-		mManager=getActivity().getSupportFragmentManager();
-		fragmentNames=getResources().getStringArray(R.array.array_frag_name);
+		mManager = getActivity().getSupportFragmentManager();
+		fragmentNames = getResources().getStringArray(R.array.array_frag_name);
 
 		setTabSelection(0);
 
@@ -113,7 +152,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		// selectively disable BLE-related features.
 		if (!getActivity().getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
 			Toast.makeText(getActivity(), R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
-			LogUtil.i(TAG,"onCreateView: "+R.string.ble_not_supported);
+			LogUtil.i(TAG, "onCreateView: " + R.string.ble_not_supported);
 			getActivity().finish();
 		}
 
@@ -134,7 +173,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 		}
 		Intent gattServiceIntent = new Intent(getActivity(), BluetoothLeService.class);
-		LogUtil.i(TAG,"Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
+		LogUtil.i(TAG, "Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
 //		getActivity().startService(new Intent(getActivity(), ScanService.class));//开始时候开启扫描服务 TODO
@@ -144,50 +183,33 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 	private void initViews() {
 
-		mWaveLoadingView= (WaveLoadingView) mView.findViewById(R.id.wlv_reminder_electric_quantity);
+		mWaveLoadingView = (WaveLoadingView) mView.findViewById(R.id.wlv_reminder_electric_quantity);
 
-		ivDeviceStatusLogo= (ImageView) mView.findViewById(R.id.iv_home_device_status_logo);
-		ivTempLogo= (ImageView) mView.findViewById(R.id.iv_home_current_temp_status_logo);
+		ivDeviceStatusLogo = (ImageView) mView.findViewById(R.id.iv_home_device_status_logo);
+		ivTempLogo = (ImageView) mView.findViewById(R.id.iv_home_current_temp_status_logo);
 		btnDeviceStatus = (Button) mView.findViewById(R.id.btn_home_device_status);
-		tvDeviceStatus= (TextView) mView.findViewById(R.id.tv_home_device_status);
-		tvTempStatus= (TextView) mView.findViewById(R.id.tv_home_current_temp_status);
-		tvCurrentTemp= (TextView) mView.findViewById(R.id.tv_home_current_temp);
+		tvDeviceStatus = (TextView) mView.findViewById(R.id.tv_home_device_status);
+		tvTempStatus = (TextView) mView.findViewById(R.id.tv_home_current_temp_status);
+		tvCurrentTemp = (TextView) mView.findViewById(R.id.tv_home_current_temp);
 
 		btnDeviceStatus.setClickable(true);
 		btnDeviceStatus.setOnClickListener(this);
 
 
-		rbMedical= (RadioButton) mView.findViewById(R.id.rb_medical);
-		rbPhysical= (RadioButton) mView.findViewById(R.id.rb_physical);
+		rbMedical = (RadioButton) mView.findViewById(R.id.rb_medical);
+		rbPhysical = (RadioButton) mView.findViewById(R.id.rb_physical);
 		rbMedical.setOnClickListener(this);
 		rbPhysical.setOnClickListener(this);
 	}
 
 	@Override
 	public void onClick(View v) {
-		switch (v.getId()){
+		switch (v.getId()) {
 			case R.id.btn_home_device_status:
-				if (mConnected){
-					setDisplayStatus(!mConnected);
-					mConnected=false;//在此处强制设为false
-
-					int stimulate=3;//关机标志
-					int stimulateGrade=0;
-					int stimulateFrequency=0;
-					int cauterizeGrade=0;
-					int cauterizeTime=0;
-					int needleType=0;
-					int needleGrade=0;
-					int needleFrequency=0;
-					int medicineTime=0;
-					int crc=stimulate+stimulateGrade+stimulateFrequency+cauterizeGrade+cauterizeTime
-							+needleType+needleGrade+needleFrequency+medicineTime;
-
-					byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
-							, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
-					,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
-					Log.i(TAG, "onClick: off"+Arrays.toString(setting));
-					mBluetoothLeService.WriteValue(setting);
+				if (mConnected) {
+//					setDisplayStatus(!mConnected);//TODO
+					mSendNewCmdFlag = true;
+					sendPowerOffCmd();
 				}
 				break;
 			case R.id.rb_medical:
@@ -199,51 +221,58 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		}
 	}
 
+	/**
+	 * 发送关机命令
+	 */
+	private void sendPowerOffCmd() {
+		mSendCmdCount++;
+		int stimulate = 3;//关机标志
+		int stimulateGrade = 0;
+		int stimulateFrequency = 0;
+		int cauterizeGrade = 0;
+		int cauterizeTime = 0;
+		int needleType = 0;
+		int needleGrade = 0;
+		int needleFrequency = 0;
+		int medicineTime = 0;
+		int crc = stimulate + stimulateGrade + stimulateFrequency + cauterizeGrade + cauterizeTime
+				+ needleType + needleGrade + needleFrequency + medicineTime;
+
+		byte[] setting = new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
+				, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte) needleType, (byte) needleGrade
+				, (byte) needleFrequency, (byte) medicineTime, (byte) crc};
+		Log.i(TAG, "onClick: off" + Arrays.toString(setting));
+		mBluetoothLeService.WriteValue(setting);
+	}
+
 
 	/**
 	 * 根据传入的index参数来设置选中的tab页。
-	 * @param index
-	 * 每个tab页对应的下标。
+	 *
+	 * @param index 每个tab页对应的下标。
 	 */
-	private void setTabSelection(int index){
+	private void setTabSelection(int index) {
 		// 开启一个Fragment事务
-		FragmentTransaction transaction=mManager.beginTransaction();
+		FragmentTransaction transaction = mManager.beginTransaction();
 		// 先隐藏掉所有的Fragment，以防止有多个Fragment显示在界面上的情况
 		hideFragments(transaction);
-		switch (index){
-//			case 0:
-//				if (mMedicalFragment==null){
-//					mMedicalFragment=new MedicalFragment();
-//					transaction.add(R.id.fl_cure_content,mMedicalFragment);
-//				}else{
-//					transaction.show(mMedicalFragment);
-//				}
-//				break;
-//			case 1:
-//				if (mPhysicalFragment==null){
-//					mPhysicalFragment=new PhysicalFragment();
-//					transaction.add(R.id.fl_cure_content,mPhysicalFragment);
-//				}else{
-//					transaction.show(mPhysicalFragment);
-//				}
-//				break;
-
+		switch (index) {
 			case 0:
-				if (mMedicalFragment==null){
-					mMedicalFragment=new MedicalFragment();
-					transaction.add(R.id.fl_cure_content,mMedicalFragment,fragmentNames[0]);
+				if (mMedicalFragment == null) {
+					mMedicalFragment = new MedicalFragment();
+					transaction.add(R.id.fl_cure_content, mMedicalFragment, fragmentNames[0]);
 					transaction.addToBackStack(fragmentNames[0]);
-				}else{
+				} else {
 					transaction.show(mMedicalFragment);
 				}
 
 				break;
 			case 1:
-				if (mPhysicalFragment==null){
-					mPhysicalFragment=new PhysicalFragment();
-					transaction.add(R.id.fl_cure_content,mPhysicalFragment,fragmentNames[1]);
+				if (mPhysicalFragment == null) {
+					mPhysicalFragment = new PhysicalFragment();
+					transaction.add(R.id.fl_cure_content, mPhysicalFragment, fragmentNames[1]);
 					transaction.addToBackStack(fragmentNames[0]);
-				}else{
+				} else {
 					transaction.show(mPhysicalFragment);
 				}
 				break;
@@ -254,8 +283,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 
 	/**
 	 * 将所有的Fragment都置为隐藏状态。
-	 * @param transaction
-	 * 用于对Fragment执行操作的事务
+	 *
+	 * @param transaction 用于对Fragment执行操作的事务
 	 */
 	private void hideFragments(FragmentTransaction transaction) {
 		if (mMedicalFragment != null) {
@@ -270,8 +299,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	/**
 	 * 根据连接状态设置
 	 */
-	private void setDisplayStatus(boolean isConnected){
-		if (isConnected){
+	private void setDisplayStatus(boolean isConnected) {
+		if (isConnected) {
 			ivDeviceStatusLogo.setBackgroundResource(R.mipmap.ic_circle_green);
 			ivTempLogo.setBackgroundResource(R.mipmap.ic_circle_yellow);
 
@@ -281,9 +310,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 			tvTempStatus.setTextColor(getResources().getColor(R.color.connect_status));
 			tvCurrentTemp.setTextColor(Color.parseColor("#FFFFFF"));
 
-			Toasty.success(getActivity(),"连接设备成功",Toast.LENGTH_SHORT).show();
+			Toasty.success(getActivity(), "连接设备成功", Toast.LENGTH_SHORT).show();
 
-		}else{
+		} else {
+
 			ivDeviceStatusLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
 			ivTempLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
 
@@ -320,70 +350,111 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
-				LogUtil.i(TAG,"Only gatt, just wait");
+				LogUtil.i(TAG, "Only gatt, just wait");
 //				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
 
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
-				LogUtil.i(TAG,"mGattUpdateReceiver断开了连接");
-//				if (mConnected){
+				LogUtil.i(TAG, "mGattUpdateReceiver断开了连接");
+
+				isFirstGetPreFrameId = true;
+				if (mSendNewCmdFlag) {
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-//							setDisplayStatus(!mConnected);
 							setDisplayStatus(false);
 						}
 					});
-//				}
+				}
+				mSendNewCmdFlag = false;
 
-				mConnected=false;
-				Intent gattIntent=new Intent();
-				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
+				mConnected = false;
+				Intent gattIntent = new Intent();
+				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS, mConnected);
 				gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
 				getActivity().sendBroadcast(gattIntent);
 
-			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)){ //可以开始干活了
+			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 
-				mConnected = true;
-				getActivity().runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						setDisplayStatus(mConnected);
-					}
-				});
-				LogUtil.i(TAG,"In what we need");
+//				mConnected = true;
+//				getActivity().runOnUiThread(new Runnable() {
+//					@Override
+//					public void run() {
+//						setDisplayStatus(mConnected);
+//					}
+//				});
+//				LogUtil.i(TAG, "In what we need");
+
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
 
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
 
-					Intent gattIntent=new Intent();
-					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
+					if (isFirstGetPreFrameId) {
+						mConnected = true;//TODO 为了测试硬件连上但是不发送数据的情况
+						getActivity().runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								setDisplayStatus(mConnected);
+							}
+						});
+					}
+
+					Intent gattIntent = new Intent();
+					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS, mConnected);
 					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
 					getActivity().sendBroadcast(gattIntent);
 
 					//TODO 接收数据处理
-					LogUtil.i(TAG,"onReceive: "+ Arrays.toString(data));
+					LogUtil.i(TAG, "onReceive: " + Arrays.toString(data));
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-//					if (!(data[2] + data[3] + data[4] + data[5] + data[6]+data[7]== data[8])) {//TODO 测试此处有错误
-//						return;
-//					}
+					if (!(data[2] + data[3] + data[4] + data[5] + data[6] + data[7] + data[8] == ConvertUtils.byte2unsignedInt(data[9]))) {
+						LogUtil.i(TAG,"数据校验出现错误");
+						return;
+					}
 
-					mCurrentTemp=ConvertUtils.byte2unsignedInt(data[3]);
-					mRemindEle=ConvertUtils.byte2unsignedInt(data[7]);
+					if (isFirstGetPreFrameId) {
+						Frame.preFrameId = ConvertUtils.byte2unsignedInt(data[8]);//再次获取一次就可以了
+						LogUtil.i(TAG, "唯一的一个Frame.preFrameId=" + Frame.preFrameId);
+						isFirstGetPreFrameId = false;
+					}
+
+
+					if (mSendNewCmdFlag) {
+						Frame.curFrameId = ConvertUtils.byte2unsignedInt(data[8]);
+						LogUtil.i(TAG, "Frame.curFrameId=" + Frame.curFrameId);
+						LogUtil.i(TAG, "Frame.preFrameId=" + Frame.preFrameId);
+						if (Frame.preFrameId == Frame.curFrameId) {
+							sendPowerOffCmd();
+						} else {
+							Frame.preFrameId = Frame.curFrameId;
+							mSendNewCmdFlag = false;
+//							getActivity().runOnUiThread(new Runnable() {//TODO 主要是不能够有效接收到数据
+//								@Override
+//								public void run() {
+//									setDisplayStatus(false);
+//								}
+//							});
+						}
+					}
+
+					mCurrentTemp = ConvertUtils.byte2unsignedInt(data[3]);
+					mRemindEle = ConvertUtils.byte2unsignedInt(data[7]);
 
 					//发送电量的广播
-					Intent batIntent=new Intent();
-					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY,mRemindEle);
+					Intent batIntent = new Intent();
+					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
 					getActivity().sendBroadcast(batIntent);
 
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							JudgeEleSetWare((int) Math.ceil(mRemindEle*10/4.3));//TODO 电量公式
-							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3])+"℃");
+							JudgeEleSetWare((int) Math.ceil(mRemindEle * 10 / 4.3 > 95 ? 95 : mRemindEle * 10 / 4.3));//TODO 电量公式
+							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3]) + "℃");
 						}
 					});
+				}else{
+					Toasty.warning(getActivity(),"请重启设备",Toast.LENGTH_LONG).show();//TODO 测试能够连接上设备，但是获取不到数据的情况
 				}
 			}
 		}
@@ -393,22 +464,22 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	 * 根据电量来设置Ware的颜色
 	 */
 	private void JudgeEleSetWare(int ele) {
-		if (!mConnected){
-			return;
-		}
+//		if (!mConnected) {//此处多余，应该当断开时就已经不执行此方法了
+//			return;
+//		}
 
 		mWaveLoadingView.startAnimation();//当断开接连时,停止了动画，所以要开始动画
 
 		mWaveLoadingView.setProgressValue(ele);
-		mWaveLoadingView.setCenterTitle(ele+"%");
-		if (ele>=Constants.EXTRAS_BATTERY_WARN){
+		mWaveLoadingView.setCenterTitle(ele + "%");
+		if (ele >= Constants.EXTRAS_BATTERY_WARN) {
 			mWaveLoadingView.setCenterTitleColor(Color.parseColor("#cc000000"));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_normal));
-		}else if (ele<Constants.EXTRAS_BATTERY_WARN&&ele>=Constants.EXTRAS_BATTERY_DANGER){
+		} else if (ele < Constants.EXTRAS_BATTERY_WARN && ele >= Constants.EXTRAS_BATTERY_DANGER) {
 			mWaveLoadingView.setCenterTitleColor(getResources().getColor(R.color.battery_electric_quantity_warn));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_warn));
-		}else{
-			Intent intent=new Intent(getActivity(), BatteryService.class);
+		} else {
+			Intent intent = new Intent(getActivity(), BatteryService.class);
 			getActivity().startService(intent);
 //			if (!beginRemindBat){
 //				if (mMaterialDialog==null){//此处需要判断是否为空，求变量要为全局，否则，在对话框后，一直会new出新的对话框
@@ -433,34 +504,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 	}
 
 
-	// Code to manage Service lifecycle.
-	public final ServiceConnection mServiceConnection = new ServiceConnection() {
-
-		@Override
-		public void onServiceConnected(ComponentName componentName, IBinder service) {
-			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-			if (!mBluetoothLeService.initialize()) {
-				LogUtil.i(TAG,"Unable to initialize Bluetooth");
-				getActivity().finish();
-			}
-
-			LogUtil.i(TAG,"mBluetoothLeService is okay");
-
-			// Automatically connects to the device upon successful start-up initialization.
-			//mBluetoothLeService.connect(mDeviceAddress);
-		}
-
-		@Override
-		public void onServiceDisconnected(ComponentName componentName) {
-			mBluetoothLeService = null;
-		}
-	};
-
-	public static boolean getBlueToothStatus(){
+	public static boolean getBlueToothStatus() {
 		return mConnected;
 	}
 
-	public static BluetoothLeService getBluetoothLeService(){
+	public static BluetoothLeService getBluetoothLeService() {
 		return mBluetoothLeService;
 	}
 
@@ -478,20 +526,20 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 //		if (mBluetoothLEAdapter != null) {
 //			mBluetoothLEAdapter.disable();
 //		}
-		LogUtil.i(TAG,"We are in destroy");
+		LogUtil.i(TAG, "We are in destroy");
 	}
 
-	public void disConnect(){
+	public void disConnect() {
 
 //		if (mConnected){
-			getActivity().runOnUiThread(new Runnable() {
-				@Override
-				public void run() {
+		getActivity().runOnUiThread(new Runnable() {
+			@Override
+			public void run() {
 //					setDisplayStatus(!mConnected);
-					setDisplayStatus(false);
-				}
-			});
-			mConnected=false;
+				setDisplayStatus(false);
+			}
+		});
+		mConnected = false;
 //		}
 		if (mBluetoothLeService != null) {
 			mBluetoothLeService.close();
@@ -511,7 +559,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener{
 		}
 	}
 
-	public void disableBlueTooth(){
+	public void disableBlueTooth() {
 		if (mBluetoothLeService != null) {
 			mBluetoothLeService.close();
 			mBluetoothLeService = null;

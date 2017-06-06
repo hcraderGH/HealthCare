@@ -18,6 +18,8 @@ public class SettingManager {
 	private boolean NO_DISTURBING=false;
 	//自动升级
 	private boolean AUTO_UPDATE=true;
+	//升级的APP版本
+	private String NEW_VERSION;
 
 	private static SettingManager instance=new SettingManager();
 
@@ -27,6 +29,20 @@ public class SettingManager {
 
 	private  SettingManager(){
 
+	}
+
+	public String getNEW_VERSION(String CURRENT_VERSION) {
+		SharedPreferences sp= MyApplication.getInstance().getSharedPreferences(Constants.APP_INFO, Context.MODE_PRIVATE);
+		NEW_VERSION=sp.getString(Constants.APP_NEW_VERSION,CURRENT_VERSION);
+		return NEW_VERSION;
+	}
+
+	public void setNEW_VERSION(String NEW_VERSION) {
+		SharedPreferences sp= MyApplication.getInstance().getSharedPreferences(Constants.APP_INFO, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor=sp.edit();
+		editor.putString(Constants.APP_NEW_VERSION,NEW_VERSION);
+		editor.commit();
+		this.NEW_VERSION = NEW_VERSION;
 	}
 
 	public boolean isNOTIFICATION() {

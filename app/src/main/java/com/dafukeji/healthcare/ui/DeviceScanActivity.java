@@ -2,17 +2,21 @@ package com.dafukeji.healthcare.ui;
 
 import android.Manifest;
 import android.annotation.TargetApi;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -31,6 +35,7 @@ import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.LeRecyclerAdapter;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.ToastUtil;
@@ -39,6 +44,8 @@ import com.romainpiel.shimmer.Shimmer;
 import com.romainpiel.shimmer.ShimmerButton;
 import com.romainpiel.shimmer.ShimmerTextView;
 import com.skyfishjy.library.RippleBackground;
+
+import es.dmoral.toasty.Toasty;
 
 public class DeviceScanActivity extends BaseActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
@@ -58,10 +65,14 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private BluetoothAdapter.LeScanCallback mLeScanCallback;
 
 	// Stops scanning after SCAN_PERIOD seconds.
-	private static final long SCAN_PERIOD = 2000;
+	private static final long SCAN_PERIOD = 3000;
 	public static final int REQUEST_ENABLE_BT = 1;
 
 	private static String TAG="测试DeviceScanActivity";
+
+	private ProgressDialog mProgressDialog;
+
+	private static BluetoothLeService mBluetoothLeService;
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
@@ -78,10 +89,38 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				(BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 		mBluetoothAdapter = bluetoothManager.getAdapter();
 
+
+//		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+//		LogUtil.i(TAG, "Try to bindService=" + this.bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
+
 		initScanCallback();
 		initWidgets();
 		mayRequestLocation();
 	}
+
+
+//	// Code to manage Service lifecycle.
+//	public final ServiceConnection mServiceConnection = new ServiceConnection() {
+//
+//		@Override
+//		public void onServiceConnected(ComponentName componentName, IBinder service) {
+//			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+//			if (!mBluetoothLeService.initialize()) {
+//				LogUtil.i(TAG, "Unable to initialize Bluetooth");
+//				finish();
+//			}
+//
+//			LogUtil.i(TAG, "mBluetoothLeService is okay");
+//
+//			// Automatically connects to the device upon successful start-up initialization.
+//			//mBluetoothLeService.connect(mDeviceAddress);
+//		}
+//
+//		@Override
+//		public void onServiceDisconnected(ComponentName componentName) {
+//			mBluetoothLeService = null;
+//		}
+//	};
 
 
 	private static final int REQUEST_FINE_LOCATION=0;
@@ -124,6 +163,10 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	}
 
 	private void initWidgets() {
+
+		mProgressDialog=new ProgressDialog(this);
+		mProgressDialog.setMessage("正在搜索蓝牙，请稍等...");
+
 		mRecyclerView = (RecyclerView) findViewById(R.id.rlv_scan_devices);
 		mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 		mLeDeviceRecyclerAdapter = new LeRecyclerAdapter(this);
@@ -132,6 +175,12 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			public void onItemClick(View view, int position) {
 				final BluetoothDevice device = mLeDeviceRecyclerAdapter.getDevice(position);
 				if (device == null) return;
+//				boolean isConnected=mBluetoothLeService.connect(device.getAddress());
+//				if (!isConnected){
+//					Toasty.warning(DeviceScanActivity.this,"未能连接上设备，请重启设备",Toast.LENGTH_LONG).show();
+//					return;
+//				}
+
 				Intent intent = new Intent();
 				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
 				intent.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
@@ -295,6 +344,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	}
 
 	private void startScan() {
+		mProgressDialog.show();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			mBluetoothAdapter.getBluetoothLeScanner().startScan(mScanCallback);
 		} else {
@@ -303,6 +353,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	}
 
 	private void stopScan() {
+		mProgressDialog.dismiss();
+		tbScan.setChecked(false);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			mBluetoothAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
 		} else {
@@ -318,6 +370,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					new ScanCallback() {
 						@Override
 						public void onScanResult(int callbackType, final ScanResult result) {
+
+							LogUtil.i(TAG,"蓝牙的信号强度："+result.getRssi());
 
 							if (result.getDevice().getName().equals(Constants.MATCH_DEVICE_NAME)) {
 								runOnUiThread(new Runnable() {
@@ -337,6 +391,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						@Override
 						public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
 
+							LogUtil.i(TAG,"蓝牙的信号强度："+rssi);
+
 							if (device.getName().equals(Constants.MATCH_DEVICE_NAME)) {
 								runOnUiThread(new Runnable() {
 									@Override
@@ -350,4 +406,13 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					};
 		}
 	}
+
+
+//	public void unbindService(){
+//		unbindService(mServiceConnection);
+//		if (mBluetoothLeService != null) {
+//			mBluetoothLeService.close();
+//			mBluetoothLeService = null;
+//		}
+//	}
 }

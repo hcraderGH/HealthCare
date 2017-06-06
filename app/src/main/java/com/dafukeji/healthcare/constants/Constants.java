@@ -18,6 +18,8 @@ public class Constants {
 	public static final String WRITE_CHARACTERISTIC_UUID="0003cdd2-0000-1000-8000-00805f9b0131";
 
 	public static final String ORIGINAL_TIME="original_time";
+	public static final String CURRENT_TEMP="current_temp";
+	public static final String CURRENT_TIME="current__time";
 
 	public static final String RECEIVE_BLUETOOTH_INFO="receive_bluetooth_info";
 	public static final String RECEIVE_GATT_STATUS="receive_gatt_status";
@@ -43,6 +45,10 @@ public class Constants {
 	public static final String APP_SETTING_AUTO_UPDATE="app_setting_auto_update";
 	public static final String APP_SETTING_NOTIFICATION="app_setting_notification";
 	public static final String APP_SETTING_NO_DISTURBING ="app_no_disturbing";
+
+	//APP的相关信息
+	public static final String APP_INFO="app_info";
+	public static final String APP_NEW_VERSION="app_new_version";
 
 	public static final String SP_CURE="sp_cure";
 

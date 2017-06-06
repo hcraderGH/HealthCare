@@ -2,10 +2,12 @@ package com.dafukeji.healthcare.ui;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SwitchCompat;
 import android.util.Log;
 import android.view.View;
@@ -13,17 +15,24 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.andexert.library.RippleView;
+import com.blankj.utilcode.util.AppUtils;
+import com.blankj.utilcode.util.NetworkUtils;
 import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.MyApplication;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
+import com.dafukeji.healthcare.util.DataCleanManager;
+import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.SettingManager;
+import com.dafukeji.healthcare.util.ToastUtil;
 import com.tencent.bugly.beta.Beta;
+import com.tencent.bugly.beta.UpgradeInfo;
 
 import java.util.Arrays;
 
@@ -35,11 +44,14 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 
 
 	private ImageView ivBack;
-	private RippleView rvAboutSoftware;
+	private RippleView rvAboutSoftware,rvCheckUpdate,rvClearDb;
 	private SwitchCompat scAutoUpdate,scNotification,scNoDisturbing;
 	private LinearLayout llNoDisturbing;
 	private Button btnExit;
+	private TextView tvVersionInfo;
 
+	private String newVersion;
+	private String currentVersion;
 
 	private boolean isGATTConnected=false;
 	private BlueToothBroadCast mBlueToothBroadCast;
@@ -80,8 +92,69 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		ivBack= (ImageView) findViewById(R.id.iv_back);
 		ivBack.setOnClickListener(this);
 
-		rvAboutSoftware= (RippleView) findViewById(R.id.rv_about_software);
+		tvVersionInfo= (TextView) findViewById(R.id.tv_version_info);
+		currentVersion=AppUtils.getAppVersionName()+"."+AppUtils.getAppVersionCode();
+		if (NetworkUtils.isConnected()){
+			UpgradeInfo upgradeInfo=Beta.getUpgradeInfo();
+			if (upgradeInfo!=null){//如果Bugly中没有发布新的版本，在此需要进行判断
+				newVersion=upgradeInfo.versionName+"."+upgradeInfo.versionCode;
+				if (currentVersion.equals(newVersion)){
+					tvVersionInfo.setText("已经是最新版本");
+				}else{
+					tvVersionInfo.setText("有更新版本 "+newVersion);
+				}
+			}else{
+				tvVersionInfo.setText("已经是最新版本");
+			}
+		}else{
+			if (SettingManager.getInstance().getNEW_VERSION(currentVersion).equals(currentVersion)){
+				tvVersionInfo.setText("已经是最新版本");
+			}else{
+				tvVersionInfo.setText("有更新版本 "+SettingManager.getInstance().getNEW_VERSION(currentVersion));
+			}
+		}
 
+		rvCheckUpdate= (RippleView) findViewById(R.id.rv_check_update);
+		rvCheckUpdate.setRippleDuration(getResources().getInteger(R.integer.rv_duration));
+		rvCheckUpdate.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
+			@Override
+			public void onComplete(RippleView rippleView) {
+				if (NetworkUtils.isConnected()){
+					Beta.checkUpgrade();//检查更新
+				}else{
+					ToastUtil.showToast(SettingActivity.this,"网络已断开!",1000);
+				}
+			}
+		});
+
+		rvClearDb= (RippleView) findViewById(R.id.rv_clear_database);
+		rvClearDb.setRippleDuration(getResources().getInteger(R.integer.rv_duration));
+		rvClearDb.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
+			@Override
+			public void onComplete(RippleView rippleView) {
+				AlertDialog.Builder builder=new AlertDialog.Builder(SettingActivity.this)
+						.setTitle("警告")
+						.setMessage("确定清空本地数据库吗？")
+						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								DataCleanManager.cleanDatabaseByName(SettingActivity.this,Constants.CURE_DB_NAME);
+								dialog.dismiss();
+								ToastUtil.showToast(SettingActivity.this,"已清空本地数据库",1000);
+							}
+						})
+						.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+							@Override
+							public void onClick(DialogInterface dialog, int which) {
+								dialog.dismiss();
+							}
+						});
+				builder.create().show();
+			}
+		});
+
+
+		rvAboutSoftware= (RippleView) findViewById(R.id.rv_about_software);
 		rvAboutSoftware.setRippleDuration(getResources().getInteger(R.integer.rv_duration));
 		rvAboutSoftware.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
 			@Override
@@ -103,9 +176,8 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		scNotification= (SwitchCompat) findViewById(R.id.sc_notification);
 		scNotification.setOnCheckedChangeListener(this);
 		scNotification.setChecked(SettingManager.getInstance().isNOTIFICATION());
-
-
 	}
+
 
 	@Override
 	public void onClick(View v) {
@@ -152,11 +224,6 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 		switch (buttonView.getId()){
 			case R.id.sc_auto_update:
-				if (isChecked){
-					Beta.autoCheckUpgrade=true;
-				}else{
-					Beta.autoCheckUpgrade=false;
-				}
 				SettingManager.getInstance().setAUTO_UPDATE(isChecked);
 				break;
 

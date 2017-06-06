@@ -1,5 +1,6 @@
 package com.dafukeji.healthcare.fragment;
 
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -15,8 +16,11 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.ui.RunningActivity;
+import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.viewpagercards.CardItem;
@@ -50,29 +54,32 @@ public class PhysicalFragment extends Fragment {
 
 
 	private boolean isGATTConnected;
-	private BlueToothBroadCast mBlueToothBroadCast;
+//	private BlueToothBroadCast mBlueToothBroadCast;
 
-	@Override
-	public void onAttach(Context context) {
-		//注册接受蓝牙信息的广播
-		mBlueToothBroadCast=new BlueToothBroadCast();
-		IntentFilter filter=new IntentFilter();
-		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-		getActivity().registerReceiver(mBlueToothBroadCast,filter);
-		super.onAttach(context);
+	private boolean mSendNewCmdFlag;
 
-		LogUtil.i(TAG,"onAttach()");
-	}
+//	@Override
+//	public void onAttach(Context context) {
+//		//注册接受蓝牙信息的广播
+//		mBlueToothBroadCast=new BlueToothBroadCast();
+//		IntentFilter filter=new IntentFilter();
+//		filter.addAction(Constants.RECEIVE_GATT_STATUS);
+//		getActivity().registerReceiver(mBlueToothBroadCast,filter);
+//		super.onAttach(context);
+//
+//		LogUtil.i(TAG,"onAttach()");
+//	}
+//
+//	class BlueToothBroadCast extends BroadcastReceiver {
+//
+//		@Override
+//		public void onReceive(Context context, Intent intent) {
+//			//得到蓝牙的服务连接
+//			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
+//			LogUtil.i(TAG,"onReceive  isGATTConnected:"+isGATTConnected);
+//		}
+//	}
 
-	class BlueToothBroadCast extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			//得到蓝牙的服务连接
-			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
-			LogUtil.i(TAG,"onReceive  isGATTConnected:"+isGATTConnected);
-		}
-	}
 
 
 	@Override
@@ -82,6 +89,76 @@ public class PhysicalFragment extends Fragment {
 
 		return mView;
 	}
+
+
+	//注册接收的事件
+	private static IntentFilter makeGattUpdateIntentFilter() {
+		final IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+		intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+		intentFilter.addAction(BluetoothDevice.ACTION_UUID);
+		return intentFilter;
+	}
+
+
+	private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final String action = intent.getAction();
+			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
+				LogUtil.i(TAG, "Only gatt, just wait");
+
+			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
+				LogUtil.i(TAG, "mGattUpdateReceiver断开了连接");
+
+				isGATTConnected = false;
+			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
+
+
+			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
+				isGATTConnected = true;
+
+				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				if (data != null) {
+
+					//TODO 接收数据处理
+					LogUtil.i(TAG, "onReceive: " + Arrays.toString(data));
+
+					//当校验码前面的数据相加不等于校验码时表示数据错误
+					if (!(data[2] + data[3] + data[4] + data[5] + data[6]+data[7]+data[8]==ConvertUtils.byte2unsignedInt(data[9])) ) {
+						return;
+					}
+
+					if (mSendNewCmdFlag) {
+						Frame.curFrameId = ConvertUtils.byte2unsignedInt(data[8]);
+						LogUtil.i(TAG,"Frame.curFrameId="+Frame.curFrameId);
+						LogUtil.i(TAG,"Frame.preFrameId="+Frame.preFrameId);
+						if (Frame.preFrameId == Frame.curFrameId) {
+							int cauterizeGrade=0;
+							int cauterizeTime=0;
+							LogUtil.i(TAG, "发送的物理治疗的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
+									, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime)));
+							HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
+									, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime));
+						} else {
+							mSendNewCmdFlag=false;
+
+							Frame.preFrameId=Frame.curFrameId;
+							LogUtil.i(TAG,"已经进入了方法");
+							Intent intent2 = new Intent(getActivity(), RunningActivity.class);
+							intent2.putExtra(Constants.CURE_TYPE,Constants.CURE_PHYSICAL);
+							intent2.putExtra(Constants.ORIGINAL_TIME, mKneadTime);
+							intent2.putExtra(Constants.CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
+							intent2.putExtra(Constants.CURRENT_TIME,System.currentTimeMillis());
+							getActivity().startActivity(intent2);
+						}
+					}
+				}
+			}
+		}
+	};
 
 	private void initViews() {
 		//初始化ViewPagerCard
@@ -128,24 +205,19 @@ public class PhysicalFragment extends Fragment {
 				}
 
 
+
+//				if (HomeFragment.getBluetoothLeService()==null){
+//					return;
+//				}
+
+				mSendNewCmdFlag=true;
+
 				int cauterizeGrade=0;
 				int cauterizeTime=0;
-
 				LogUtil.i(TAG, "发送的物理治疗的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
 						, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime)));
-
-				if (HomeFragment.getBluetoothLeService()==null){
-					return;
-				}
-
-				LogUtil.i(TAG,"HomeFragment.getBluetoothLeService()"+HomeFragment.getBluetoothLeService());
 				HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
 						, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime));
-
-				Intent intent = new Intent(getActivity(), RunningActivity.class);
-				intent.putExtra(Constants.CURE_TYPE,Constants.CURE_PHYSICAL);
-				intent.putExtra(Constants.ORIGINAL_TIME, mKneadTime);
-				getActivity().startActivity(intent);
 			}
 		});
 	}
@@ -153,7 +225,20 @@ public class PhysicalFragment extends Fragment {
 	@Override
 	public void onDestroy() {
 		LogUtil.i(TAG,"onDestroy()");
-		getActivity().unregisterReceiver(mBlueToothBroadCast);
+//		getActivity().unregisterReceiver(mBlueToothBroadCast);
 		super.onDestroy();
+	}
+
+
+	@Override
+	public void onStart() {
+		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+		super.onStart();
+	}
+
+	@Override
+	public void onStop() {
+		getActivity().unregisterReceiver(mGattUpdateReceiver);
+		super.onStop();
 	}
 }
