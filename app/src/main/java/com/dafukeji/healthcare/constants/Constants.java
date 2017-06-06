@@ -8,8 +8,7 @@ public class Constants {
 
 	public static final String CURE_DB_NAME="treat.db";
 
-	public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
-	public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
+
 
 	public static final String MATCH_DEVICE_NAME="USR-BLE101";
 
@@ -22,8 +21,9 @@ public class Constants {
 	public static final String CURRENT_TIME="current__time";
 
 	public static final String RECEIVE_BLUETOOTH_INFO="receive_bluetooth_info";
-	public static final String RECEIVE_GATT_STATUS="receive_gatt_status";
 	public static final String EXTRAS_GATT_STATUS="extras_gatt_status";
+	public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
+	public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
 
 
 	public static final String CURE_TYPE="cure_type";//指的是物理治疗还是药物治疗

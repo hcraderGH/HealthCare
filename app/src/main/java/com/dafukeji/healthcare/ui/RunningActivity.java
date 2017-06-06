@@ -369,7 +369,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 				Intent disConnectIntent=new Intent();
 				disConnectIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
-				disConnectIntent.setAction(Constants.RECEIVE_GATT_STATUS);
+				disConnectIntent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
 				sendBroadcast(disConnectIntent);
 
 				//TODO 断开连接处理
@@ -428,7 +428,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						msgTemp.what=3;
 						msgTemp.arg1=temp;
 						mHandler.sendMessage(msgTemp);
-
 						mSum=0;
 					}
 
@@ -587,9 +586,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
 		Log.i(TAG, "中途停止疗程"+Arrays.toString(setting));
 
-		if (HomeFragment.getBluetoothLeService()!=null){//处于连接状态
-			LogUtil.i(TAG,"HomeFragment.getBluetoothLeService()"+HomeFragment.getBluetoothLeService());
-			HomeFragment.getBluetoothLeService().WriteValue(setting);
+		if (DeviceScanActivity.getBluetoothLeService()!=null){//处于连接状态
+			LogUtil.i(TAG,"HomeFragment.getBluetoothLeService()"+DeviceScanActivity.getBluetoothLeService());
+			DeviceScanActivity.getBluetoothLeService().WriteValue(setting);
 		}else{
 			//TODO 由于突然断开进行的处理
 		}
@@ -685,11 +684,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		LogUtil.i(TAG, "发送的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime)));
 
-		if (HomeFragment.getBluetoothLeService()==null){
+		if (DeviceScanActivity.getBluetoothLeService()==null){
 			return;
 		}
 
-		HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
+		DeviceScanActivity.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime));
 	}
 

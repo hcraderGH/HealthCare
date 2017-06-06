@@ -66,7 +66,7 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		//注册接受蓝牙信息的广播
 		mBlueToothBroadCast=new BlueToothBroadCast();
 		IntentFilter filter=new IntentFilter();
-		filter.addAction(Constants.RECEIVE_GATT_STATUS);
+		filter.addAction(Constants.RECEIVE_BLUETOOTH_INFO);
 		registerReceiver(mBlueToothBroadCast,filter);
 
 		initViews();
@@ -210,7 +210,7 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 											, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
 											,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
 									Log.i(TAG, "onClick: off"+ Arrays.toString(setting));
-									HomeFragment.getBluetoothLeService().WriteValue(setting);
+									DeviceScanActivity.getBluetoothLeService().WriteValue(setting);
 								}
 								MyApplication.getInstance().exit();
 							}

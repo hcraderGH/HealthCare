@@ -124,7 +124,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		//注册接受蓝牙信息的广播
 		mBlueToothBroadCast=new BlueToothBroadCast();
 		IntentFilter filter=new IntentFilter();
-		filter.addAction(Constants.RECEIVE_GATT_STATUS);
+		filter.addAction(Constants.RECEIVE_BLUETOOTH_INFO);
 		registerReceiver(mBlueToothBroadCast,filter);
 	}
 
@@ -229,7 +229,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 											, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
 											,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
 									Log.i(TAG, "onClick: off"+ Arrays.toString(setting));
-									HomeFragment.getBluetoothLeService().WriteValue(setting);
+									DeviceScanActivity.getBluetoothLeService().WriteValue(setting);
 								}
 								MyApplication.getInstance().exit();
 							}
@@ -348,10 +348,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 									startActivity(new Intent(MainActivity.this,DeviceScanActivity.class));
 									break;
 								case 1:
-									//断开蓝牙的连接
-									if (homeFragment!=null){
-										homeFragment.disableBlueTooth();
-									}
+									//TODO 断开蓝牙的连接
+
 									break;
 							}
 						}
@@ -418,13 +416,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			} else {
 				ToastUtil.cancelToast();
 
-				if (homeFragment!=null){
-					homeFragment.disConnect();
-				}
+				unbindService(DeviceScanActivity.getServiceConnection());
 
 				//当退出程序的时候，关闭蓝牙扫描服务
-				Intent intent=new Intent(this, ScanService.class);
-				stopService(intent);
+//				Intent intent=new Intent(this, ScanService.class);
+//				stopService(intent);
 
 				//关闭蓝牙
 				if (mBluetoothLEAdapter != null&&mBluetoothLEAdapter.isEnabled()) {

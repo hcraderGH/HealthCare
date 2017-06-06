@@ -60,27 +60,6 @@ public class MedicalFragment extends Fragment {
 
 	private boolean mSendNewCmdFlag;
 
-//	private BlueToothBroadCast mBlueToothBroadCast;
-//	@Override
-//	public void onAttach(Context context) {
-//		//注册接受蓝牙信息的广播
-//		mBlueToothBroadCast=new BlueToothBroadCast();
-//		IntentFilter filter=new IntentFilter();
-//		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-//		getActivity().registerReceiver(mBlueToothBroadCast,filter);
-//		super.onAttach(context);
-//	}
-//
-//	class BlueToothBroadCast extends BroadcastReceiver {
-//
-//		@Override
-//		public void onReceive(Context context, Intent intent) {
-//			//得到蓝牙的服务连接
-//			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
-//			LogUtil.i(TAG,"onReceive  isGATTConnected:"+isGATTConnected);
-//		}
-//	}
-
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		mView = inflater.inflate(R.layout.fragment_home_medical, container, false);
@@ -140,7 +119,7 @@ public class MedicalFragment extends Fragment {
 
 
 							LogUtil.i(TAG,"已经进入了方法");
-							HomeFragment.getBluetoothLeService().WriteValue(settings);
+							DeviceScanActivity.getBluetoothLeService().WriteValue(settings);
 						} else {
 							mSendNewCmdFlag=false;
 
@@ -209,19 +188,19 @@ public class MedicalFragment extends Fragment {
 				LogUtil.i(TAG, "发送的药物治疗数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 						, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime)));
 
-				if (HomeFragment.getBluetoothLeService() == null) {
+				if (DeviceScanActivity.getBluetoothLeService() == null) {
 					return;
 				}
 
 
-				LogUtil.i(TAG, "HomeFragment.getBluetoothLeService()" + HomeFragment.getBluetoothLeService());
+				LogUtil.i(TAG, "HomeFragment.getBluetoothLeService()" + DeviceScanActivity.getBluetoothLeService());
 
 				mSendNewCmdFlag = true;
 
 				byte[] settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 						, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
 
-				HomeFragment.getBluetoothLeService().WriteValue(settings);
+				DeviceScanActivity.getBluetoothLeService().WriteValue(settings);
 
 			}
 		});

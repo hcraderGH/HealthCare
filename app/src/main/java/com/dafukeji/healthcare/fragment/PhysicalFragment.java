@@ -19,6 +19,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BluetoothLeService;
+import com.dafukeji.healthcare.ui.DeviceScanActivity;
 import com.dafukeji.healthcare.ui.RunningActivity;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
@@ -57,30 +58,6 @@ public class PhysicalFragment extends Fragment {
 //	private BlueToothBroadCast mBlueToothBroadCast;
 
 	private boolean mSendNewCmdFlag;
-
-//	@Override
-//	public void onAttach(Context context) {
-//		//注册接受蓝牙信息的广播
-//		mBlueToothBroadCast=new BlueToothBroadCast();
-//		IntentFilter filter=new IntentFilter();
-//		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-//		getActivity().registerReceiver(mBlueToothBroadCast,filter);
-//		super.onAttach(context);
-//
-//		LogUtil.i(TAG,"onAttach()");
-//	}
-//
-//	class BlueToothBroadCast extends BroadcastReceiver {
-//
-//		@Override
-//		public void onReceive(Context context, Intent intent) {
-//			//得到蓝牙的服务连接
-//			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
-//			LogUtil.i(TAG,"onReceive  isGATTConnected:"+isGATTConnected);
-//		}
-//	}
-
-
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -140,7 +117,7 @@ public class PhysicalFragment extends Fragment {
 							int cauterizeTime=0;
 							LogUtil.i(TAG, "发送的物理治疗的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
 									, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime)));
-							HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
+							DeviceScanActivity.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
 									, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime));
 						} else {
 							mSendNewCmdFlag=false;
@@ -216,7 +193,7 @@ public class PhysicalFragment extends Fragment {
 				int cauterizeTime=0;
 				LogUtil.i(TAG, "发送的物理治疗的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
 						, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime)));
-				HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
+				DeviceScanActivity.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
 						, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime));
 			}
 		});

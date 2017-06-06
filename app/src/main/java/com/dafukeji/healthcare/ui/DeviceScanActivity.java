@@ -89,38 +89,46 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				(BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 		mBluetoothAdapter = bluetoothManager.getAdapter();
 
-
-//		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-//		LogUtil.i(TAG, "Try to bindService=" + this.bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
-
 		initScanCallback();
 		initWidgets();
 		mayRequestLocation();
+
+
+		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+		bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
 	}
 
 
-//	// Code to manage Service lifecycle.
-//	public final ServiceConnection mServiceConnection = new ServiceConnection() {
-//
-//		@Override
-//		public void onServiceConnected(ComponentName componentName, IBinder service) {
-//			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
-//			if (!mBluetoothLeService.initialize()) {
-//				LogUtil.i(TAG, "Unable to initialize Bluetooth");
-//				finish();
-//			}
-//
-//			LogUtil.i(TAG, "mBluetoothLeService is okay");
-//
-//			// Automatically connects to the device upon successful start-up initialization.
-//			//mBluetoothLeService.connect(mDeviceAddress);
-//		}
-//
-//		@Override
-//		public void onServiceDisconnected(ComponentName componentName) {
-//			mBluetoothLeService = null;
-//		}
-//	};
+	// Code to manage Service lifecycle.
+	public static final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+		@Override
+		public void onServiceConnected(ComponentName componentName, IBinder service) {
+			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+			if (!mBluetoothLeService.initialize()) {
+				LogUtil.i(TAG, "Unable to initialize Bluetooth");
+			}
+
+			LogUtil.i(TAG, "mBluetoothLeService is okay");
+
+			// Automatically connects to the device upon successful start-up initialization.
+			//mBluetoothLeService.connect(mDeviceAddress);
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName componentName) {
+			mBluetoothLeService = null;
+		}
+	};
+
+
+	public static BluetoothLeService getBluetoothLeService() {
+		return mBluetoothLeService;
+	}
+
+	public static ServiceConnection getServiceConnection(){
+		return  mServiceConnection;
+	}
 
 
 	private static final int REQUEST_FINE_LOCATION=0;
@@ -174,16 +182,20 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			@Override
 			public void onItemClick(View view, int position) {
 				final BluetoothDevice device = mLeDeviceRecyclerAdapter.getDevice(position);
-				if (device == null) return;
-//				boolean isConnected=mBluetoothLeService.connect(device.getAddress());
-//				if (!isConnected){
-//					Toasty.warning(DeviceScanActivity.this,"未能连接上设备，请重启设备",Toast.LENGTH_LONG).show();
-//					return;
-//				}
+				if (device == null){
+					ToastUtil.showToast(DeviceScanActivity.this,"未能搜到，请重试或开启设备",1000);
+				}
+
+				boolean isConnected=mBluetoothLeService.connect(device.getAddress());
+				if (!isConnected){
+					Toasty.warning(DeviceScanActivity.this,"未能连接上，请重启设备",Toast.LENGTH_LONG).show();
+					return;
+				}
 
 				Intent intent = new Intent();
 				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
 				intent.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+				intent.putExtra(Constants.EXTRAS_GATT_STATUS,true);
 				intent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
 				sendBroadcast(intent);
 				finish();
@@ -243,52 +255,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	}
 
 
-//	private void setupActionBar(){
-//		ActionBar actionBar=getSupportActionBar();
-//		if (actionBar!=null){
-//			actionBar.setDisplayHomeAsUpEnabled(true);//为ActionBar的左边添加返回图标并执行返回功能
-//		}
-//	}
-
-//	@Override
-//	public boolean onCreateOptionsMenu(Menu menu) {
-//		getMenuInflater().inflate(R.menu.scan_menu,menu);
-//		if (!mScanning){//没有进行扫描时
-//			menu.findItem(R.id.menu_stop).setVisible(false);
-//			menu.findItem(R.id.menu_scan).setVisible(true);
-//			menu.findItem(R.id.menu_refresh).setActionView(null);
-//		}else{
-//			menu.findItem(R.id.menu_stop).setVisible(true);
-//			menu.findItem(R.id.menu_scan).setVisible(false);
-//			menu.findItem(R.id.menu_refresh).setActionView(
-//					R.layout.actionbar_indeterminate_progress);
-//		}
-//
-//		return true;
-//	}
-//
-//	@Override
-//	public boolean onOptionsItemSelected(MenuItem item) {
-//
-//		switch (item.getItemId()){
-//
-//			case R.id.menu_scan:
-//				openBlueTooth();
-//				Logger.i("蓝牙是否打开了"+mBluetoothAdapter.isEnabled());
-//				mLeDeviceRecyclerAdapter.clear();
-//				scanLeDevice(true);
-//				break;
-//			case R.id.menu_stop:
-//				scanLeDevice(false);
-//				break;
-//
-//			case android.R.id.home:
-//				NavUtils.navigateUpFromSameTask(this);
-//				break;
-//		}
-//		return true;
-//	}
-
 	private void openBlueTooth() {
 		// Use this check to determine whether BLE is supported on the device.  Then you can
 		// selectively disable BLE-related features.
@@ -338,9 +304,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			mScanning = false;
 			stopScan();
 		}
-
-//		//对Menu进行重新绘制
-//		invalidateOptionsMenu();
 	}
 
 	private void startScan() {
@@ -408,11 +371,60 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	}
 
 
-//	public void unbindService(){
-//		unbindService(mServiceConnection);
-//		if (mBluetoothLeService != null) {
-//			mBluetoothLeService.close();
-//			mBluetoothLeService = null;
+	public void unbindService(){
+		unbindService(mServiceConnection);
+		if (mBluetoothLeService != null) {
+			mBluetoothLeService.close();
+			mBluetoothLeService = null;
+		}
+	}
+
+
+
+
+	//	private void setupActionBar(){
+//		ActionBar actionBar=getSupportActionBar();
+//		if (actionBar!=null){
+//			actionBar.setDisplayHomeAsUpEnabled(true);//为ActionBar的左边添加返回图标并执行返回功能
 //		}
+//	}
+
+//	@Override
+//	public boolean onCreateOptionsMenu(Menu menu) {
+//		getMenuInflater().inflate(R.menu.scan_menu,menu);
+//		if (!mScanning){//没有进行扫描时
+//			menu.findItem(R.id.menu_stop).setVisible(false);
+//			menu.findItem(R.id.menu_scan).setVisible(true);
+//			menu.findItem(R.id.menu_refresh).setActionView(null);
+//		}else{
+//			menu.findItem(R.id.menu_stop).setVisible(true);
+//			menu.findItem(R.id.menu_scan).setVisible(false);
+//			menu.findItem(R.id.menu_refresh).setActionView(
+//					R.layout.actionbar_indeterminate_progress);
+//		}
+//
+//		return true;
+//	}
+//
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//
+//		switch (item.getItemId()){
+//
+//			case R.id.menu_scan:
+//				openBlueTooth();
+//				Logger.i("蓝牙是否打开了"+mBluetoothAdapter.isEnabled());
+//				mLeDeviceRecyclerAdapter.clear();
+//				scanLeDevice(true);
+//				break;
+//			case R.id.menu_stop:
+//				scanLeDevice(false);
+//				break;
+//
+//			case android.R.id.home:
+//				NavUtils.navigateUpFromSameTask(this);
+//				break;
+//		}
+//		return true;
 //	}
 }
