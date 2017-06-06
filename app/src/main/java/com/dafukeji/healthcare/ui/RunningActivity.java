@@ -417,6 +417,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						}else{
 							insertPoint(mCurrentTime, (int) Math.floor(mSum/11));
 							temp= (int) Math.floor(mSum/11);//无符号位转换
+
+							mSum=0;
 						}
 
 						Message msg=Message.obtain();
@@ -428,8 +430,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						msgTemp.what=3;
 						msgTemp.arg1=temp;
 						mHandler.sendMessage(msgTemp);
-
-						mSum=0;
 					}
 
 //					//TODO 测试添加到数据库中的数据
@@ -557,11 +557,15 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				isAgain();
 				break;
 			case R.id.iv_over://实现结束功能(当结束后则直接返回，如果疗程没有进行完则提示)
-				if (mRunningTime == mOriginalTime) {
-					finish();
-				} else {
-					isOver();
+				if (mRunningTime != mOriginalTime) {
+					stopTimer();
+					saveData();//此处保存的数据为未做完的
+					if (mConnected){
+						sendStopSettingData();//发送结束疗程的配置数据
+					}
 				}
+				finish();
+
 				break;
 			case R.id.iv_back:
 				isOver();
@@ -607,7 +611,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						stopTimer();
-
 						saveData();//此处保存的数据为未做完的
 						if (mConnected){
 							sendStopSettingData();//发送结束疗程的配置数据

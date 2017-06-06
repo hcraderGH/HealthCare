@@ -71,13 +71,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private BluetoothAdapter mBluetoothLEAdapter;
 	private String mDeviceAddress;
 	private static BluetoothLeService mBluetoothLeService;
-	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<>();
 	private static boolean mConnected = false;
 
 	private View mView;
 
 	private BlueToothBroadCast mBlueToothBroadCast;
-	private boolean isGATTConnected;
 
 //	private boolean beginRemindBat =false;//当连接设备成功时，即提醒用户电量
 
@@ -89,7 +87,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		mBlueToothBroadCast = new BlueToothBroadCast();
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(Constants.RECEIVE_BLUETOOTH_INFO);
-		filter.addAction(Constants.RECEIVE_GATT_STATUS);
 		getActivity().registerReceiver(mBlueToothBroadCast, filter);
 
 		super.onAttach(context);
@@ -103,13 +100,21 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
 			LogUtil.i(TAG, "onReceive:mDeviceAddress " + mDeviceAddress);
 			LogUtil.i(TAG,"mBluetoothLeService="+mBluetoothLeService);
-			mBluetoothLeService.connect(mDeviceAddress);
-
-			isGATTConnected=intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
-			if (!isGATTConnected){
-				setDisplayStatus(false);
+			boolean isConnected=mBluetoothLeService.connect(mDeviceAddress);
+			if (isConnected){
+				getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						setDisplayStatus(true);
+					}
+				});
 			}else{
-				setDisplayStatus(true);
+				getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						setDisplayStatus(false);
+					}
+				});
 			}
 		}
 	}
@@ -367,7 +372,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				mConnected = false;
 				Intent gattIntent = new Intent();
 				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS, mConnected);
-				gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
+				gattIntent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
 				getActivity().sendBroadcast(gattIntent);
 
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
@@ -379,9 +384,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 //						setDisplayStatus(mConnected);
 //					}
 //				});
-//				LogUtil.i(TAG, "In what we need");
+				LogUtil.i(TAG, "In what we need");
 
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
+
+				mConnected=true;
 
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
@@ -463,11 +470,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			mWaveLoadingView.setCenterTitleColor(getResources().getColor(R.color.battery_electric_quantity_danger));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_danger));
 		}
-	}
-
-
-	public static boolean getBlueToothStatus() {
-		return mConnected;
 	}
 
 	public static BluetoothLeService getBluetoothLeService() {

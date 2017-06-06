@@ -72,17 +72,12 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private ProgressDialog mProgressDialog;
 
-	private static BluetoothLeService mBluetoothLeService;
-
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 //		setupActionBar();//必须放在setContentView方法前面
 		setContentView(R.layout.activity_device_scan);
-
-		//设定默认返回值为取消
-		setResult(RESULT_CANCELED);
 
 		// Initializes Bluetooth adapter.
 		final BluetoothManager bluetoothManager =
@@ -147,7 +142,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			@Override
 			public void onItemClick(View view, int position) {
 				final BluetoothDevice device = mLeDeviceRecyclerAdapter.getDevice(position);
-				if (device == null) return;
+
 				Intent intent = new Intent();
 				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
 				intent.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
