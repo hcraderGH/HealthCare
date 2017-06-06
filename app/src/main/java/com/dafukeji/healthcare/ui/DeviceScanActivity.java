@@ -13,6 +13,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.nfc.Tag;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -81,9 +82,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 //		setupActionBar();//必须放在setContentView方法前面
 		setContentView(R.layout.activity_device_scan);
 
-		//设定默认返回值为取消
-		setResult(RESULT_CANCELED);
-
 		// Initializes Bluetooth adapter.
 		final BluetoothManager bluetoothManager =
 				(BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -93,8 +91,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		initWidgets();
 		mayRequestLocation();
 
-
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+		startService(gattServiceIntent);
 		bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE);
 	}
 
@@ -125,11 +123,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	public static BluetoothLeService getBluetoothLeService() {
 		return mBluetoothLeService;
 	}
-
-	public static ServiceConnection getServiceConnection(){
-		return  mServiceConnection;
-	}
-
 
 	private static final int REQUEST_FINE_LOCATION=0;
 	private void mayRequestLocation() {
@@ -182,28 +175,26 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			@Override
 			public void onItemClick(View view, int position) {
 				final BluetoothDevice device = mLeDeviceRecyclerAdapter.getDevice(position);
-				if (device == null){
-					ToastUtil.showToast(DeviceScanActivity.this,"未能搜到，请重试或开启设备",1000);
-				}
 
 				boolean isConnected=mBluetoothLeService.connect(device.getAddress());
+				LogUtil.i(TAG,"蓝牙连接状态 isConnected="+isConnected);
+
 				if (!isConnected){
 					Toasty.warning(DeviceScanActivity.this,"未能连接上，请重启设备",Toast.LENGTH_LONG).show();
 					return;
+				}else{
+					Intent intent = new Intent();
+					intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
+					intent.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+					intent.putExtra(Constants.EXTRAS_GATT_STATUS,true);
+					intent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
+					sendBroadcast(intent);
+					finish();
+					if (mScanning) {
+						stopScan();
+						mScanning = false;
+					}
 				}
-
-				Intent intent = new Intent();
-				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
-				intent.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
-				intent.putExtra(Constants.EXTRAS_GATT_STATUS,true);
-				intent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
-				sendBroadcast(intent);
-				finish();
-				if (mScanning) {
-					stopScan();
-					mScanning = false;
-				}
-
 			}
 		});
 		mRecyclerView.setAdapter(mLeDeviceRecyclerAdapter);
@@ -370,16 +361,13 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		}
 	}
 
-
-	public void unbindService(){
+	@Override
+	protected void onDestroy() {
 		unbindService(mServiceConnection);
-		if (mBluetoothLeService != null) {
-			mBluetoothLeService.close();
-			mBluetoothLeService = null;
-		}
+
+		LogUtil.i(TAG,"获取蓝牙服务："+getBluetoothLeService());
+		super.onDestroy();
 	}
-
-
 
 
 	//	private void setupActionBar(){

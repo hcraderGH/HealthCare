@@ -323,7 +323,8 @@ public class BluetoothLeService extends Service {
             mBluetoothGatt = null;
         }
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
-//        mBluetoothGatt.connect();
+
+//        mBluetoothGatt.connect();//TODO 是否要注释此处
 
         Log.d(TAG, "Trying to create a new connection.");
         return true;

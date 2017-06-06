@@ -165,11 +165,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						break;
 					case 1:
 						isOver = true;
+						stopTimer();
 						saveData();//保存数据
 						sendStopSettingData();//为了防止与设备之间疗程时间的不同步，在此直接结束疗程
 						mIvSpace.setVisibility(View.INVISIBLE);
 						mIvAgain.setVisibility(View.VISIBLE);
-						stopTimer();
 						break;
 
 					case 2://接受温度
@@ -556,11 +556,18 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				isAgain();
 				break;
 			case R.id.iv_over://实现结束功能(当结束后则直接返回，如果疗程没有进行完则提示)
-				if (mRunningTime == mOriginalTime) {
-					finish();
-				} else {
-					isOver();
+//				if (mRunningTime == mOriginalTime) {
+//					finish();
+//				} else {
+//					isOver();
+//				}
+
+				saveData();
+				if (mConnected){
+					sendStopSettingData();//发送结束疗程的配置数据
 				}
+				finish();
+
 				break;
 			case R.id.iv_back:
 				isOver();

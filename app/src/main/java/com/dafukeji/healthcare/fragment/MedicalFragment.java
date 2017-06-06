@@ -200,8 +200,9 @@ public class MedicalFragment extends Fragment {
 				byte[] settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 						, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
 
-				DeviceScanActivity.getBluetoothLeService().WriteValue(settings);
+				LogUtil.i(TAG,"获取服务:"+DeviceScanActivity.getBluetoothLeService());
 
+				DeviceScanActivity.getBluetoothLeService().WriteValue(settings);
 			}
 		});
 	}
