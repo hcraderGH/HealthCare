@@ -26,7 +26,6 @@ import android.view.View;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -37,9 +36,6 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.fragment.RecordFragment;
-import com.dafukeji.healthcare.service.ScanService;
-import com.dafukeji.healthcare.util.SPUtils;
-import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
@@ -48,7 +44,6 @@ import com.nightonke.boommenu.BoomButtons.TextOutsideCircleButton;
 import com.nightonke.boommenu.BoomMenuButton;
 import com.nightonke.boommenu.OnBoomListener;
 import com.nightonke.boommenu.Piece.PiecePlaceEnum;
-import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -423,8 +418,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 				}
 
 				//当退出程序的时候，关闭蓝牙扫描服务
-				Intent intent=new Intent(this, ScanService.class);
-				stopService(intent);
 
 				//关闭蓝牙
 				if (mBluetoothLEAdapter != null&&mBluetoothLEAdapter.isEnabled()) {

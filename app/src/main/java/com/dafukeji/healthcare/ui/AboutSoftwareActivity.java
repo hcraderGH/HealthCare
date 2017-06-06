@@ -32,7 +32,6 @@ public class AboutSoftwareActivity extends BaseActivity implements View.OnClickL
 
 	}
 
-
 	private void initViews() {
 		ivBack= (ImageView) findViewById(R.id.iv_back);
 		ivBack.setOnClickListener(this);

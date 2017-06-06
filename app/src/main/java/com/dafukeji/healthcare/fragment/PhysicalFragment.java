@@ -52,35 +52,10 @@ public class PhysicalFragment extends Fragment {
 
 	private static String TAG="测试PhysicalFragment";
 
-
 	private boolean isGATTConnected;
-//	private BlueToothBroadCast mBlueToothBroadCast;
+
 
 	private boolean mSendNewCmdFlag;
-
-//	@Override
-//	public void onAttach(Context context) {
-//		//注册接受蓝牙信息的广播
-//		mBlueToothBroadCast=new BlueToothBroadCast();
-//		IntentFilter filter=new IntentFilter();
-//		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-//		getActivity().registerReceiver(mBlueToothBroadCast,filter);
-//		super.onAttach(context);
-//
-//		LogUtil.i(TAG,"onAttach()");
-//	}
-//
-//	class BlueToothBroadCast extends BroadcastReceiver {
-//
-//		@Override
-//		public void onReceive(Context context, Intent intent) {
-//			//得到蓝牙的服务连接
-//			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
-//			LogUtil.i(TAG,"onReceive  isGATTConnected:"+isGATTConnected);
-//		}
-//	}
-
-
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

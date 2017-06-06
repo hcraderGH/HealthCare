@@ -83,9 +83,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 	private static String TAG = "测试HomeFragment";
 
-
-	private boolean isFirstGetPreFrameId = true;
-
 	@Override
 	public void onAttach(Context context) {
 		//注册接受蓝牙信息的广播
@@ -105,11 +102,14 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			//得到蓝牙的信息
 			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
 			LogUtil.i(TAG, "onReceive:mDeviceAddress " + mDeviceAddress);
+			LogUtil.i(TAG,"mBluetoothLeService="+mBluetoothLeService);
 			mBluetoothLeService.connect(mDeviceAddress);
 
 			isGATTConnected=intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
 			if (!isGATTConnected){
 				setDisplayStatus(false);
+			}else{
+				setDisplayStatus(true);
 			}
 		}
 	}
@@ -176,8 +176,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		LogUtil.i(TAG, "Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
-//		getActivity().startService(new Intent(getActivity(), ScanService.class));//开始时候开启扫描服务 TODO
-
 		return mView;
 	}
 
@@ -207,7 +205,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		switch (v.getId()) {
 			case R.id.btn_home_device_status:
 				if (mConnected) {
-//					setDisplayStatus(!mConnected);//TODO
+					setDisplayStatus(false);//TODO
 					mSendNewCmdFlag = true;
 					sendPowerOffCmd();
 				}
@@ -356,7 +354,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				LogUtil.i(TAG, "mGattUpdateReceiver断开了连接");
 
-				isFirstGetPreFrameId = true;
 				if (mSendNewCmdFlag) {
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
@@ -389,16 +386,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				if (data != null) {
 
-					if (isFirstGetPreFrameId) {
-						mConnected = true;//TODO 为了测试硬件连上但是不发送数据的情况
-						getActivity().runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								setDisplayStatus(mConnected);
-							}
-						});
-					}
-
 					Intent gattIntent = new Intent();
 					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS, mConnected);
 					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
@@ -411,31 +398,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					if (!(data[2] + data[3] + data[4] + data[5] + data[6] + data[7] + data[8] == ConvertUtils.byte2unsignedInt(data[9]))) {
 						LogUtil.i(TAG,"数据校验出现错误");
 						return;
-					}
-
-					if (isFirstGetPreFrameId) {
-						Frame.preFrameId = ConvertUtils.byte2unsignedInt(data[8]);//再次获取一次就可以了
-						LogUtil.i(TAG, "唯一的一个Frame.preFrameId=" + Frame.preFrameId);
-						isFirstGetPreFrameId = false;
-					}
-
-
-					if (mSendNewCmdFlag) {
-						Frame.curFrameId = ConvertUtils.byte2unsignedInt(data[8]);
-						LogUtil.i(TAG, "Frame.curFrameId=" + Frame.curFrameId);
-						LogUtil.i(TAG, "Frame.preFrameId=" + Frame.preFrameId);
-						if (Frame.preFrameId == Frame.curFrameId) {
-							sendPowerOffCmd();
-						} else {
-							Frame.preFrameId = Frame.curFrameId;
-							mSendNewCmdFlag = false;
-//							getActivity().runOnUiThread(new Runnable() {//TODO 主要是不能够有效接收到数据
-//								@Override
-//								public void run() {
-//									setDisplayStatus(false);
-//								}
-//							});
-						}
 					}
 
 					mCurrentTemp = ConvertUtils.byte2unsignedInt(data[3]);
