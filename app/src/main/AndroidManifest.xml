@@ -46,26 +46,30 @@
 
         <activity android:name=".ui.MainActivity"/>
 
-        <activity android:name=".ui.DeviceScanActivity"
-            android:parentActivityName=".ui.MainActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".ui.MainActivity"/>
+        <!--<activity android:name=".ui.DeviceScanActivity"-->
+            <!--android:parentActivityName=".ui.MainActivity">-->
+            <!--<meta-data-->
+                <!--android:name="android.support.PARENT_ACTIVITY"-->
+                <!--android:value=".ui.MainActivity"/>-->
 
-        </activity>
+        <!--</activity>-->
+        <activity android:name=".ui.DeviceScanActivity"/>
+
+
         <activity android:name=".ui.ShareActivity"/>
         <service android:name=".service.BluetoothLeService"
             android:enabled="true"/>
         <activity android:name=".ui.RunningActivity"/>
         <activity android:name=".ui.SettingActivity"/>
         <activity android:name=".ui.AboutSoftwareActivity"/>
+
         <service android:name=".service.BatteryService"/>
 
-        <receiver android:name=".fragment.HomeFragment$BlueToothBroadCast"/>
-        <receiver android:name=".BaseActivity$BlueToothBroadCast"/>
-        <receiver android:name=".service.BatteryService$BlueToothBroadCast"/>
-        <receiver android:name=".ui.MainActivity$BlueToothBroadCast"/>
-        <receiver android:name=".ui.SettingActivity$BlueToothBroadCast"/>
+        <!--<receiver android:name=".fragment.HomeFragment$BlueToothBroadCast"/>-->
+        <!--<receiver android:name=".BaseActivity$BlueToothBroadCast"/>-->
+        <!--<receiver android:name=".service.BatteryService$BlueToothBroadCast"/>-->
+        <!--<receiver android:name=".ui.MainActivity$BlueToothBroadCast"/>-->
+        <!--<receiver android:name=".ui.SettingActivity$BlueToothBroadCast"/>-->
 
         <activity
             android:name="com.tencent.bugly.beta.ui.BetaActivity"

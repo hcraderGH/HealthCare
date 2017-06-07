@@ -39,7 +39,6 @@ import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
-import com.orhanobut.logger.Logger;
 import com.romainpiel.shimmer.Shimmer;
 import com.romainpiel.shimmer.ShimmerTextView;
 import com.skyfishjy.library.RippleBackground;
@@ -190,10 +189,14 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					mProgressDialog.dismiss();
 					Toasty.success(DeviceScanActivity.this, "连接设备成功", 500).show();
 					//TODO 接收数据处理
-					Intent intent2 = new Intent();
-					intent2.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
-					intent2.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
-					intent2.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
+//					Intent intent2 = new Intent();
+//					intent2.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
+//					intent2.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+//					intent2.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
+
+					Intent intent2=new Intent();
+					intent2.putExtra(Constants.EXTRAS_GATT_STATUS,true);
+					intent2.setAction(Constants.RECEIVE_GATT_STATUS);
 					sendBroadcast(intent2);
 					finish();
 
@@ -390,7 +393,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					break;
 				case 2://连接超时
 					stopTimer();
-					mBluetoothLeService.disconnect();
+//					mBluetoothLeService.disconnect();
 					if (mProgressDialog!=null){
 						mProgressDialog.dismiss();
 					}

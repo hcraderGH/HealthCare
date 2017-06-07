@@ -97,11 +97,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的信息
-			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
+//			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
 			LogUtil.i(TAG, "onReceive:mDeviceAddress " + mDeviceAddress);
 			LogUtil.i(TAG,"mBluetoothLeService="+mBluetoothLeService);
-			boolean isConnected=mBluetoothLeService.connect(mDeviceAddress);
-			if (isConnected){
+			boolean isGATTConnected=intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
+			if (isGATTConnected){
 				getActivity().runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -181,8 +181,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		Intent gattServiceIntent = new Intent(getActivity(), BluetoothLeService.class);
 		LogUtil.i(TAG, "Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
-
 
 		return mView;
 	}
@@ -420,8 +418,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-//							JudgeEleSetWare((int) Math.ceil(mRemindEle * 10 / 4.3 > 95 ? 95 : mRemindEle * 10 / 4.3));//TODO 电量公式
-							JudgeEleSetWare((int) Math.ceil(10));
+							JudgeEleSetWare((int) Math.ceil(mRemindEle * 10 / 4.3 > 95 ? 95 : mRemindEle * 10 / 4.3));//TODO 电量公式
 							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3]) + "℃");
 						}
 					});
