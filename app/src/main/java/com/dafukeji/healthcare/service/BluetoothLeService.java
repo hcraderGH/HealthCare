@@ -30,6 +30,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
+import android.support.annotation.IntDef;
 import android.util.Log;
 
 import com.dafukeji.healthcare.constants.Constants;
@@ -72,6 +73,25 @@ public class BluetoothLeService extends Service {
 
     private BluetoothGattCharacteristic mWriteCharacteristic;
     private BluetoothGattCharacteristic mReadCharacteristic;
+
+
+    @Override
+    public void onCreate() {
+        LogUtil.i(TAG,"onCreate()");
+        super.onCreate();
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        LogUtil.i(TAG,"onStartCommand()");
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onDestroy() {
+        LogUtil.i(TAG,"onDestroy()");
+        super.onDestroy();
+    }
 
     public void WriteValue(byte[] bytesValue) {
         Log.i(TAG, "WriteValue: bytesValue"+ Arrays.toString(bytesValue));
@@ -243,6 +263,8 @@ public class BluetoothLeService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
+
+        LogUtil.i(TAG,"onBind()");
         return mBinder;
     }
 
