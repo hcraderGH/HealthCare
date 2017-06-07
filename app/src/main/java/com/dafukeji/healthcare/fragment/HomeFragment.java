@@ -313,8 +313,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			tvTempStatus.setTextColor(getResources().getColor(R.color.connect_status));
 			tvCurrentTemp.setTextColor(Color.parseColor("#FFFFFF"));
 
-			Toasty.success(getActivity(), "连接设备成功", Toast.LENGTH_SHORT).show();
-
+//			Toasty.success(getActivity(), "连接设备成功", Toast.LENGTH_SHORT).show();
 		} else {
 
 			ivDeviceStatusLogo.setBackgroundResource(R.mipmap.ic_circle_gray);
@@ -391,6 +390,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				mConnected=true;
 
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
 
 					Intent gattIntent = new Intent();
@@ -399,7 +399,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					getActivity().sendBroadcast(gattIntent);
 
 					//TODO 接收数据处理
-					LogUtil.i(TAG, "onReceive: " + Arrays.toString(data));
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					if (!(data[2] + data[3] + data[4] + data[5] + data[6] + data[7] + data[8] == ConvertUtils.byte2unsignedInt(data[9]))) {

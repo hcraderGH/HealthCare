@@ -8,9 +8,11 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -21,7 +23,6 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -37,13 +38,15 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.LogUtil;
-import com.dafukeji.healthcare.util.StatusBar;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.orhanobut.logger.Logger;
 import com.romainpiel.shimmer.Shimmer;
-import com.romainpiel.shimmer.ShimmerButton;
 import com.romainpiel.shimmer.ShimmerTextView;
 import com.skyfishjy.library.RippleBackground;
+
+import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import es.dmoral.toasty.Toasty;
 
@@ -72,6 +75,14 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private ProgressDialog mProgressDialog;
 
+	private BluetoothLeService mBluetoothLeService;
+
+	private BluetoothDevice device;
+
+	private TimerTask mTimerTask;
+	private Timer mTimer;
+	private int mOverTime ;
+
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -88,6 +99,122 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		initScanCallback();
 		initWidgets();
 		mayRequestLocation();
+
+		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
+		Logger.d("Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));//已经在HomeFragment中进行绑定服务了
+		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+	}
+
+	// Code to manage Service lifecycle.
+	public final ServiceConnection mServiceConnection = new ServiceConnection() {
+
+		@Override
+		public void onServiceConnected(ComponentName componentName, IBinder service) {
+			mBluetoothLeService = ((BluetoothLeService.LocalBinder) service).getService();
+			if (!mBluetoothLeService.initialize()) {
+				LogUtil.i(TAG, "Unable to initialize Bluetooth");
+				finish();
+			}
+
+			LogUtil.i(TAG, "mBluetoothLeService is okay");
+			// Automatically connects to the device upon successful start-up initialization.
+			//mBluetoothLeService.connect(mDeviceAddress);
+		}
+
+		@Override
+		public void onServiceDisconnected(ComponentName componentName) {
+			mBluetoothLeService = null;
+		}
+	};
+
+
+	//注册接收的事件
+	private static IntentFilter makeGattUpdateIntentFilter() {
+		final IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_CONNECTED);
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_DISCONNECTED);
+		intentFilter.addAction(BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED);
+		intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
+		intentFilter.addAction(BluetoothDevice.ACTION_UUID);
+		return intentFilter;
+	}
+
+	private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			final String action = intent.getAction();
+			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
+				LogUtil.i(TAG, "Only gatt, just wait");
+//				ToastUtil.showToast(getActivity(), "连接成功，现在可以正常通信！",1000);
+
+			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
+				LogUtil.i(TAG, "mGattUpdateReceiver断开了连接");
+
+			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
+
+				LogUtil.i(TAG, "In what we need");
+
+			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
+
+				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
+
+				if (data != null) {
+
+					stopTimer();//获取到数据的情况下，停止计时
+					mProgressDialog.dismiss();
+
+					Toasty.success(DeviceScanActivity.this, "连接设备成功", 500).show();
+					//TODO 接收数据处理
+					Intent intent2 = new Intent();
+					intent2.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
+					intent2.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+					intent2.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
+					sendBroadcast(intent2);
+					finish();
+
+				}else{
+					Toasty.warning(DeviceScanActivity.this, "连接失败，请重连或重启设备", 500).show();
+				}
+			}
+		}
+	};
+
+
+	private void startTimer() {
+		mOverTime=3000;
+		if (mTimer == null) {
+			mTimer = new Timer();
+		}
+		if (mTimerTask == null) {
+			mTimerTask = new TimerTask() {
+				@Override
+				public void run() {
+					mOverTime-=1000;
+					if (mOverTime==0) {
+						Message msg = Message.obtain();
+						msg.what = 2;
+						mHandler.sendMessage(msg);
+					}
+				}
+			};
+		}
+
+		if (mTimer != null && mTimerTask != null) {
+			mTimer.schedule(mTimerTask, 1000, 1000);
+		}
+	}
+
+	private void stopTimer() {
+		if (mTimer != null) {
+			mTimer.cancel();
+			mTimer = null;
+		}
+
+		if (mTimerTask != null) {
+			mTimerTask.cancel();
+			mTimerTask = null;
+		}
 	}
 
 
@@ -141,14 +268,22 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		mLeDeviceRecyclerAdapter.setOnItemClickListener(new LeRecyclerAdapter.OnItemClickListener() {
 			@Override
 			public void onItemClick(View view, int position) {
-				final BluetoothDevice device = mLeDeviceRecyclerAdapter.getDevice(position);
 
-				Intent intent = new Intent();
-				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
-				intent.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
-				intent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
-				sendBroadcast(intent);
-				finish();
+				mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
+				mProgressDialog.setMessage("正在连接设备，请稍等...");
+				mProgressDialog.show();
+
+				startTimer();//开始连接倒计时
+
+				device= mLeDeviceRecyclerAdapter.getDevice(position);
+				mBluetoothLeService.connect(device.getAddress());
+
+//				Intent intent = new Intent();
+//				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
+//				intent.putExtra(Constants.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+//				intent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
+//				sendBroadcast(intent);
+//				finish();
 				if (mScanning) {
 					stopScan();
 					mScanning = false;
@@ -228,6 +363,13 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				case 1: // Notify change
 					mLeDeviceRecyclerAdapter.notifyDataSetChanged();
 					break;
+				case 2://连接超时
+					stopTimer();
+					Toasty.warning(DeviceScanActivity.this,"连接超时，请重连或重启设备",500).show();
+					if (mProgressDialog!=null){
+						mProgressDialog.dismiss();
+					}
+					break;
 			}
 		}
 	};
@@ -276,7 +418,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		}
 	}
 
-
 	@TargetApi(21)
 	private void initScanCallback() {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
@@ -285,7 +426,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						@Override
 						public void onScanResult(int callbackType, final ScanResult result) {
 
-							LogUtil.i(TAG,"蓝牙的信号强度："+result.getRssi());
+//							LogUtil.i(TAG,"蓝牙的信号强度："+result.getRssi());
 
 							if (result.getDevice().getName().equals(Constants.MATCH_DEVICE_NAME)) {
 								runOnUiThread(new Runnable() {
@@ -305,7 +446,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						@Override
 						public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
 
-							LogUtil.i(TAG,"蓝牙的信号强度："+rssi);
+//							LogUtil.i(TAG,"蓝牙的信号强度："+rssi);
 
 							if (device.getName().equals(Constants.MATCH_DEVICE_NAME)) {
 								runOnUiThread(new Runnable() {
@@ -319,5 +460,14 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						}
 					};
 		}
+	}
+
+
+	@Override
+	protected void onDestroy() {
+
+		unbindService(mServiceConnection);
+		unregisterReceiver(mGattUpdateReceiver);
+		super.onDestroy();
 	}
 }

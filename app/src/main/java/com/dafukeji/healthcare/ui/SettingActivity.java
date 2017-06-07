@@ -70,7 +70,6 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		registerReceiver(mBlueToothBroadCast,filter);
 
 		initViews();
-
 	}
 
 	class BlueToothBroadCast extends BroadcastReceiver {

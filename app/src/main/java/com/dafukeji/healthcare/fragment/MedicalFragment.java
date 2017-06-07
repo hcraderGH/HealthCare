@@ -120,10 +120,10 @@ public class MedicalFragment extends Fragment {
 				isGATTConnected = true;
 
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
 
 					//TODO 接收数据处理
-					LogUtil.i(TAG, "onReceive: " + Arrays.toString(data));
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					if (!(data[2] + data[3] + data[4] + data[5] + data[6]+data[7]+data[8]==ConvertUtils.byte2unsignedInt(data[9])) ) {
