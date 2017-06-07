@@ -24,7 +24,7 @@
 
     //是否必须支持低功耗蓝牙，此处不必须(当正式使用时设置为true)
     <uses-feature android:name="android.hardware.bluetooth_le"
-        android:required="true"/>
+        android:required="false"/>
 
     <application
         xmlns:tools="http://schemas.android.com/tools"
@@ -62,6 +62,10 @@
         <service android:name=".service.BatteryService"/>
 
         <receiver android:name=".fragment.HomeFragment$BlueToothBroadCast"/>
+        <receiver android:name=".BaseActivity$BlueToothBroadCast"/>
+        <receiver android:name=".service.BatteryService$BlueToothBroadCast"/>
+        <receiver android:name=".ui.MainActivity$BlueToothBroadCast"/>
+        <receiver android:name=".ui.SettingActivity$BlueToothBroadCast"/>
 
         <activity
             android:name="com.tencent.bugly.beta.ui.BetaActivity"

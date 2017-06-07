@@ -69,7 +69,7 @@ public class BatteryService extends Service {
 	}
 
 
-	class BlueToothBroadCast extends BroadcastReceiver {
+	public class BlueToothBroadCast extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {

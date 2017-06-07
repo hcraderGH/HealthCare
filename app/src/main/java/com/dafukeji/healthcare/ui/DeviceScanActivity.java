@@ -53,7 +53,7 @@ import es.dmoral.toasty.Toasty;
 public class DeviceScanActivity extends BaseActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
 	private LeRecyclerAdapter mLeDeviceRecyclerAdapter;
-	private BluetoothAdapter mBluetoothAdapter;
+	private BluetoothAdapter mBluetoothLEAdapter;
 	private RecyclerView mRecyclerView;
 	private boolean mScanning = false;
 
@@ -83,6 +83,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private Timer mTimer;
 	private int mOverTime ;
 
+	private boolean isItemClicked=false;
+
+
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -90,18 +93,38 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 //		setupActionBar();//必须放在setContentView方法前面
 		setContentView(R.layout.activity_device_scan);
 
-		// Initializes Bluetooth adapter.
-		final BluetoothManager bluetoothManager =
-				(BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
-		mBluetoothAdapter = bluetoothManager.getAdapter();
-
-
 		initScanCallback();
 		initWidgets();
 		mayRequestLocation();
 
+		// Use this check to determine whether BLE is supported on the device.  Then you can
+		// selectively disable BLE-related features.
+		if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+			Toast.makeText(this, R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
+			LogUtil.i(TAG, "onCreate: " + R.string.ble_not_supported);
+			finish();
+		}
+
+		// Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
+		// BluetoothAdapter through BluetoothManager.
+		final BluetoothManager bluetoothManager =
+				(BluetoothManager)getSystemService(Context.BLUETOOTH_SERVICE);
+		mBluetoothLEAdapter = bluetoothManager.getAdapter();
+
+		// Checks if Bluetooth is supported on the device.
+		if (mBluetoothLEAdapter == null) {
+			Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
+			finish();
+		}
+		// 若蓝牙没打开
+		if (!mBluetoothLEAdapter.isEnabled()) {
+			mBluetoothLEAdapter.enable();  //打开蓝牙，需要BLUETOOTH_ADMIN权限
+
+		}
+
+
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-		Logger.d("Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));//已经在HomeFragment中进行绑定服务了
+		LogUtil.i(TAG,"Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));//已经在HomeFragment中进行绑定服务了
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 	}
 
@@ -142,6 +165,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private final BroadcastReceiver mGattUpdateReceiver = new BroadcastReceiver() {
 		@Override
 		public void onReceive(Context context, Intent intent) {
+
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
 				LogUtil.i(TAG, "Only gatt, just wait");
@@ -158,12 +182,12 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
+				if (data != null&&isItemClicked) {
 
-				if (data != null) {
+					isItemClicked=false;
 
 					stopTimer();//获取到数据的情况下，停止计时
 					mProgressDialog.dismiss();
-
 					Toasty.success(DeviceScanActivity.this, "连接设备成功", 500).show();
 					//TODO 接收数据处理
 					Intent intent2 = new Intent();
@@ -182,7 +206,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 
 	private void startTimer() {
-		mOverTime=3000;
+		mOverTime=5000;
 		if (mTimer == null) {
 			mTimer = new Timer();
 		}
@@ -190,7 +214,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			mTimerTask = new TimerTask() {
 				@Override
 				public void run() {
-					mOverTime-=1000;
+					mOverTime=mOverTime-1000;
 					if (mOverTime==0) {
 						Message msg = Message.obtain();
 						msg.what = 2;
@@ -260,7 +284,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private void initWidgets() {
 
 		mProgressDialog=new ProgressDialog(this);
-		mProgressDialog.setMessage("正在搜索蓝牙，请稍等...");
+		mProgressDialog.setMessage("正在搜索设备，请稍等...");
 
 		mRecyclerView = (RecyclerView) findViewById(R.id.rlv_scan_devices);
 		mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -269,10 +293,16 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			@Override
 			public void onItemClick(View view, int position) {
 
+				isItemClicked=true;
+
+				if (mScanning) {
+					stopScan();
+					mScanning = false;
+				}
+
 				mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
 				mProgressDialog.setMessage("正在连接设备，请稍等...");
 				mProgressDialog.show();
-
 				startTimer();//开始连接倒计时
 
 				device= mLeDeviceRecyclerAdapter.getDevice(position);
@@ -284,11 +314,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 //				intent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
 //				sendBroadcast(intent);
 //				finish();
-				if (mScanning) {
-					stopScan();
-					mScanning = false;
-				}
-
 			}
 		});
 		mRecyclerView.setAdapter(mLeDeviceRecyclerAdapter);
@@ -322,8 +347,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				if (tbScan.isChecked()) {
 					mSBScanString.setVisibility(View.INVISIBLE);//当点击搜索时，则隐藏文字
 					openBlueTooth();
-					Logger.i("DeviceScan蓝牙打开了？"+mBluetoothAdapter.isEnabled());
-					if (!mBluetoothAdapter.isEnabled()) {
+					LogUtil.i(TAG,"DeviceScan蓝牙打开了？"+mBluetoothLEAdapter.isEnabled());
+					if (!mBluetoothLEAdapter.isEnabled()) {
 						return;
 					}
 					mRippleBackground.startRippleAnimation();
@@ -350,13 +375,13 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 		// Ensures Bluetooth is available on the device and it is enabled. If not,
 		// displays a dialog requesting user permission to enable Bluetooth.
-		if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
+		if (mBluetoothLEAdapter == null || !mBluetoothLEAdapter.isEnabled()) {
 			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
 		}
 	}
 
-	public final Handler mHandler = new Handler() {
+	public Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
@@ -365,10 +390,11 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					break;
 				case 2://连接超时
 					stopTimer();
-					Toasty.warning(DeviceScanActivity.this,"连接超时，请重连或重启设备",500).show();
+					mBluetoothLeService.disconnect();
 					if (mProgressDialog!=null){
 						mProgressDialog.dismiss();
 					}
+					Toasty.warning(DeviceScanActivity.this,"连接超时，请重连或重启设备",500).show();
 					break;
 			}
 		}
@@ -377,6 +403,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private void scanLeDevice(final boolean enable) {
 		if (enable) {
+
+			mScanning = true;
 			// Stops scanning after a pre-defined scan period.
 			mHandler.postDelayed(new Runnable() {
 				@Override
@@ -387,11 +415,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					}
 				}
 			}, SCAN_PERIOD);
-
-			mScanning = true;
 			mLeDeviceRecyclerAdapter.clear();
 			startScan();
-			Logger.i("开始扫描，蓝牙设备");
+			LogUtil.i(TAG,"开始扫描，蓝牙设备");
 		} else {
 			mScanning = false;
 			stopScan();
@@ -402,9 +428,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private void startScan() {
 		mProgressDialog.show();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			mBluetoothAdapter.getBluetoothLeScanner().startScan(mScanCallback);
+			mBluetoothLEAdapter.getBluetoothLeScanner().startScan(mScanCallback);
 		} else {
-			mBluetoothAdapter.startLeScan(mLeScanCallback);
+			mBluetoothLEAdapter.startLeScan(mLeScanCallback);
 		}
 	}
 
@@ -412,9 +438,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		mProgressDialog.dismiss();
 		tbScan.setChecked(false);
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			mBluetoothAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
+			mBluetoothLEAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
 		} else {
-			mBluetoothAdapter.stopLeScan(mLeScanCallback);
+			mBluetoothLEAdapter.stopLeScan(mLeScanCallback);
 		}
 	}
 
@@ -466,6 +492,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	@Override
 	protected void onDestroy() {
 
+		LogUtil.i(TAG,"onDestroy()");
 		unbindService(mServiceConnection);
 		unregisterReceiver(mGattUpdateReceiver);
 		super.onDestroy();

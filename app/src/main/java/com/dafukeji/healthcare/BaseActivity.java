@@ -47,7 +47,7 @@ public class BaseActivity extends AppCompatActivity {
     }
 
 
-    class BlueToothBroadCast extends BroadcastReceiver {
+    public class BlueToothBroadCast extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {

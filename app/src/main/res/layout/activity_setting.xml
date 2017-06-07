@@ -148,7 +148,8 @@
             </LinearLayout>
 
 
-            <com.andexert.library.RippleView
+            <com.balysv.materialripple.MaterialRippleLayout
+                android:clickable="true"
                 android:id="@+id/rv_check_update"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -182,9 +183,9 @@
                         android:background="@mipmap/ic_arrow_right_gray"/>
 
                 </LinearLayout>
-            </com.andexert.library.RippleView>
+            </com.balysv.materialripple.MaterialRippleLayout>
 
-            <com.andexert.library.RippleView
+            <com.balysv.materialripple.MaterialRippleLayout
                 android:id="@+id/rv_about_software"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -210,7 +211,7 @@
                         android:background="@mipmap/ic_arrow_right_gray"/>
 
                 </LinearLayout>
-            </com.andexert.library.RippleView>
+            </com.balysv.materialripple.MaterialRippleLayout>
 
             <TextView
                 android:layout_width="wrap_content"
@@ -222,7 +223,7 @@
                 android:textColor="@color/setting_title_color"
                 android:textSize="14sp"/>
 
-            <com.andexert.library.RippleView
+            <com.balysv.materialripple.MaterialRippleLayout
                 android:id="@+id/rv_clear_cache"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -247,9 +248,9 @@
                         android:background="@mipmap/ic_arrow_right_gray"/>
 
                 </LinearLayout>
-            </com.andexert.library.RippleView>
+            </com.balysv.materialripple.MaterialRippleLayout>
 
-            <com.andexert.library.RippleView
+            <com.balysv.materialripple.MaterialRippleLayout
                 android:id="@+id/rv_clear_database"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -274,7 +275,7 @@
                         android:background="@mipmap/ic_arrow_right_gray"/>
 
                 </LinearLayout>
-            </com.andexert.library.RippleView>
+            </com.balysv.materialripple.MaterialRippleLayout>
 
         </LinearLayout>
 

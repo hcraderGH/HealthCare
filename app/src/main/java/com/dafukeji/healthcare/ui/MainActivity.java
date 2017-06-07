@@ -123,7 +123,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		registerReceiver(mBlueToothBroadCast,filter);
 	}
 
-	class BlueToothBroadCast extends BroadcastReceiver {
+	public class BlueToothBroadCast extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -415,6 +415,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 				if (homeFragment!=null){
 					homeFragment.disConnect();
+					homeFragment.disableBlueTooth();
 				}
 
 				//当退出程序的时候，关闭蓝牙扫描服务

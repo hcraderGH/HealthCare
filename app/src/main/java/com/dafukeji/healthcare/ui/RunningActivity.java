@@ -395,10 +395,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				mConnected=true;
 
 				mData = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				LogUtil.i(TAG, "onReceive: " + (mData==null?"data为null":Arrays.toString(mData)));
 				if (mData != null) {
 					//TODO 接收数据处理
-
-					LogUtil.i(TAG,"RunningActivity onReceive: mData" + Arrays.toString(mData));//TODO 将接受到的数据显示在图表中
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					if (!(mData[2] + mData[3] + mData[4] + mData[5] + mData[6]+mData[7]+mData[8]== ConvertUtils.byte2unsignedInt(mData[9]))) {

@@ -93,7 +93,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	}
 
 
-	class BlueToothBroadCast extends BroadcastReceiver {
+	public class BlueToothBroadCast extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的信息
@@ -177,6 +177,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			mBluetoothLEAdapter.enable();  //打开蓝牙，需要BLUETOOTH_ADMIN权限
 
 		}
+
 		Intent gattServiceIntent = new Intent(getActivity(), BluetoothLeService.class);
 		LogUtil.i(TAG, "Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
@@ -419,7 +420,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							JudgeEleSetWare((int) Math.ceil(mRemindEle * 10 / 4.3 > 95 ? 95 : mRemindEle * 10 / 4.3));//TODO 电量公式
+//							JudgeEleSetWare((int) Math.ceil(mRemindEle * 10 / 4.3 > 95 ? 95 : mRemindEle * 10 / 4.3));//TODO 电量公式
+							JudgeEleSetWare((int) Math.ceil(10));
 							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3]) + "℃");
 						}
 					});
@@ -482,41 +484,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		super.onDestroyView();
 		getActivity().unregisterReceiver(mBlueToothBroadCast);
 		getActivity().unregisterReceiver(mGattUpdateReceiver);
-//		getActivity().unbindService(mServiceConnection);
-//		if (mBluetoothLeService != null) {
-//			mBluetoothLeService.close();
-//			mBluetoothLeService = null;
-//		}
-//
-//		if (mBluetoothLEAdapter != null) {
-//			mBluetoothLEAdapter.disable();
-//		}
+		getActivity().unbindService(mServiceConnection);
+
 		LogUtil.i(TAG, "We are in destroy");
 	}
 
 	public void disConnect() {
 
-		getActivity().runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				setDisplayStatus(false);
-			}
-		});
-		mConnected = false;
-
 		if (mBluetoothLeService != null) {
 			mBluetoothLeService.close();
 			mBluetoothLeService = null;
-		}
-
-		getActivity().unbindService(mServiceConnection);
-		if (mBluetoothLeService != null) {
-			mBluetoothLeService.close();
-			mBluetoothLeService = null;
-		}
-
-		if (mBluetoothLEAdapter != null) {
-			mBluetoothLEAdapter.disable();
 		}
 	}
 

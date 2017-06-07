@@ -20,6 +20,7 @@ import android.widget.TextView;
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.andexert.library.RippleView;
+import com.balysv.materialripple.MaterialRippleLayout;
 import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.NetworkUtils;
 import com.dafukeji.healthcare.BaseActivity;
@@ -28,7 +29,6 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.util.DataCleanManager;
-import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.SettingManager;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.tencent.bugly.beta.Beta;
@@ -44,7 +44,7 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 
 
 	private ImageView ivBack;
-	private RippleView rvAboutSoftware,rvCheckUpdate,rvClearDb;
+	private MaterialRippleLayout mrlAboutSoftware, mrlCheckUpdate, mrlClearDb;
 	private SwitchCompat scAutoUpdate,scNotification,scNoDisturbing;
 	private LinearLayout llNoDisturbing;
 	private Button btnExit;
@@ -72,7 +72,7 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		initViews();
 	}
 
-	class BlueToothBroadCast extends BroadcastReceiver {
+	public class BlueToothBroadCast extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -113,11 +113,10 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 			}
 		}
 
-		rvCheckUpdate= (RippleView) findViewById(R.id.rv_check_update);
-		rvCheckUpdate.setRippleDuration(getResources().getInteger(R.integer.rv_duration));
-		rvCheckUpdate.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
+		mrlCheckUpdate = (MaterialRippleLayout) findViewById(R.id.rv_check_update);
+		mrlCheckUpdate.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onComplete(RippleView rippleView) {
+			public void onClick(View v) {
 				if (NetworkUtils.isConnected()){
 					Beta.checkUpgrade();//检查更新
 				}else{
@@ -126,11 +125,10 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 			}
 		});
 
-		rvClearDb= (RippleView) findViewById(R.id.rv_clear_database);
-		rvClearDb.setRippleDuration(getResources().getInteger(R.integer.rv_duration));
-		rvClearDb.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
+		mrlClearDb = (MaterialRippleLayout) findViewById(R.id.rv_clear_database);
+		mrlClearDb.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onComplete(RippleView rippleView) {
+			public void onClick(View v) {
 				AlertDialog.Builder builder=new AlertDialog.Builder(SettingActivity.this)
 						.setTitle("警告")
 						.setMessage("确定清空本地数据库吗？")
@@ -153,15 +151,13 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		});
 
 
-		rvAboutSoftware= (RippleView) findViewById(R.id.rv_about_software);
-		rvAboutSoftware.setRippleDuration(getResources().getInteger(R.integer.rv_duration));
-		rvAboutSoftware.setOnRippleCompleteListener(new RippleView.OnRippleCompleteListener() {
+		mrlAboutSoftware = (MaterialRippleLayout) findViewById(R.id.rv_about_software);
+		mrlAboutSoftware.setOnClickListener(new View.OnClickListener() {
 			@Override
-			public void onComplete(RippleView rippleView) {
+			public void onClick(View v) {
 				startActivity(new Intent(SettingActivity.this,AboutSoftwareActivity.class));
 			}
 		});
-
 
 		//scNoDisturbing需要先初始化，否则当scNotification设置偏好设置保存的值时，后触发监听，而此时scNoDisturbing没有初始化的话，会导致空指针
 		scNoDisturbing= (SwitchCompat) findViewById(R.id.sc_no_disturbing);
@@ -245,5 +241,11 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 				SettingManager.getInstance().setNO_DISTURBING(isChecked);
 				break;
 		}
+	}
+
+	@Override
+	protected void onDestroy() {
+		unregisterReceiver(mBlueToothBroadCast);
+		super.onDestroy();
 	}
 }
