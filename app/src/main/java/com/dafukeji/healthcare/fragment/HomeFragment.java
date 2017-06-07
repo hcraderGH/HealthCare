@@ -181,6 +181,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		LogUtil.i(TAG, "Try to bindService=" + getActivity().bindService(gattServiceIntent, mServiceConnection, Context.BIND_AUTO_CREATE));
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
+
+
 		return mView;
 	}
 
@@ -478,8 +480,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
-//		getActivity().unregisterReceiver(mBlueToothBroadCast);
-//		getActivity().unregisterReceiver(mGattUpdateReceiver);
+		getActivity().unregisterReceiver(mBlueToothBroadCast);
+		getActivity().unregisterReceiver(mGattUpdateReceiver);
 //		getActivity().unbindService(mServiceConnection);
 //		if (mBluetoothLeService != null) {
 //			mBluetoothLeService.close();
@@ -494,23 +496,19 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 	public void disConnect() {
 
-//		if (mConnected){
 		getActivity().runOnUiThread(new Runnable() {
 			@Override
 			public void run() {
-//					setDisplayStatus(!mConnected);
 				setDisplayStatus(false);
 			}
 		});
 		mConnected = false;
-//		}
+
 		if (mBluetoothLeService != null) {
 			mBluetoothLeService.close();
 			mBluetoothLeService = null;
 		}
 
-		getActivity().unregisterReceiver(mBlueToothBroadCast);
-		getActivity().unregisterReceiver(mGattUpdateReceiver);
 		getActivity().unbindService(mServiceConnection);
 		if (mBluetoothLeService != null) {
 			mBluetoothLeService.close();
