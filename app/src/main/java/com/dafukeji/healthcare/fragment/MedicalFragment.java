@@ -56,26 +56,26 @@ public class MedicalFragment extends Fragment {
 
 	private boolean mSendNewCmdFlag;
 
-//	private BlueToothBroadCast mBlueToothBroadCast;
-//	@Override
-//	public void onAttach(Context context) {
-//		//注册接受蓝牙信息的广播
-//		mBlueToothBroadCast=new BlueToothBroadCast();
-//		IntentFilter filter=new IntentFilter();
-//		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-//		getActivity().registerReceiver(mBlueToothBroadCast,filter);
-//		super.onAttach(context);
-//	}
-//
-//	class BlueToothBroadCast extends BroadcastReceiver {
-//
-//		@Override
-//		public void onReceive(Context context, Intent intent) {
-//			//得到蓝牙的服务连接
-//			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
-//			LogUtil.i(TAG,"onReceive  isGATTConnected:"+isGATTConnected);
-//		}
-//	}
+	private BlueToothBroadCast mBlueToothBroadCast;
+	@Override
+	public void onAttach(Context context) {
+		//注册接受蓝牙信息的广播
+		mBlueToothBroadCast=new BlueToothBroadCast();
+		IntentFilter filter=new IntentFilter();
+		filter.addAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+		getActivity().registerReceiver(mBlueToothBroadCast,filter);
+		super.onAttach(context);
+	}
+
+	class BlueToothBroadCast extends BroadcastReceiver {
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			//得到蓝牙的服务连接
+			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME,false);
+			LogUtil.i(TAG,"onReceive  isGATTConnectedFromHome:"+isGATTConnected);
+		}
+	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -106,8 +106,6 @@ public class MedicalFragment extends Fragment {
 
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				LogUtil.i(TAG, "mGattUpdateReceiver断开了连接");
-
-
 				isGATTConnected = false;
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 
@@ -122,7 +120,8 @@ public class MedicalFragment extends Fragment {
 					//TODO 接收数据处理
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(data[2] + data[3] + data[4] + data[5] + data[6]+data[7]+data[8]==ConvertUtils.byte2unsignedInt(data[9])) ) {
+					if (!(data[2] + data[3] + data[4] + data[5] + data[6] + data[7] + data[8] == ConvertUtils.byte2unsignedInt(data[9]))) {
+						LogUtil.i(TAG,"数据校验出现错误");
 						return;
 					}
 

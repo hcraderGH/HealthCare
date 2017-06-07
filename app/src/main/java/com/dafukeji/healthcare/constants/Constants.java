@@ -28,6 +28,9 @@ public class Constants {
 	public static final String EXTRAS_GATT_STATUS="extras_gatt_status";
 	public static final String RECEIVE_GATT_STATUS="receive_gatt_status";
 
+	public static final String EXTRAS_GATT_STATUS_FORM_HOME="extras_gatt_status_from_home";
+	public static final String RECEIVE_GATT_STATUS_FROM_HOME="receive_gatt_status_from_home";
+
 
 	public static final String CURE_TYPE="cure_type";//指的是物理治疗还是药物治疗
 

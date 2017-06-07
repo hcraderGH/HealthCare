@@ -101,8 +101,10 @@ public class BluetoothLeService extends Service {
                         Log.i(TAG, UUID_NOTIFY.toString());
                         mReadCharacteristic = gattCharacteristic;
                         Log.i(TAG, "findService: mReadCharacteristic"+mReadCharacteristic.getUuid().toString());
-                        setCharacteristicNotification(gattCharacteristic, true);
-                        broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+                        if (setCharacteristicNotification(gattCharacteristic, true)){
+                            broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+                        }
+
                     }
 
                     if(gattCharacteristic.getUuid().toString().equalsIgnoreCase(UUID_WRITE.toString())) {
@@ -144,6 +146,8 @@ public class BluetoothLeService extends Service {
                     broadcastUpdate(intentAction);
                 }
             }
+
+
         }
 
         @Override
@@ -376,13 +380,13 @@ public class BluetoothLeService extends Service {
      * @param characteristic Characteristic to act on.
      * @param enabled If true, enable notification.  False otherwise.
      */
-    public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
+    public boolean setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
                                               boolean enabled) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
+            return false;
         }
-        mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
+        return mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 /*
         // This is specific to Heart Rate Measurement.
         if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {

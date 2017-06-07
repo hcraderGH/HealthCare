@@ -179,12 +179,15 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
 
+				if (!isItemClicked){
+					return;
+				}
+
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
-				if (data != null&&isItemClicked) {
+				if (data != null) {
 
 					isItemClicked=false;
-
 					stopTimer();//获取到数据的情况下，停止计时
 					mProgressDialog.dismiss();
 					Toasty.success(DeviceScanActivity.this, "连接设备成功", 500).show();
@@ -393,7 +396,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					break;
 				case 2://连接超时
 					stopTimer();
-//					mBluetoothLeService.disconnect();
+					mBluetoothLeService.disconnect();
 					if (mProgressDialog!=null){
 						mProgressDialog.dismiss();
 					}

@@ -86,7 +86,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		//注册接受蓝牙信息的广播
 		mBlueToothBroadCast = new BlueToothBroadCast();
 		IntentFilter filter = new IntentFilter();
-		filter.addAction(Constants.RECEIVE_BLUETOOTH_INFO);
+		filter.addAction(Constants.RECEIVE_GATT_STATUS);
 		getActivity().registerReceiver(mBlueToothBroadCast, filter);
 
 		super.onAttach(context);
@@ -98,17 +98,18 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的信息
 //			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
-			LogUtil.i(TAG, "onReceive:mDeviceAddress " + mDeviceAddress);
-			LogUtil.i(TAG,"mBluetoothLeService="+mBluetoothLeService);
-			boolean isGATTConnected=intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
-			if (isGATTConnected){
+			LogUtil.i(TAG, "mBluetoothLeService=" + mBluetoothLeService);
+			boolean isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS, false);
+			LogUtil.i(TAG, "连接状态isGATTConnected=" + isGATTConnected);
+
+			if (isGATTConnected) {
 				getActivity().runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
 						setDisplayStatus(true);
 					}
 				});
-			}else{
+			} else {
 				getActivity().runOnUiThread(new Runnable() {
 					@Override
 					public void run() {
@@ -213,6 +214,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				if (mConnected) {
 					setDisplayStatus(false);//TODO
 					mSendNewCmdFlag = true;
+
+					Intent intent = new Intent();
+					intent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+					intent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+					getActivity().sendBroadcast(intent);
+
 					sendPowerOffCmd();
 				}
 				break;
@@ -359,21 +366,20 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				LogUtil.i(TAG, "mGattUpdateReceiver断开了连接");
 
-				if (mSendNewCmdFlag) {
-					getActivity().runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							setDisplayStatus(false);
-						}
-					});
-				}
-				mSendNewCmdFlag = false;
+				getActivity().runOnUiThread(new Runnable() {
+					@Override
+					public void run() {
+						setDisplayStatus(false);
+					}
+				});
 
+				mSendNewCmdFlag = false;
 				mConnected = false;
-				Intent gattIntent = new Intent();
-				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS, mConnected);
-				gattIntent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
-				getActivity().sendBroadcast(gattIntent);
+
+//				Intent gattIntent = new Intent();
+//				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS, mConnected);
+//				gattIntent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
+//				getActivity().sendBroadcast(gattIntent);
 
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 
@@ -388,22 +394,22 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
 
-				mConnected=true;
+				mConnected = true;
 
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
-				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
+				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
 
 					Intent gattIntent = new Intent();
-					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS, mConnected);
-					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS);
+					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
+					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
 					getActivity().sendBroadcast(gattIntent);
 
 					//TODO 接收数据处理
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					if (!(data[2] + data[3] + data[4] + data[5] + data[6] + data[7] + data[8] == ConvertUtils.byte2unsignedInt(data[9]))) {
-						LogUtil.i(TAG,"数据校验出现错误");
+						LogUtil.i(TAG, "数据校验出现错误");
 						return;
 					}
 
@@ -422,8 +428,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3]) + "℃");
 						}
 					});
-				}else{
-					Toasty.warning(getActivity(),"请重启设备",Toast.LENGTH_LONG).show();//TODO 测试能够连接上设备，但是获取不到数据的情况
+				} else {
+					Toasty.warning(getActivity(), "请重启设备", Toast.LENGTH_LONG).show();//TODO 测试能够连接上设备，但是获取不到数据的情况
 				}
 			}
 		}
