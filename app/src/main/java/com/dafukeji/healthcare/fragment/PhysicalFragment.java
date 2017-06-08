@@ -178,7 +178,7 @@ public class PhysicalFragment extends Fragment {
 
 
 				if (!isGATTConnected){
-					Toasty.warning(getActivity(),"请连接设备", Toast.LENGTH_SHORT).show();
+					Toasty.warning(getActivity(),"请连接设备",  getResources().getInteger(R.integer.toasty_duration)).show();
 					return;
 				}
 				if (CureSPUtil.isSaved(Constants.SP_PHYSICAL_STIMULATE,getActivity())){

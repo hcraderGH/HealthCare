@@ -4,4 +4,6 @@
 
     <integer name="mrl_ripple_duration">300</integer>
     <integer name="rv_duration">200</integer>
+
+    <integer name="toasty_duration">500</integer>
 </resources>

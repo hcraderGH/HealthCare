@@ -6,6 +6,7 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
 import android.content.BroadcastReceiver;
@@ -317,10 +318,14 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				startTimer();//开始连接倒计时
 
 				LogUtil.i(TAG,"HomeFragment.getConnectStatus()="+HomeFragment.getConnectStatus());
-				if (!HomeFragment.getConnectStatus()){
+
+				if(BluetoothLeService.getConnectionState()== BluetoothProfile.STATE_DISCONNECTED){
+					mBluetoothLeService.disconnect();
+				}else{
 					device= mLeDeviceRecyclerAdapter.getDevice(position);
 					mBluetoothLeService.connect(device.getAddress());
 				}
+
 
 //				Intent intent = new Intent();
 //				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());

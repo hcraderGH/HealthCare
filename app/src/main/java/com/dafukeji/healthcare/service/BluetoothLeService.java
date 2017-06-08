@@ -137,8 +137,9 @@ public class BluetoothLeService extends Service {
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            String intentAction;
-            Log.i(TAG, "oldStatus=" + status + " NewStates=" + newState);
+            try {
+                String intentAction;
+                Log.i(TAG, "oldStatus=" + status + " NewStates=" + newState);
 //            if(status == BluetoothGatt.GATT_SUCCESS)
 //            {
 
@@ -163,6 +164,9 @@ public class BluetoothLeService extends Service {
                     Log.i(TAG, "Disconnected from GATT server.");
                     broadcastUpdate(intentAction);
 //                }
+            }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
@@ -343,10 +347,11 @@ public class BluetoothLeService extends Service {
         }
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
-//        if(mBluetoothGatt != null) {
-//            mBluetoothGatt.close();
-//            mBluetoothGatt = null;
-//        }
+
+        if(mBluetoothGatt != null) {
+            mBluetoothGatt.close();
+            mBluetoothGatt = null;
+        }
 
         Log.i(TAG, "connect: mBluetoothGatt="+mBluetoothGatt);
 
