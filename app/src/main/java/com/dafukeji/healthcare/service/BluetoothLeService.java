@@ -86,6 +86,9 @@ public class BluetoothLeService extends Service {
     }
 
     public void findService(List<BluetoothGattService> gattServices) {
+
+        long beforeTime=System.currentTimeMillis();
+
         Log.i(TAG, "Count is:" + gattServices.size());
         for (BluetoothGattService gattService : gattServices) {
             Log.i(TAG, gattService.getUuid().toString());
@@ -102,11 +105,14 @@ public class BluetoothLeService extends Service {
                         mReadCharacteristic = gattCharacteristic;
                         Log.i(TAG, "findService: mReadCharacteristic"+mReadCharacteristic.getUuid().toString());
                         if (setCharacteristicNotification(gattCharacteristic, true)){
+
+                            long readTime=System.currentTimeMillis();
+                            Log.i(TAG, "findService: 读取的时间="+(readTime-beforeTime));
                             broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
                         }
 
                     }
-
+                    
                     if(gattCharacteristic.getUuid().toString().equalsIgnoreCase(UUID_WRITE.toString())) {
                         Log.i(TAG, gattCharacteristic.getUuid().toString());
                         Log.i(TAG, UUID_NOTIFY.toString());
@@ -146,12 +152,13 @@ public class BluetoothLeService extends Service {
                     broadcastUpdate(intentAction);
                 }
             }
-
-
         }
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
+
+            Log.i(TAG, "onServicesDiscovered: status="+status);
+
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
                 findService(gatt.getServices());

@@ -87,36 +87,50 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		mBlueToothBroadCast = new BlueToothBroadCast();
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(Constants.RECEIVE_GATT_STATUS);
+		filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+		filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
 		getActivity().registerReceiver(mBlueToothBroadCast, filter);
 
 		super.onAttach(context);
 	}
-
 
 	public class BlueToothBroadCast extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的信息
 //			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
-			LogUtil.i(TAG, "mBluetoothLeService=" + mBluetoothLeService);
-			boolean isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS, false);
-			LogUtil.i(TAG, "连接状态isGATTConnected=" + isGATTConnected);
 
-			if (isGATTConnected) {
-				getActivity().runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						setDisplayStatus(true);
+			switch (intent.getAction()){
+				case BluetoothDevice.ACTION_ACL_CONNECTED:
+					LogUtil.i(TAG,"设备连接上了");
+					break;
+				case BluetoothDevice.ACTION_ACL_DISCONNECTED:
+					LogUtil.i(TAG,"设备断开了");
+					break;
+				case Constants.RECEIVE_GATT_STATUS:
+					LogUtil.i(TAG, "mBluetoothLeService=" + mBluetoothLeService);
+					boolean isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS, false);
+					LogUtil.i(TAG, "连接状态isGATTConnected=" + isGATTConnected);
+
+					if (isGATTConnected) {
+						getActivity().runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								setDisplayStatus(true);
+							}
+						});
+					} else {
+						getActivity().runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								setDisplayStatus(false);
+							}
+						});
 					}
-				});
-			} else {
-				getActivity().runOnUiThread(new Runnable() {
-					@Override
-					public void run() {
-						setDisplayStatus(false);
-					}
-				});
+					break;
 			}
+
+
 		}
 	}
 
