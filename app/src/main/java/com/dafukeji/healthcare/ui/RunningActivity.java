@@ -292,7 +292,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						LogUtil.i(TAG,"当点击again时mCureID会改变"+mCureId);
 					}
 
-
 					for (int i = 0; i <points.size() ; i++) {
 						points.get(i).setCureId(mCureId);
 						mPointDao.insert(points.get(i));
@@ -367,10 +366,10 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				mConnected = false;
 
-				Intent disConnectIntent=new Intent();
-				disConnectIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
-				disConnectIntent.setAction(Constants.RECEIVE_GATT_STATUS);
-				sendBroadcast(disConnectIntent);
+//				Intent disConnectIntent=new Intent();
+//				disConnectIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
+//				disConnectIntent.setAction(Constants.RECEIVE_GATT_STATUS);
+//				sendBroadcast(disConnectIntent);
 
 				//TODO 断开连接处理
 //				Toasty.error(RunningActivity.this, "与设备断开连接", Toast.LENGTH_SHORT).show();

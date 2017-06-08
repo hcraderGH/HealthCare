@@ -2,7 +2,6 @@ package com.dafukeji.healthcare.fragment;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
@@ -13,7 +12,9 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -29,18 +30,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
-import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
-import com.dafukeji.healthcare.ui.RunningActivity;
 import com.dafukeji.healthcare.util.ConvertUtils;
-import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
-import com.dafukeji.healthcare.util.ToastUtil;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import es.dmoral.toasty.Toasty;
 import me.itangqi.waveloadingview.WaveLoadingView;
@@ -103,9 +101,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			switch (intent.getAction()){
 				case BluetoothDevice.ACTION_ACL_CONNECTED:
 					LogUtil.i(TAG,"设备连接上了");
+					mConnected=true;
 					break;
 				case BluetoothDevice.ACTION_ACL_DISCONNECTED:
 					LogUtil.i(TAG,"设备断开了");
+					mSendNewCmdFlag=false;
+					mConnected=false;
 					break;
 				case Constants.RECEIVE_GATT_STATUS:
 					LogUtil.i(TAG, "mBluetoothLeService=" + mBluetoothLeService);
@@ -226,6 +227,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		switch (v.getId()) {
 			case R.id.btn_home_device_status:
 				if (mConnected) {
+
+					mBatTime=5000;//主要是为了当关机的时候不等于5000秒时，不能显示电量的颜色了
 					setDisplayStatus(false);//TODO
 					mSendNewCmdFlag = true;
 
@@ -246,6 +249,63 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		}
 	}
 
+
+	private Handler mHandler=new Handler(){
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.what){
+				case 0://接受到的电量
+					if (mBatTime==5000){
+						LogUtil.i(TAG,"接收到的电量"+msg.arg1);
+						JudgeEleSetWare((int) Math.floor(msg.arg1*10/4.1>=100?95:msg.arg1*10/4.1));//TODO 电量的计算公式
+						startTimer();
+					}
+
+					if (mBatTime<=0){
+						mBatTime=5000;
+						stopTimer();
+					}
+					tvCurrentTemp.setText(msg.arg2+"℃");//温度的显示
+					break;
+			}
+		}
+	};
+
+
+	private Timer mTimer;
+	private TimerTask mTimerTask;
+	private int mBatTime = 5000;//电量每隔此秒数显示一下
+	private void startTimer() {
+
+		if (mTimer == null) {
+			mTimer = new Timer();
+		}
+		if (mTimerTask == null) {
+			mTimerTask = new TimerTask() {
+				@Override
+				public void run() {
+					mBatTime -=1000;
+				}
+			};
+		}
+		if (mTimer != null && mTimerTask != null) {
+			mTimer.schedule(mTimerTask, 0, 1000);
+		}
+	}
+
+	private void stopTimer() {
+		if (mTimer != null) {
+			mTimer.cancel();
+			mTimer = null;
+		}
+
+		if (mTimerTask != null) {
+			mTimerTask.cancel();
+			mTimerTask = null;
+		}
+	}
+
+
 	/**
 	 * 发送关机命令
 	 */
@@ -263,11 +323,18 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		int crc = stimulate + stimulateGrade + stimulateFrequency + cauterizeGrade + cauterizeTime
 				+ needleType + needleGrade + needleFrequency + medicineTime;
 
-		byte[] setting = new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
+		final byte[] setting = new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
 				, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte) needleType, (byte) needleGrade
 				, (byte) needleFrequency, (byte) medicineTime, (byte) crc};
 		Log.i(TAG, "onClick: off" + Arrays.toString(setting));
-		mBluetoothLeService.WriteValue(setting);
+//		mBluetoothLeService.WriteValue(setting);
+
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				mBluetoothLeService.WriteValue(setting);
+			}
+		}).start();
 	}
 
 
@@ -397,13 +464,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 
-//				mConnected = true;
-//				getActivity().runOnUiThread(new Runnable() {
-//					@Override
-//					public void run() {
-//						setDisplayStatus(mConnected);
-//					}
-//				});
 				LogUtil.i(TAG, "In what we need");
 
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
@@ -413,6 +473,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
+
+					if (mSendNewCmdFlag){
+						//不需要在此设置mSendNewCmdFlag=false，因为断开时设为false
+						mSendNewCmdFlag=false;//仅能够实现断开后接收到一次数据的情况
+						return;
+					}
 
 					Intent gattIntent = new Intent();
 					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
@@ -435,13 +501,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
 					getActivity().sendBroadcast(batIntent);
 
-					getActivity().runOnUiThread(new Runnable() {
-						@Override
-						public void run() {
-							JudgeEleSetWare((int) Math.ceil(mRemindEle * 10 / 4.3 > 95 ? 95 : mRemindEle * 10 / 4.3));//TODO 电量公式
-							tvCurrentTemp.setText(ConvertUtils.byte2unsignedInt(data[3]) + "℃");
-						}
-					});
+					Message msg=Message.obtain();
+					msg.what=0;
+					msg.arg1=mRemindEle;
+					msg.arg2=mCurrentTemp;
+					mHandler.sendMessage(msg);
+
 				} else {
 					Toasty.warning(getActivity(), "请重启设备", Toast.LENGTH_LONG).show();//TODO 测试能够连接上设备，但是获取不到数据的情况
 				}
@@ -506,6 +571,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		LogUtil.i(TAG, "We are in destroy");
 	}
 
+
+	public static boolean getConnectStatus(){
+		return mConnected;
+	}
+
 	public void disConnect() {
 
 		if (mBluetoothLeService != null) {
@@ -515,9 +585,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	}
 
 	public void disableBlueTooth() {
-		if (mBluetoothLeService != null) {
-			mBluetoothLeService.close();
-			mBluetoothLeService = null;
+		if (mBluetoothLEAdapter != null) {
+			mBluetoothLEAdapter.disable();
+			mBluetoothLEAdapter = null;
 		}
 	}
 }

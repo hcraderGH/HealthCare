@@ -36,6 +36,7 @@ import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.LeRecyclerAdapter;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
@@ -85,6 +86,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private boolean isItemClicked=false;
 
 
+
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -121,10 +123,11 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 		}
 
-
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		LogUtil.i(TAG,"Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));//已经在HomeFragment中进行绑定服务了
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+
+
 	}
 
 	// Code to manage Service lifecycle.
@@ -308,11 +311,16 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 				mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
 				mProgressDialog.setMessage("正在连接设备，请稍等...");
+				mProgressDialog.setCancelable(true);//设置进度条是否可以按退回键取消
+				mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
 				mProgressDialog.show();
 				startTimer();//开始连接倒计时
 
-				device= mLeDeviceRecyclerAdapter.getDevice(position);
-				mBluetoothLeService.connect(device.getAddress());
+				LogUtil.i(TAG,"HomeFragment.getConnectStatus()="+HomeFragment.getConnectStatus());
+				if (!HomeFragment.getConnectStatus()){
+					device= mLeDeviceRecyclerAdapter.getDevice(position);
+					mBluetoothLeService.connect(device.getAddress());
+				}
 
 //				Intent intent = new Intent();
 //				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
@@ -397,6 +405,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				case 2://连接超时
 					stopTimer();
 					mBluetoothLeService.disconnect();
+//					mBluetoothLeService=null;
 					if (mProgressDialog!=null){
 						mProgressDialog.dismiss();
 					}
@@ -409,8 +418,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private void scanLeDevice(final boolean enable) {
 		if (enable) {
-
 			mScanning = true;
+
+
 			// Stops scanning after a pre-defined scan period.
 			mHandler.postDelayed(new Runnable() {
 				@Override
@@ -442,7 +452,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private void stopScan() {
 		mProgressDialog.dismiss();
+
 		tbScan.setChecked(false);
+
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			mBluetoothLEAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
 		} else {
@@ -497,7 +509,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	@Override
 	protected void onDestroy() {
-
 		LogUtil.i(TAG,"onDestroy()");
 		unbindService(mServiceConnection);
 		unregisterReceiver(mGattUpdateReceiver);

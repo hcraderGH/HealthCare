@@ -65,11 +65,15 @@
 
         <service android:name=".service.BatteryService"/>
 
-        <!--<receiver android:name=".fragment.HomeFragment$BlueToothBroadCast"/>-->
-        <!--<receiver android:name=".BaseActivity$BlueToothBroadCast"/>-->
-        <!--<receiver android:name=".service.BatteryService$BlueToothBroadCast"/>-->
-        <!--<receiver android:name=".ui.MainActivity$BlueToothBroadCast"/>-->
-        <!--<receiver android:name=".ui.SettingActivity$BlueToothBroadCast"/>-->
+
+        <receiver android:name=".BaseActivity$BlueToothBroadCast"/>
+        <receiver android:name=".fragment.HomeFragment$BlueToothBroadCast"/>
+        <receiver android:name=".BaseActivity$BlueToothBroadCast"/>
+        <receiver android:name=".service.BatteryService$BlueToothBroadCast"/>
+        <receiver android:name=".ui.MainActivity$BlueToothBroadCast"/>
+        <receiver android:name=".ui.SettingActivity$BlueToothBroadCast"/>
+        <receiver android:name=".fragment.MedicalFragment$BlueToothBroadCast"/>
+
 
         <activity
             android:name="com.tencent.bugly.beta.ui.BetaActivity"

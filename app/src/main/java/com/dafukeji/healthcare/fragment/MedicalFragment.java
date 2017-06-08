@@ -60,6 +60,8 @@ public class MedicalFragment extends Fragment {
 	@Override
 	public void onAttach(Context context) {
 		//注册接受蓝牙信息的广播
+
+		LogUtil.i(TAG,"onAttach()");
 		mBlueToothBroadCast=new BlueToothBroadCast();
 		IntentFilter filter=new IntentFilter();
 		filter.addAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
@@ -67,7 +69,7 @@ public class MedicalFragment extends Fragment {
 		super.onAttach(context);
 	}
 
-	class BlueToothBroadCast extends BroadcastReceiver {
+	public class BlueToothBroadCast extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -81,7 +83,7 @@ public class MedicalFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		mView = inflater.inflate(R.layout.fragment_home_medical, container, false);
 		initViews();
-
+		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		return mView;
 	}
 
@@ -224,14 +226,9 @@ public class MedicalFragment extends Fragment {
 
 
 	@Override
-	public void onStart() {
-		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-		super.onStart();
-	}
-
-	@Override
-	public void onStop() {
+	public void onDestroy() {
 		getActivity().unregisterReceiver(mGattUpdateReceiver);
-		super.onStop();
+		getActivity().unregisterReceiver(mBlueToothBroadCast);
+		super.onDestroy();
 	}
 }

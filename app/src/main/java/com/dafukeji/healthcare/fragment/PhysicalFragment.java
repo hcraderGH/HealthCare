@@ -81,7 +81,7 @@ public class PhysicalFragment extends Fragment {
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		mView=inflater.inflate(R.layout.fragment_home_physical,container,false);
 		initViews();
-
+		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		return mView;
 	}
 
@@ -201,8 +201,6 @@ public class PhysicalFragment extends Fragment {
 					mKneadTime=CureSPUtil.getKneadTimeByPosition(CureSPUtil.getSP(Constants.SP_KNEAD_TIME_GRADE,getActivity()));
 				}
 
-
-
 //				if (HomeFragment.getBluetoothLeService()==null){
 //					return;
 //				}
@@ -222,20 +220,8 @@ public class PhysicalFragment extends Fragment {
 	@Override
 	public void onDestroy() {
 		LogUtil.i(TAG,"onDestroy()");
-//		getActivity().unregisterReceiver(mBlueToothBroadCast);
-		super.onDestroy();
-	}
-
-
-	@Override
-	public void onStart() {
-		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-		super.onStart();
-	}
-
-	@Override
-	public void onStop() {
 		getActivity().unregisterReceiver(mGattUpdateReceiver);
-		super.onStop();
+		getActivity().unregisterReceiver(mBlueToothBroadCast);
+		super.onDestroy();
 	}
 }
