@@ -307,17 +307,17 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					mScanning = false;
 				}
 
+				LogUtil.i(TAG,"HomeFragment.getConnectStatus()="+HomeFragment.getConnectStatus());
+
+				device= mLeDeviceRecyclerAdapter.getDevice(position);
+				mBluetoothLeService.connect(device.getAddress());
+
 				mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
 				mProgressDialog.setMessage("正在连接设备，请稍等...");
 				mProgressDialog.setCancelable(false);//设置进度条是否可以按退回键取消
-				mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
+				mProgressDialog.setCanceledOnTouchOutside(true);//设置点击进度对话框外的区域对话框是否消失
 				mProgressDialog.show();
 				startTimer();//开始连接倒计时
-
-				LogUtil.i(TAG,"HomeFragment.getConnectStatus()="+HomeFragment.getConnectStatus());
-
-					device= mLeDeviceRecyclerAdapter.getDevice(position);
-					mBluetoothLeService.connect(device.getAddress());
 
 //				Intent intent = new Intent();
 //				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
