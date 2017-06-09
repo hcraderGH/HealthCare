@@ -123,17 +123,19 @@ public class PhysicalFragment extends Fragment {
 					//TODO 接收数据处理
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(ConvertUtils.byte2unsignedInt(data[2]) +
+					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
 							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
 							ConvertUtils.byte2unsignedInt(data[5]) +
 							ConvertUtils.byte2unsignedInt(data[6])+
 							ConvertUtils.byte2unsignedInt(data[7])+
-							ConvertUtils.byte2unsignedInt(data[8])== ConvertUtils.byte2unsignedInt(data[9]))) {
-
+							ConvertUtils.byte2unsignedInt(data[8]);
+					LogUtil.i(TAG,"cmdSum%256="+cmdSum%256);
+					LogUtil.i(TAG,"ConvertUtils.byte2unsignedInt(data[9])="+ConvertUtils.byte2unsignedInt(data[9]));
+					if (!((cmdSum%256)== ConvertUtils.byte2unsignedInt(data[9]))) {
 						LogUtil.i(TAG,"数据校验出现错误");
 						return;
 					}
+
 
 					if (mSendNewCmdFlag) {
 						Frame.curFrameId = ConvertUtils.byte2unsignedInt(data[8]);

@@ -33,6 +33,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
+import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 
@@ -104,10 +105,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				case BluetoothDevice.ACTION_ACL_CONNECTED:
 
 					LogUtil.i(TAG,"设备连接上了");
-
 					setDisplayStatus(true);
-
 					mConnected=true;
+
 					break;
 				case BluetoothDevice.ACTION_ACL_DISCONNECTED:
 					LogUtil.i(TAG,"设备断开了");
@@ -140,8 +140,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					}
 					break;
 			}
-
-
 		}
 	}
 
@@ -502,16 +500,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					//TODO 接收数据处理
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(ConvertUtils.byte2unsignedInt(data[2]) +
-							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
-							ConvertUtils.byte2unsignedInt(data[5]) +
-							ConvertUtils.byte2unsignedInt(data[6])+
-							ConvertUtils.byte2unsignedInt(data[7])+
-							ConvertUtils.byte2unsignedInt(data[8])== ConvertUtils.byte2unsignedInt(data[9]))) {
-
+					boolean crcIsRight= CommonUtils.IsCRCRight(data);
+					if (!crcIsRight){
 						LogUtil.i(TAG,"数据校验出现错误");
 						return;
 					}
+
 
 					mCurrentTemp = ConvertUtils.byte2unsignedInt(data[3]);
 					mRemindEle = ConvertUtils.byte2unsignedInt(data[7]);

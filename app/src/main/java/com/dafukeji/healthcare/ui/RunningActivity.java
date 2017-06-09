@@ -34,6 +34,7 @@ import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.util.ColorArcProgressBar;
+import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
@@ -401,12 +402,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					//TODO 接收数据处理
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(ConvertUtils.byte2unsignedInt(mData[2]) +
-							ConvertUtils.byte2unsignedInt(mData[3])+ConvertUtils.byte2unsignedInt(mData[4] )+
-							ConvertUtils.byte2unsignedInt(mData[5]) +
-							ConvertUtils.byte2unsignedInt(mData[6])+
-							ConvertUtils.byte2unsignedInt(mData[7])+
-							ConvertUtils.byte2unsignedInt(mData[8])== ConvertUtils.byte2unsignedInt(mData[9]))) {
+					boolean crcIsRight= CommonUtils.IsCRCRight(mData);
+					if (!crcIsRight){
+						LogUtil.i(TAG,"数据校验出现错误");
 						return;
 					}
 

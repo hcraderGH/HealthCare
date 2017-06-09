@@ -19,6 +19,7 @@ import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.ui.RunningActivity;
+import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
@@ -122,16 +123,25 @@ public class MedicalFragment extends Fragment {
 					//TODO 接收数据处理
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(ConvertUtils.byte2unsignedInt(data[2]) +
-							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
-							ConvertUtils.byte2unsignedInt(data[5]) +
-							ConvertUtils.byte2unsignedInt(data[6])+
-							ConvertUtils.byte2unsignedInt(data[7])+
-							ConvertUtils.byte2unsignedInt(data[8])== ConvertUtils.byte2unsignedInt(data[9]))) {
+//					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
+//							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
+//							ConvertUtils.byte2unsignedInt(data[5]) +
+//							ConvertUtils.byte2unsignedInt(data[6])+
+//							ConvertUtils.byte2unsignedInt(data[7])+
+//							ConvertUtils.byte2unsignedInt(data[8]);
+//					LogUtil.i(TAG,"cmdSum%256="+cmdSum%256);
+//					LogUtil.i(TAG,"ConvertUtils.byte2unsignedInt(data[9])="+ConvertUtils.byte2unsignedInt(data[9]));
+//					if (!((cmdSum%256)== ConvertUtils.byte2unsignedInt(data[9]))) {
+//						LogUtil.i(TAG,"数据校验出现错误");
+//						return;
+//					}
 
+					boolean crcIsRight= CommonUtils.IsCRCRight(data);
+					if (!crcIsRight){
 						LogUtil.i(TAG,"数据校验出现错误");
 						return;
 					}
+
 
 					if (mSendNewCmdFlag) {
 						Frame.curFrameId = ConvertUtils.byte2unsignedInt(data[8]);
