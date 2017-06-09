@@ -122,7 +122,13 @@ public class MedicalFragment extends Fragment {
 					//TODO 接收数据处理
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(data[2] + data[3] + data[4] + data[5] + data[6] + data[7] + data[8] == ConvertUtils.byte2unsignedInt(data[9]))) {
+					if (!(ConvertUtils.byte2unsignedInt(data[2]) +
+							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
+							ConvertUtils.byte2unsignedInt(data[5]) +
+							ConvertUtils.byte2unsignedInt(data[6])+
+							ConvertUtils.byte2unsignedInt(data[7])+
+							ConvertUtils.byte2unsignedInt(data[8])== ConvertUtils.byte2unsignedInt(data[9]))) {
+
 						LogUtil.i(TAG,"数据校验出现错误");
 						return;
 					}

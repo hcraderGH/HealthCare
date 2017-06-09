@@ -231,6 +231,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		mLineChartView.setViewportCalculationEnabled(false);
 		mLineChartView.setOnValueTouchListener(new ValueTouchListener());
 
+
+		LogUtil.i(TAG,"接受到的温度："+getIntent().getIntExtra(Constants.CURRENT_TEMP,0));
 		dynamicDataDisplay(getIntent().getLongExtra(Constants.CURRENT_TIME,0),getIntent().getIntExtra(Constants.CURRENT_TEMP,0));
 	}
 
@@ -399,7 +401,12 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					//TODO 接收数据处理
 
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(mData[2] + mData[3] + mData[4] + mData[5] + mData[6]+mData[7]+mData[8]== ConvertUtils.byte2unsignedInt(mData[9]))) {
+					if (!(ConvertUtils.byte2unsignedInt(mData[2]) +
+							ConvertUtils.byte2unsignedInt(mData[3])+ConvertUtils.byte2unsignedInt(mData[4] )+
+							ConvertUtils.byte2unsignedInt(mData[5]) +
+							ConvertUtils.byte2unsignedInt(mData[6])+
+							ConvertUtils.byte2unsignedInt(mData[7])+
+							ConvertUtils.byte2unsignedInt(mData[8])== ConvertUtils.byte2unsignedInt(mData[9]))) {
 						return;
 					}
 
