@@ -62,6 +62,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private FragmentManager mManager;
 	private String[] fragmentNames;
 
+	private long cmdOffTime;
+	private long realOffTime;
 
 	private RadioButton rbMedical;
 	private RadioButton rbPhysical;
@@ -100,11 +102,19 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 			switch (intent.getAction()){
 				case BluetoothDevice.ACTION_ACL_CONNECTED:
+
 					LogUtil.i(TAG,"设备连接上了");
+
+					setDisplayStatus(true);
+
 					mConnected=true;
 					break;
 				case BluetoothDevice.ACTION_ACL_DISCONNECTED:
 					LogUtil.i(TAG,"设备断开了");
+					LogUtil.i(TAG,"设备断开所需的时间："+(System.currentTimeMillis()-cmdOffTime));
+
+					setDisplayStatus(false);
+
 					mSendNewCmdFlag=false;
 					mConnected=false;
 					break;
@@ -228,7 +238,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			case R.id.btn_home_device_status:
 				if (mConnected) {
 
+					cmdOffTime=System.currentTimeMillis();
+
 					mBatTime=5000;//主要是为了当关机的时候不等于5000秒时，不能显示电量的颜色了
+					stopTimer();
+
 					setDisplayStatus(false);//TODO
 					mSendNewCmdFlag = true;
 
@@ -575,6 +589,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	public static boolean getConnectStatus(){
 		return mConnected;
 	}
+
 
 	public void disConnect() {
 

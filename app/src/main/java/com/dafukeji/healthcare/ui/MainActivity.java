@@ -36,6 +36,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.fragment.RecordFragment;
+import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
@@ -181,9 +182,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		mBmbController.setShowDelay(100);//设置Boom按钮的展示的延迟
 		mBmbController.setHideDuration(400);
 
-		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_1);
-		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_1);
-
 		ReinitializeBoom();
 
 		mrlExit= (MaterialRippleLayout)mDrawer.findViewById(R.id.mrl_exit);
@@ -279,8 +277,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 //			mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_1);
 //		}
 
-//		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
-//		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
+		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
+		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
 
 		int[] normalColor=new int[]{Color.parseColor("#4CAF50"),Color.parseColor("#ff0000")};//设置子控件的颜色
 		int[] highLightedColor=new int[]{Color.parseColor("#70bf73"),Color.parseColor("#ff5c5c")};//设置子控件点击后的背景颜色
@@ -344,9 +342,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 									break;
 								case 1:
 									//断开蓝牙的连接
-									if (homeFragment!=null){
-										homeFragment.disableBlueTooth();
-									}
+									HomeFragment.getBluetoothLeService().disconnect();
 									break;
 							}
 						}

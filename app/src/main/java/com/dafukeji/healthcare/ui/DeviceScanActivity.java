@@ -216,7 +216,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 
 	private void startTimer() {
-		mOverTime=5000;
+		mOverTime=21000;//连接断开的时间
 		if (mTimer == null) {
 			mTimer = new Timer();
 		}
@@ -293,9 +293,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private void initWidgets() {
 
-		mProgressDialog=new ProgressDialog(this);
-		mProgressDialog.setMessage("正在搜索设备，请稍等...");
-
 		mRecyclerView = (RecyclerView) findViewById(R.id.rlv_scan_devices);
 		mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 		mLeDeviceRecyclerAdapter = new LeRecyclerAdapter(this);
@@ -312,20 +309,15 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 				mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
 				mProgressDialog.setMessage("正在连接设备，请稍等...");
-				mProgressDialog.setCancelable(true);//设置进度条是否可以按退回键取消
+				mProgressDialog.setCancelable(false);//设置进度条是否可以按退回键取消
 				mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
 				mProgressDialog.show();
 				startTimer();//开始连接倒计时
 
 				LogUtil.i(TAG,"HomeFragment.getConnectStatus()="+HomeFragment.getConnectStatus());
 
-				if(BluetoothLeService.getConnectionState()== BluetoothProfile.STATE_DISCONNECTED){
-					mBluetoothLeService.disconnect();
-				}else{
 					device= mLeDeviceRecyclerAdapter.getDevice(position);
 					mBluetoothLeService.connect(device.getAddress());
-				}
-
 
 //				Intent intent = new Intent();
 //				intent.putExtra(Constants.EXTRAS_DEVICE_NAME, device.getName());
@@ -364,6 +356,12 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		switch (buttonView.getId()) {
 			case R.id.tb_scan:
 				if (tbScan.isChecked()) {
+
+					mProgressDialog=new ProgressDialog(this);
+					mProgressDialog.setMessage("正在搜索设备，请稍等...");
+					mProgressDialog.setCancelable(true);
+					mProgressDialog.setCanceledOnTouchOutside(true);
+
 					mSBScanString.setVisibility(View.INVISIBLE);//当点击搜索时，则隐藏文字
 					openBlueTooth();
 					LogUtil.i(TAG,"DeviceScan蓝牙打开了？"+mBluetoothLEAdapter.isEnabled());
