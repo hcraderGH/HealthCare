@@ -216,7 +216,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 
 	private void startTimer() {
-		mOverTime=21000;//连接断开的时间
+		mOverTime=30000;//连接断开的时间（华为与其他机器是否一样）
 		if (mTimer == null) {
 			mTimer = new Timer();
 		}
@@ -272,7 +272,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		}
 	}
 
-
 	@Override
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
 	                                       @NonNull int[] grantResults) {
@@ -290,6 +289,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				break;
 		}
 	}
+
 
 	private void initWidgets() {
 
@@ -422,7 +422,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private void scanLeDevice(final boolean enable) {
 		if (enable) {
 			mScanning = true;
-
 
 			// Stops scanning after a pre-defined scan period.
 			mHandler.postDelayed(new Runnable() {
