@@ -33,6 +33,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
+import com.dafukeji.healthcare.ui.MainActivity;
 import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
@@ -43,6 +44,8 @@ import java.util.TimerTask;
 
 import es.dmoral.toasty.Toasty;
 import me.itangqi.waveloadingview.WaveLoadingView;
+
+import static android.app.Activity.RESULT_OK;
 
 public class HomeFragment extends Fragment implements View.OnClickListener {
 
@@ -77,6 +80,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private View mView;
 
 	private BlueToothBroadCast mBlueToothBroadCast;
+
+	private int mReceivedDataCount;
 
 //	private boolean beginRemindBat =false;//当连接设备成功时，即提醒用户电量
 
@@ -113,6 +118,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					LogUtil.i(TAG,"设备断开了");
 					LogUtil.i(TAG,"设备断开所需的时间："+(System.currentTimeMillis()-cmdOffTime));
 
+					stopTimerOff();
 					setDisplayStatus(false);
 
 					mSendNewCmdFlag=false;
@@ -230,6 +236,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		rbPhysical.setOnClickListener(this);
 	}
 
+
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode==RESULT_OK){
+			JudgeEleSetWare(data.getIntExtra("ele",0));
+			tvCurrentTemp.setText(data.getIntExtra("temp",0)+"℃");
+		}
+	}
+
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
@@ -238,17 +254,20 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 					cmdOffTime=System.currentTimeMillis();
 
-					mBatTime=5000;//主要是为了当关机的时候不等于5000秒时，不能显示电量的颜色了
-					stopTimer();
 
-					setDisplayStatus(false);//TODO
+					//采用定时器的方式
+//					mBatTime=5000;//主要是为了当关机的时候不等于5000秒时，不能显示电量的颜色了
+//					stopTimer();
+//					setDisplayStatus(false);//TODO
+//					mSendNewCmdFlag = true;
+//					Intent intent = new Intent();
+//					intent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+//					intent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+//					getActivity().sendBroadcast(intent);
+
 					mSendNewCmdFlag = true;
 
-					Intent intent = new Intent();
-					intent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
-					intent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
-					getActivity().sendBroadcast(intent);
-
+					startTimerOff();
 					sendPowerOffCmd();
 				}
 				break;
@@ -267,16 +286,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		public void handleMessage(Message msg) {
 			switch (msg.what){
 				case 0://接受到的电量
-					if (mBatTime==5000){
-						LogUtil.i(TAG,"接收到的电量"+msg.arg1);
-						JudgeEleSetWare((int) Math.floor(msg.arg1*10/4.1>=100?95:msg.arg1*10/4.1));//TODO 电量的计算公式
-						startTimer();
-					}
 
-					if (mBatTime<=0){
-						mBatTime=5000;
-						stopTimer();
-					}
+					JudgeEleSetWare((int) Math.floor(msg.arg1*10/4.1>=100?95:msg.arg1*10/4.1));//TODO 电量的计算公式
+
 					tvCurrentTemp.setText(msg.arg2+"℃");//温度的显示
 					break;
 			}
@@ -284,46 +296,57 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	};
 
 
-	private Timer mTimer;
-	private TimerTask mTimerTask;
-	private int mBatTime = 5000;//电量每隔此秒数显示一下
-	private void startTimer() {
+	private Timer mTimerOff;
+	private TimerTask mTimerTaskOff;
+	private int offTime=0;
+	private void startTimerOff() {
 
-		if (mTimer == null) {
-			mTimer = new Timer();
+		if (mTimerOff == null) {
+			mTimerOff = new Timer();
 		}
-		if (mTimerTask == null) {
-			mTimerTask = new TimerTask() {
+		if (mTimerTaskOff == null) {
+			mTimerTaskOff = new TimerTask() {
 				@Override
 				public void run() {
-					mBatTime -=1000;
+					offTime=offTime+10;
+					if (offTime==1000){
+						mSendNewCmdFlag=false;
+						getActivity().runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								setDisplayStatus(false);
+							}
+						});
+					}
+
 				}
 			};
 		}
-		if (mTimer != null && mTimerTask != null) {
-			mTimer.schedule(mTimerTask, 0, 1000);
+		if (mTimerOff != null && mTimerTaskOff != null) {
+			mTimerOff.schedule(mTimerTaskOff, 0,10);
 		}
 	}
 
-	private void stopTimer() {
-		if (mTimer != null) {
-			mTimer.cancel();
-			mTimer = null;
+	private void stopTimerOff() {
+		offTime=0;
+		if (mTimerOff != null) {
+			mTimerOff.cancel();
+			mTimerOff = null;
 		}
 
-		if (mTimerTask != null) {
-			mTimerTask.cancel();
-			mTimerTask = null;
+		if (mTimerTaskOff != null) {
+			mTimerTaskOff.cancel();
+			mTimerTaskOff = null;
 		}
 	}
+
 
 
 	/**
 	 * 发送关机命令
 	 */
 	private void sendPowerOffCmd() {
-		mSendCmdCount++;
-		int stimulate = 3;//关机标志
+		int stimulate = 5;//关机标志  TODO 关机命令有3改为5
 		int stimulateGrade = 0;
 		int stimulateFrequency = 0;
 		int cauterizeGrade = 0;
@@ -339,14 +362,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte) needleType, (byte) needleGrade
 				, (byte) needleFrequency, (byte) medicineTime, (byte) crc};
 		Log.i(TAG, "onClick: off" + Arrays.toString(setting));
-//		mBluetoothLeService.WriteValue(setting);
-
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				mBluetoothLeService.WriteValue(setting);
-			}
-		}).start();
+		mBluetoothLeService.WriteValue(setting);
 	}
 
 
@@ -469,11 +485,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				mSendNewCmdFlag = false;
 				mConnected = false;
 
-//				Intent gattIntent = new Intent();
-//				gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS, mConnected);
-//				gattIntent.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
-//				getActivity().sendBroadcast(gattIntent);
-
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 
 				LogUtil.i(TAG, "In what we need");
@@ -486,11 +497,25 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
 
+					//采用类似于握手的方法
+//					if (data[2]==4){
+//						byte[] off=new byte[]{(byte)0xFA,(byte)0xFB,5,0,0,0,0,0,0,0,0,5};
+//						mBluetoothLeService.WriteValue(off);
+//
+//						Intent intent2 = new Intent();
+//						intent2.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+//						intent2.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+//						getActivity().sendBroadcast(intent2);
+//						return;
+//					}
+
+
+					//通过关机后1秒内有没有收到数据为准
 					if (mSendNewCmdFlag){
-						//不需要在此设置mSendNewCmdFlag=false，因为断开时设为false
-						mSendNewCmdFlag=false;//仅能够实现断开后接收到一次数据的情况
-						return;
+						stopTimerOff();
+						startTimerOff();
 					}
+
 
 					Intent gattIntent = new Intent();
 					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
@@ -510,16 +535,20 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					mCurrentTemp = ConvertUtils.byte2unsignedInt(data[3]);
 					mRemindEle = ConvertUtils.byte2unsignedInt(data[7]);
 
-					//发送电量的广播
-					Intent batIntent = new Intent();
-					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
-					getActivity().sendBroadcast(batIntent);
 
-					Message msg=Message.obtain();
-					msg.what=0;
-					msg.arg1=mRemindEle;
-					msg.arg2=mCurrentTemp;
-					mHandler.sendMessage(msg);
+					mReceivedDataCount++;
+					if (mReceivedDataCount%10==0||mReceivedDataCount==1){
+						//发送电量的广播
+						Intent batIntent = new Intent();
+						batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
+						getActivity().sendBroadcast(batIntent);
+
+						Message msg=Message.obtain();
+						msg.what=0;
+						msg.arg1=mRemindEle;
+						msg.arg2=mCurrentTemp;
+						mHandler.sendMessage(msg);
+					}
 
 				} else {
 					Toasty.warning(getActivity(), "请重启设备", Toast.LENGTH_LONG).show();//TODO 测试能够连接上设备，但是获取不到数据的情况

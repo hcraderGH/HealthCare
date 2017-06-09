@@ -40,6 +40,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
+import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.romainpiel.shimmer.Shimmer;
@@ -205,12 +206,20 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						stopTimer();//获取到数据的情况下，停止计时
 						mProgressDialog.dismiss();
 					}
+
 					Toasty.success(DeviceScanActivity.this, "连接设备成功", 500).show();
 					//TODO 接收数据处理
 					Intent intent2=new Intent();
 					intent2.putExtra(Constants.EXTRAS_GATT_STATUS,true);
 					intent2.setAction(Constants.RECEIVE_GATT_STATUS);
 					sendBroadcast(intent2);
+
+					Intent intent3=new Intent();
+					intent3.putExtra("temp",ConvertUtils.byte2unsignedInt(data[3]));
+					int ele=ConvertUtils.byte2unsignedInt(data[7]);
+					intent3.putExtra("ele",(int) Math.floor(ele*10/4.1>=100?95:ele*10/4.1));//TODO 电量计算公式
+					DeviceScanActivity.this.setResult(RESULT_OK,intent3);
+
 					finish();
 
 				}else{
@@ -219,9 +228,11 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			}else if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)){
 				LogUtil.i(TAG,"设备断开了");
 				isConnected=false;
-				if (isItemClicked){
-					mBluetoothLeService.connect(device.getAddress());
-				}
+//				LogUtil.i(TAG,"ACL  isItemClicked="+isItemClicked);
+//				LogUtil.i(TAG,"device address ="+device.getAddress());
+//				if (isItemClicked){
+//					mBluetoothLeService.connect(device.getAddress());
+//				}
 			}else if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)){
 				LogUtil.i(TAG,"设备连接上了");
 				isConnected=true;
@@ -324,17 +335,18 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 				LogUtil.i(TAG,"onItemClick isConnected="+isConnected);
 
-				if (!isConnected){
-					device= mLeDeviceRecyclerAdapter.getDevice(position);
+				device= mLeDeviceRecyclerAdapter.getDevice(position);
+
+//				if (!isConnected){
 					mBluetoothLeService.connect(device.getAddress());
-				}else{
+//				}else{
 					mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
 					mProgressDialog.setMessage("正在连接设备，请稍等...");
 					mProgressDialog.setCancelable(false);//设置进度条是否可以按退回键取消
-					mProgressDialog.setCanceledOnTouchOutside(true);//设置点击进度对话框外的区域对话框是否消失
+					mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
 					mProgressDialog.show();
 					startTimer();//开始连接倒计时
-				}
+//				}
 			}
 		});
 		mRecyclerView.setAdapter(mLeDeviceRecyclerAdapter);
@@ -420,7 +432,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 //					mBluetoothLeService.disconnect();
 //					mBluetoothLeService.close();
 //					mBluetoothLeService=null;
-					if (mProgressDialog!=null){
+					if (mProgressDialog.isShowing()){
 						mProgressDialog.dismiss();
 					}
 					Toasty.warning(DeviceScanActivity.this,"连接超时，请重连或重启设备",500).show();

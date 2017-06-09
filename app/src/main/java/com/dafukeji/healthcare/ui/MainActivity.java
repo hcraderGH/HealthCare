@@ -82,6 +82,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	private MaterialRippleLayout mrlHome;
 	private static String TAG="测试MainActivity";
 
+	private static boolean isBoomOff;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -273,12 +275,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 //			mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
 //			mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
 //		}else{
-//			mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_1);
-//			mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_1);
+			mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_1);
+			mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_1);
 //		}
 
-		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
-		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
+//		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
+//		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
 
 		int[] normalColor=new int[]{Color.parseColor("#4CAF50"),Color.parseColor("#ff0000")};//设置子控件的颜色
 		int[] highLightedColor=new int[]{Color.parseColor("#70bf73"),Color.parseColor("#ff5c5c")};//设置子控件点击后的背景颜色
@@ -338,11 +340,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 						public void onBoomButtonClick(int index) {
 							switch (index){
 								case 0:
-									startActivity(new Intent(MainActivity.this,DeviceScanActivity.class));
+									startActivityForResult(new Intent(MainActivity.this,DeviceScanActivity.class),0);
 									break;
 								case 1:
 									//断开蓝牙的连接
-									HomeFragment.getBluetoothLeService().disconnect();
+									synchronized (HomeFragment.getBluetoothLeService()){
+										byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,2,0,0,0,0,0,0,0,0,2};
+										HomeFragment.getBluetoothLeService().WriteValue(init);
+										HomeFragment.getBluetoothLeService().disconnect();
+									}
 									break;
 							}
 						}
@@ -360,6 +366,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		}
 	}
 
+
+	public static boolean getIsBoomOff(){
+		return isBoomOff;
+	}
 
 	@Override
 	public void onWindowFocusChanged(boolean hasFocus) {
