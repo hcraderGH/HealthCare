@@ -216,7 +216,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 
 	private void startTimer() {
-		mOverTime=30000;//连接断开的时间（华为与其他机器是否一样）
+		mOverTime=22000;//连接断开的时间（华为与其他机器是否一样）
 		if (mTimer == null) {
 			mTimer = new Timer();
 		}
@@ -312,7 +312,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 				mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
 				mProgressDialog.setMessage("正在连接设备，请稍等...");
-				mProgressDialog.setCancelable(false);//设置进度条是否可以按退回键取消
+				mProgressDialog.setCancelable(true);//设置进度条是否可以按退回键取消
 				mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
 				mProgressDialog.show();
 				startTimer();//开始连接倒计时
@@ -359,6 +359,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					if (!mBluetoothLEAdapter.isEnabled()) {
 						return;
 					}
+
 					mRippleBackground.startRippleAnimation();
 					mLeDeviceRecyclerAdapter.clear();
 					mLeDeviceRecyclerAdapter.notifyDataSetChanged();
@@ -398,7 +399,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					break;
 				case 2://连接超时
 					stopTimer();
-					mBluetoothLeService.disconnect();
+//					mBluetoothLeService.disconnect();
 //					mBluetoothLeService=null;
 					if (mProgressDialog!=null){
 						mProgressDialog.dismiss();

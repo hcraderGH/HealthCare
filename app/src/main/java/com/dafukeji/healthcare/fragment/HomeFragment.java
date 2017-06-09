@@ -100,23 +100,23 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			//得到蓝牙的信息
 //			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
 
-			switch (intent.getAction()){
+			switch (intent.getAction()) {
 				case BluetoothDevice.ACTION_ACL_CONNECTED:
 
-					LogUtil.i(TAG,"设备连接上了");
+					LogUtil.i(TAG, "设备连接上了");
 
 					setDisplayStatus(true);
 
-					mConnected=true;
+					mConnected = true;
 					break;
 				case BluetoothDevice.ACTION_ACL_DISCONNECTED:
-					LogUtil.i(TAG,"设备断开了");
-					LogUtil.i(TAG,"设备断开所需的时间："+(System.currentTimeMillis()-cmdOffTime));
+					LogUtil.i(TAG, "设备断开了");
+					LogUtil.i(TAG, "设备断开所需的时间：" + (System.currentTimeMillis() - cmdOffTime));
 
 					setDisplayStatus(false);
 
-					mSendNewCmdFlag=false;
-					mConnected=false;
+					mSendNewCmdFlag = false;
+					mConnected = false;
 					break;
 				case Constants.RECEIVE_GATT_STATUS:
 					LogUtil.i(TAG, "mBluetoothLeService=" + mBluetoothLeService);
@@ -238,18 +238,17 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			case R.id.btn_home_device_status:
 				if (mConnected) {
 
-					cmdOffTime=System.currentTimeMillis();
+					cmdOffTime = System.currentTimeMillis();
 
-					mBatTime=5000;//主要是为了当关机的时候不等于5000秒时，不能显示电量的颜色了
-					stopTimer();
-
-					setDisplayStatus(false);//TODO
+//					mBatTime = 5000;//主要是为了当关机的时候不等于5000秒时，不能显示电量的颜色了
+//					stopTimer();
 					mSendNewCmdFlag = true;
-
-					Intent intent = new Intent();
-					intent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
-					intent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
-					getActivity().sendBroadcast(intent);
+//					setDisplayStatus(false);
+//
+//					Intent intent = new Intent();
+//					intent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+//					intent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+//					getActivity().sendBroadcast(intent);
 
 					sendPowerOffCmd();
 				}
@@ -264,22 +263,22 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	}
 
 
-	private Handler mHandler=new Handler(){
+	private Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
-			switch (msg.what){
+			switch (msg.what) {
 				case 0://接受到的电量
-					if (mBatTime==5000){
-						LogUtil.i(TAG,"接收到的电量"+msg.arg1);
-						JudgeEleSetWare((int) Math.floor(msg.arg1*10/4.1>=100?95:msg.arg1*10/4.1));//TODO 电量的计算公式
+					if (mBatTime == 5000) {
+						LogUtil.i(TAG, "接收到的电量" + msg.arg1);
+						JudgeEleSetWare((int) Math.floor(msg.arg1 * 10 / 4.1 >= 100 ? 95 : msg.arg1 * 10 / 4.1));//TODO 电量的计算公式
 						startTimer();
 					}
 
-					if (mBatTime<=0){
-						mBatTime=5000;
+					if (mBatTime <= 0) {
+						mBatTime = 5000;
 						stopTimer();
 					}
-					tvCurrentTemp.setText(msg.arg2+"℃");//温度的显示
+					tvCurrentTemp.setText(msg.arg2 + "℃");//温度的显示
 					break;
 			}
 		}
@@ -289,6 +288,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private Timer mTimer;
 	private TimerTask mTimerTask;
 	private int mBatTime = 5000;//电量每隔此秒数显示一下
+
 	private void startTimer() {
 
 		if (mTimer == null) {
@@ -298,7 +298,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			mTimerTask = new TimerTask() {
 				@Override
 				public void run() {
-					mBatTime -=1000;
+					mBatTime -= 1000;
 				}
 			};
 		}
@@ -488,9 +488,25 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
 
-					if (mSendNewCmdFlag){
-						//不需要在此设置mSendNewCmdFlag=false，因为断开时设为false
-						mSendNewCmdFlag=false;//仅能够实现断开后接收到一次数据的情况
+					//TODO 接收数据处理
+					//当校验码前面的数据相加不等于校验码时表示数据错误
+					if (!(data[2] + data[3] + data[4] + data[5] + data[6] + data[7] + data[8] == ConvertUtils.byte2unsignedInt(data[9]))) {
+						LogUtil.i(TAG, "数据校验出现错误");
+						return;
+					}
+
+					if (data[2] == 4) {
+						Intent intent2 = new Intent();
+						intent2.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+						intent2.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+						getActivity().sendBroadcast(intent2);
+
+						mBatTime = 5000;
+						stopTimer();
+
+						mBluetoothLeService.disconnect();
+						mBluetoothLeService.close();
+						setDisplayStatus(false);
 						return;
 					}
 
@@ -498,14 +514,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
 					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
 					getActivity().sendBroadcast(gattIntent);
-
-					//TODO 接收数据处理
-
-					//当校验码前面的数据相加不等于校验码时表示数据错误
-					if (!(data[2] + data[3] + data[4] + data[5] + data[6] + data[7] + data[8] == ConvertUtils.byte2unsignedInt(data[9]))) {
-						LogUtil.i(TAG, "数据校验出现错误");
-						return;
-					}
 
 					mCurrentTemp = ConvertUtils.byte2unsignedInt(data[3]);
 					mRemindEle = ConvertUtils.byte2unsignedInt(data[7]);
@@ -515,10 +523,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
 					getActivity().sendBroadcast(batIntent);
 
-					Message msg=Message.obtain();
-					msg.what=0;
-					msg.arg1=mRemindEle;
-					msg.arg2=mCurrentTemp;
+					Message msg = Message.obtain();
+					msg.what = 0;
+					msg.arg1 = mRemindEle;
+					msg.arg2 = mCurrentTemp;
 					mHandler.sendMessage(msg);
 
 				} else {
@@ -586,7 +594,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	}
 
 
-	public static boolean getConnectStatus(){
+	public static boolean getConnectStatus() {
 		return mConnected;
 	}
 

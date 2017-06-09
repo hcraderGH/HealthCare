@@ -89,6 +89,7 @@ public class BluetoothLeService extends Service {
     public void WriteValue(byte[] bytesValue,BluetoothGattCharacteristic write) {
         mWriteCharacteristic.setValue(bytesValue);
         mBluetoothGatt.writeCharacteristic(write);
+
     }
 
     public void findService(List<BluetoothGattService> gattServices) {
