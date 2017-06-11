@@ -50,11 +50,11 @@ public class MyApplication extends Application {
 		Utils.init(this);
 		setClearSPAndBD();//初次安装的时候是否清空偏好设置和数据库
 
-		//初始化Bugly
-		initBugly();
-
-		//初始化Umeng
-		initUmeng();
+//		//初始化Bugly
+//		initBugly();
+//
+//		//初始化Umeng
+//		initUmeng();
 
 		if (isTest){
 			//初始化内存泄露

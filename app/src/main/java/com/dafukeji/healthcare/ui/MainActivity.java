@@ -340,7 +340,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 						public void onBoomButtonClick(int index) {
 							switch (index){
 								case 0:
-									startActivityForResult(new Intent(MainActivity.this,DeviceScanActivity.class),0);
+									startActivity(new Intent(MainActivity.this,DeviceScanActivity.class));
 									break;
 								case 1:
 									//断开蓝牙的连接

@@ -110,7 +110,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				case BluetoothDevice.ACTION_ACL_CONNECTED:
 
 					LogUtil.i(TAG,"设备连接上了");
-					setDisplayStatus(true);
+					getActivity().runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							setDisplayStatus(true);
+						}
+					});
 					mConnected=true;
 
 					break;
@@ -119,7 +124,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					LogUtil.i(TAG,"设备断开所需的时间："+(System.currentTimeMillis()-cmdOffTime));
 
 					stopTimerOff();
-					setDisplayStatus(false);
+					getActivity().runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							setDisplayStatus(false);
+						}
+					});
 
 					mSendNewCmdFlag=false;
 					mConnected=false;
@@ -238,22 +248,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 
 	@Override
-	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		super.onActivityResult(requestCode, resultCode, data);
-		if (requestCode==RESULT_OK){
-			JudgeEleSetWare(data.getIntExtra("ele",0));
-			tvCurrentTemp.setText(data.getIntExtra("temp",0)+"℃");
-		}
-	}
-
-	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 			case R.id.btn_home_device_status:
 				if (mConnected) {
 
 					cmdOffTime=System.currentTimeMillis();
-
 
 					//采用定时器的方式
 //					mBatTime=5000;//主要是为了当关机的时候不等于5000秒时，不能显示电量的颜色了
@@ -266,6 +266,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 //					getActivity().sendBroadcast(intent);
 
 					mSendNewCmdFlag = true;
+					setDisplayStatus(false);//先直接变灰
 
 					startTimerOff();
 					sendPowerOffCmd();
@@ -299,6 +300,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private Timer mTimerOff;
 	private TimerTask mTimerTaskOff;
 	private int offTime=0;
+	private int mDataCountAfterOff;
 	private void startTimerOff() {
 
 		if (mTimerOff == null) {
@@ -309,14 +311,25 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				@Override
 				public void run() {
 					offTime=offTime+10;
-					if (offTime==1000){
-						mSendNewCmdFlag=false;
+					if (offTime>=2000){
+//						mSendNewCmdFlag=false;
 						getActivity().runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
+								stopTimerOff();
 								setDisplayStatus(false);
 							}
 						});
+					}else {
+						if (mDataCountAfterOff>=3){
+							getActivity().runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									setDisplayStatus(true);
+								}
+							});
+							sendPowerOffCmd();
+						}
 					}
 
 				}
@@ -346,7 +359,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	 * 发送关机命令
 	 */
 	private void sendPowerOffCmd() {
-		int stimulate = 5;//关机标志  TODO 关机命令有3改为5
+		int stimulate = 3;//关机标志  TODO 关机命令有3改为5
 		int stimulateGrade = 0;
 		int stimulateFrequency = 0;
 		int cauterizeGrade = 0;
@@ -484,6 +497,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 				mSendNewCmdFlag = false;
 				mConnected = false;
+				mDataCountAfterOff=0;
 
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 
@@ -497,33 +511,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
 
-					//采用类似于握手的方法
-//					if (data[2]==4){
-//						byte[] off=new byte[]{(byte)0xFA,(byte)0xFB,5,0,0,0,0,0,0,0,0,5};
-//						mBluetoothLeService.WriteValue(off);
-//
-//						Intent intent2 = new Intent();
-//						intent2.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
-//						intent2.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
-//						getActivity().sendBroadcast(intent2);
-//						return;
-//					}
-
-
-					//通过关机后1秒内有没有收到数据为准
-					if (mSendNewCmdFlag){
-						stopTimerOff();
-						startTimerOff();
-					}
-
-
-					Intent gattIntent = new Intent();
-					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
-					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
-					getActivity().sendBroadcast(gattIntent);
-
 					//TODO 接收数据处理
-
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					boolean crcIsRight= CommonUtils.IsCRCRight(data);
 					if (!crcIsRight){
@@ -531,6 +519,41 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 						return;
 					}
 
+					//当接受下位机的强刺激位为4时表示下位机收到了关机命令
+					if (data[2]==4){
+
+						mDataCountAfterOff=0;
+						mSendNewCmdFlag=false;
+						LogUtil.i(TAG,"接受到4");
+						getActivity().runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								setDisplayStatus(false);
+							}
+						});
+
+						stopTimerOff();
+						Intent gattIntent = new Intent();
+						gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+						gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+						getActivity().sendBroadcast(gattIntent);
+
+						return;
+					}
+
+					//通过关机后1秒内有没有收到数据为准，如果1秒内收不到数据则重新发送
+					if (mSendNewCmdFlag){
+						mDataCountAfterOff++;
+
+						LogUtil.i(TAG,"关机后接收到的信息数据的个数:"+mDataCountAfterOff);
+//						stopTimerOff();
+						offTime=0;
+					}
+
+					Intent gattIntent = new Intent();
+					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
+					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+					getActivity().sendBroadcast(gattIntent);
 
 					mCurrentTemp = ConvertUtils.byte2unsignedInt(data[3]);
 					mRemindEle = ConvertUtils.byte2unsignedInt(data[7]);
