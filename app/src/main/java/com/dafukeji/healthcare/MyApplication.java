@@ -36,7 +36,7 @@ public class MyApplication extends Application {
 	private static String TAG="测试";
 	private static boolean isClearSP=false;
 	private static boolean isClearDB=false;
-	private static boolean isTest=true;//TODO 当不处于测试的时候应该设置为false
+	private static boolean isTest=false;//TODO 当不处于测试的时候应该设置为false
 
 
 	private SPUtils mSpUtils;
@@ -50,11 +50,11 @@ public class MyApplication extends Application {
 		Utils.init(this);
 		setClearSPAndBD();//初次安装的时候是否清空偏好设置和数据库
 
-//		//初始化Bugly
-//		initBugly();
-//
-//		//初始化Umeng
-//		initUmeng();
+		//初始化Bugly
+		initBugly();
+
+		//初始化Umeng
+		initUmeng();
 
 		if (isTest){
 			//初始化内存泄露
