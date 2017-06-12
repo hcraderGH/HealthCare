@@ -21,6 +21,8 @@ public class Constants {
 	public static final String CURRENT_TIME="current__time";
 
 	public static final String RECEIVE_BLUETOOTH_INFO="receive_bluetooth_info";
+	public static final String RECEIVE_CURRENT_TEMP="receive_current_temp";
+	public static final String RECEIVE_CURRENT_ELE="receive_current_ele";
 
 	public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
 	public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";

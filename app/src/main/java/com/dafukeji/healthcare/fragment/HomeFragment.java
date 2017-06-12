@@ -95,6 +95,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		filter.addAction(Constants.RECEIVE_GATT_STATUS);
 		filter.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
 		filter.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+		filter.addAction(Constants.RECEIVE_BLUETOOTH_INFO);
 		getActivity().registerReceiver(mBlueToothBroadCast, filter);
 
 		super.onAttach(context);
@@ -102,7 +103,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 	public class BlueToothBroadCast extends BroadcastReceiver {
 		@Override
-		public void onReceive(Context context, Intent intent) {
+		public void onReceive(Context context, final Intent intent) {
 			//得到蓝牙的信息
 //			mDeviceAddress = intent.getStringExtra(Constants.EXTRAS_DEVICE_ADDRESS);
 
@@ -154,6 +155,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 							}
 						});
 					}
+					break;
+
+				case Constants.RECEIVE_BLUETOOTH_INFO:
+					getActivity().runOnUiThread(new Runnable() {
+						@Override
+						public void run() {
+							JudgeEleSetWare(intent.getIntExtra(Constants.RECEIVE_CURRENT_ELE,0));
+							tvCurrentTemp.setText(intent.getIntExtra(Constants.RECEIVE_CURRENT_TEMP,0)+"℃");
+						}
+					});
 					break;
 			}
 		}
@@ -288,7 +299,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			switch (msg.what){
 				case 0://接受到的电量
 
-					JudgeEleSetWare((int) Math.floor(msg.arg1*10/4.1>=100?95:msg.arg1*10/4.1));//TODO 电量的计算公式
+					JudgeEleSetWare(CommonUtils.eleFormula(msg.arg1));//TODO 电量的计算公式
 
 					tvCurrentTemp.setText(msg.arg2+"℃");//温度的显示
 					break;
@@ -521,6 +532,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 					//当接受下位机的强刺激位为4时表示下位机收到了关机命令
 					if (data[2]==4){
+
+						mBluetoothLeService.disconnect();
+						mBluetoothLeService.close();
 
 						mDataCountAfterOff=0;
 						mSendNewCmdFlag=false;

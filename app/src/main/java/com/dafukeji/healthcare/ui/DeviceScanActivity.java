@@ -39,6 +39,8 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
+import com.dafukeji.healthcare.util.CommonUtils;
+import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.romainpiel.shimmer.Shimmer;
@@ -228,6 +230,12 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					intent2.setAction(Constants.RECEIVE_GATT_STATUS);
 					sendBroadcast(intent2);
 
+					Intent intent3 =new Intent();
+					intent3.putExtra(Constants.RECEIVE_CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
+					intent3.putExtra(Constants.RECEIVE_CURRENT_ELE, CommonUtils.eleFormula(ConvertUtils.byte2unsignedInt(data[7])));
+					intent3.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
+					sendBroadcast(intent3);
+
 					finish();
 
 				}else{
@@ -235,19 +243,19 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				}
 			}
 
-			if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)){
-				LogUtil.i(TAG,"设备断开了");
-				if (mLeDeviceRecyclerAdapter.getItemCount()>0&&device!=null){
-					HomeFragment.getBluetoothLeService().connect(device.getAddress());
-				}
-
-				isConnected=false;
-			}
-
-			if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)){
-				LogUtil.i(TAG,"设备连接上了");
-				isConnected=true;
-			}
+//			if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)){
+//				LogUtil.i(TAG,"设备断开了");
+//				if (mLeDeviceRecyclerAdapter.getItemCount()>0&&device!=null){
+//					HomeFragment.getBluetoothLeService().connect(device.getAddress());
+//				}
+//
+//				isConnected=false;
+//			}
+//
+//			if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)){
+//				LogUtil.i(TAG,"设备连接上了");
+//				isConnected=true;
+//			}
 		}
 	};
 
@@ -275,7 +283,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					}
 				}
 			};
-		}else{
+		}
+		else{
+			LogUtil.i(TAG,"mProgressTask");
 			mProgressTask.cancel();
 			mProgressTask=null;
 		}
@@ -289,6 +299,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 		if(mProgressTask!=null){
 			mProgressTask.cancel();
+			mProgressTask=null;
 		}
 
 		if (mTimer != null) {
@@ -397,17 +408,20 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 				device= mLeDeviceRecyclerAdapter.getDevice(position);
 
-				if (!isConnected){
-					mBluetoothLeService.connect(device.getAddress());
-				}
+//				if (!isConnected){
+//					mBluetoothLeService.connect(device.getAddress());
+//				}
+
+				mBluetoothLeService.connect(device.getAddress());
+					startProgressTimer();//开始连接倒计时
 					mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
 					mProgressDialog.setMessage("正在连接设备，请稍等...");
 					mProgressDialog.setCancelable(false);//设置进度条是否可以按退回键取消
 					mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
 					mProgressDialog.show();
 
-					stopProgressTimer();//确保不发生java.lang.IllegalStateException: TimerTask is scheduled already
-					startProgressTimer();//开始连接倒计时
+//					stopProgressTimer();//确保不发生java.lang.IllegalStateException: TimerTask is scheduled already
+
 
 			}
 		});
@@ -501,13 +515,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					break;
 				case 2://连接超时
 
-					if (mProgressDialog!=null&&mProgressDialog.isShowing()){
-						mProgressDialog.dismiss();
-					}
-
+					mProgressDialog.dismiss();
 					stopProgressTimer();
 
-					mBluetoothLeService.close();
 					isItemClicked=false;
 					mLeDeviceRecyclerAdapter.clear();
 					mLeDeviceRecyclerAdapter.notifyDataSetChanged();
