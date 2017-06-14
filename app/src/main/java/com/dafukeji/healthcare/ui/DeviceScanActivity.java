@@ -16,6 +16,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -213,6 +214,12 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
 
+					boolean crcIsRight= CommonUtils.IsCRCRight(data);
+					if (!crcIsRight){
+						LogUtil.i(TAG,"数据校验出现错误");
+						return;
+					}
+
 					isReceivedData=true;
 
 					isItemClicked=false;
@@ -266,6 +273,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private Timer mTimer;
 	private int mOverTime ;
 	private void startProgressTimer() {
+
+		stopProgressTimer();
+
 		mOverTime=20000;//连接断开的时间（华为与其他机器是否一样）
 		if (mTimer == null) {
 			mTimer = new Timer();
@@ -283,11 +293,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					}
 				}
 			};
-		}
-		else{
-			LogUtil.i(TAG,"mProgressTask");
-			mProgressTask.cancel();
-			mProgressTask=null;
 		}
 
 		if (mTimer != null && mProgressTask!= null) {
@@ -353,17 +358,21 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private static final int REQUEST_FINE_LOCATION=0;
 	private void mayRequestLocation() {
 		if (Build.VERSION.SDK_INT >= 23) {
-			int checkCallPhonePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-			if(checkCallPhonePermission != PackageManager.PERMISSION_GRANTED){
-				//判断是否需要 向用户解释，为什么要申请该权限
-				if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION))
-					Toast.makeText(this,R.string.ble_need,Toast.LENGTH_LONG).show();
+			try {
+				int checkCallPhonePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
+				if(checkCallPhonePermission != PackageManager.PERMISSION_GRANTED){
+					//判断是否需要 向用户解释，为什么要申请该权限
+					if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION))
+						Toast.makeText(this,R.string.ble_need,Toast.LENGTH_LONG).show();
 
-				ActivityCompat.requestPermissions(this ,new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_FINE_LOCATION);
-				return;
+					ActivityCompat.requestPermissions(this ,new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_FINE_LOCATION);
+					return;
 
-			}else{
+				}else{
 
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
 		} else {
 
@@ -398,6 +407,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			@Override
 			public void onItemClick(View view, int position) {
 
+
+				isReceivedData=false;//当点击连接时，要置为false，才可以一直向下位机发6
 				isItemClicked=true;
 				if (mScanning) {
 					stopScan();
@@ -519,6 +530,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					stopProgressTimer();
 
 					isItemClicked=false;
+					isReceivedData=true;//当超时时要停止向下位机发6
+
 					mLeDeviceRecyclerAdapter.clear();
 					mLeDeviceRecyclerAdapter.notifyDataSetChanged();
 					Toasty.warning(DeviceScanActivity.this,"连接超时，请重连或重启设备",500).show();

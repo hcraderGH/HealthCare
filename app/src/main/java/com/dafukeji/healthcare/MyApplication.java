@@ -12,10 +12,16 @@ import com.blankj.utilcode.util.Utils;
 import com.dafukeji.healthcare.constants.Config;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.ui.MainActivity;
+import com.dafukeji.healthcare.util.AppBlockCanaryContext;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.SPUtils;
 import com.dafukeji.healthcare.util.SettingManager;
+import com.facebook.stetho.DumperPluginsProvider;
+import com.facebook.stetho.Stetho;
+import com.facebook.stetho.dumpapp.DumperPlugin;
+import com.github.moduth.blockcanary.BlockCanary;
 import com.orhanobut.logger.Logger;
+import com.squareup.leakcanary.LeakCanary;
 import com.tencent.bugly.Bugly;
 import com.tencent.bugly.BuglyStrategy;
 import com.tencent.bugly.beta.Beta;
@@ -33,7 +39,7 @@ public class MyApplication extends Application {
 	private List<Activity> mList = new ArrayList<>();
 	private static MyApplication instance;
 
-	private static String TAG="测试";
+	private static String TAG="测试MyApplication";
 	private static boolean isClearSP=false;
 	private static boolean isClearDB=false;
 	private static boolean isTest=true;//TODO 当不处于测试的时候应该设置为false
@@ -57,10 +63,18 @@ public class MyApplication extends Application {
 		initUmeng();
 
 		if (isTest){
-			//初始化内存泄露
-//			LeakCanary.install(this);
+
 			//初始化日志
 //			initLogger();//不习惯使用
+
+			//初始化内存泄露
+			LeakCanary.install(this);
+
+			//初始化性能检测组件，找到卡顿元凶
+			BlockCanary.install(this,new AppBlockCanaryContext()).start();
+
+			//初始化Stetho
+			Stetho.initializeWithDefaults(this);
 		}
 
 	}

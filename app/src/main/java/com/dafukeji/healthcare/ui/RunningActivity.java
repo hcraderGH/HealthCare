@@ -20,7 +20,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.dafukeji.daogenerator.Cure;
 import com.dafukeji.daogenerator.CureDao;
@@ -29,10 +28,10 @@ import com.dafukeji.daogenerator.DaoSession;
 import com.dafukeji.daogenerator.Point;
 import com.dafukeji.daogenerator.PointDao;
 import com.dafukeji.healthcare.BaseActivity;
-import com.dafukeji.healthcare.fragment.HomeFragment;
-import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
+import com.dafukeji.healthcare.fragment.HomeFragment;
+import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.ColorArcProgressBar;
 import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
@@ -40,7 +39,6 @@ import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.TimeUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
-import com.orhanobut.logger.Logger;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +46,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import es.dmoral.toasty.Toasty;
 import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
 import lecho.lib.hellocharts.model.Axis;
 import lecho.lib.hellocharts.model.AxisValue;
@@ -58,6 +55,10 @@ import lecho.lib.hellocharts.model.PointValue;
 import lecho.lib.hellocharts.model.ValueShape;
 import lecho.lib.hellocharts.model.Viewport;
 import lecho.lib.hellocharts.view.LineChartView;
+import rx.Observable;
+import rx.Scheduler;
+import rx.Subscriber;
+import rx.schedulers.Schedulers;
 
 /**
  * Created by DevCheng on 2017/4/21.
@@ -279,6 +280,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	}
 
 
+
+	//TODO 使用RxJava重构数据库的写入
 	private void saveData(){
 		new Thread(new Runnable() {
 			@Override

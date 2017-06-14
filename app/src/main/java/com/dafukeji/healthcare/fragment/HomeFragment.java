@@ -314,6 +314,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private int mDataCountAfterOff;
 	private void startTimerOff() {
 
+		stopTimerOff();//java.lang.IllegalStateException: TimerTask is scheduled already
+
 		if (mTimerOff == null) {
 			mTimerOff = new Timer();
 		}
