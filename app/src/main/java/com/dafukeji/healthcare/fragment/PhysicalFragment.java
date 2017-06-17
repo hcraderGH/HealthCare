@@ -119,9 +119,7 @@ public class PhysicalFragment extends Fragment {
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
-
 					//TODO 接收数据处理
-
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
 							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
@@ -151,7 +149,7 @@ public class PhysicalFragment extends Fragment {
 						} else {
 							mSendNewCmdFlag=false;
 
-							Frame.preFrameId=Frame.curFrameId;
+//							Frame.preFrameId=Frame.curFrameId;
 							LogUtil.i(TAG,"已经进入了方法");
 							Intent intent2 = new Intent(getActivity(), RunningActivity.class);
 							intent2.putExtra(Constants.CURE_TYPE,Constants.CURE_PHYSICAL);
@@ -160,6 +158,8 @@ public class PhysicalFragment extends Fragment {
 							intent2.putExtra(Constants.CURRENT_TIME,System.currentTimeMillis());
 							getActivity().startActivity(intent2);
 						}
+					}else{
+						Frame.preFrameId=ConvertUtils.byte2unsignedInt(data[8]);
 					}
 				}
 			}

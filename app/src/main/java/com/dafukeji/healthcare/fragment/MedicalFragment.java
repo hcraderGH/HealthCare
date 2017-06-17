@@ -119,22 +119,20 @@ public class MedicalFragment extends Fragment {
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
-
 					//TODO 接收数据处理
-
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-//					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
-//							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
-//							ConvertUtils.byte2unsignedInt(data[5]) +
-//							ConvertUtils.byte2unsignedInt(data[6])+
-//							ConvertUtils.byte2unsignedInt(data[7])+
-//							ConvertUtils.byte2unsignedInt(data[8]);
-//					LogUtil.i(TAG,"cmdSum%256="+cmdSum%256);
-//					LogUtil.i(TAG,"ConvertUtils.byte2unsignedInt(data[9])="+ConvertUtils.byte2unsignedInt(data[9]));
-//					if (!((cmdSum%256)== ConvertUtils.byte2unsignedInt(data[9]))) {
-//						LogUtil.i(TAG,"数据校验出现错误");
-//						return;
-//					}
+					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
+							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
+							ConvertUtils.byte2unsignedInt(data[5]) +
+							ConvertUtils.byte2unsignedInt(data[6])+
+							ConvertUtils.byte2unsignedInt(data[7])+
+							ConvertUtils.byte2unsignedInt(data[8]);
+					LogUtil.i(TAG,"cmdSum%256="+cmdSum%256);
+					LogUtil.i(TAG,"ConvertUtils.byte2unsignedInt(data[9])="+ConvertUtils.byte2unsignedInt(data[9]));
+					if (!((cmdSum%256)== ConvertUtils.byte2unsignedInt(data[9]))) {
+						LogUtil.i(TAG,"数据校验出现错误");
+						return;
+					}
 
 					boolean crcIsRight= CommonUtils.IsCRCRight(data);
 					if (!crcIsRight){
@@ -152,12 +150,12 @@ public class MedicalFragment extends Fragment {
 									, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
 
 
-							LogUtil.i(TAG,"已经进入了方法");
 							HomeFragment.getBluetoothLeService().WriteValue(settings);
 						} else {
 							mSendNewCmdFlag=false;
 
-							Frame.preFrameId=Frame.curFrameId;
+//							Frame.preFrameId=Frame.curFrameId;
+							LogUtil.i(TAG,"已经进入了方法");
 							Intent intent2 = new Intent(getActivity(), RunningActivity.class);
 							intent2.putExtra(Constants.CURE_TYPE, Constants.CURE_MEDICAL);
 							intent2.putExtra(Constants.ORIGINAL_TIME, mCauterizeTime + mMedicineTime);
@@ -165,6 +163,8 @@ public class MedicalFragment extends Fragment {
 							intent2.putExtra(Constants.CURRENT_TIME,System.currentTimeMillis());
 							getActivity().startActivity(intent2);
 						}
+					}else{
+						Frame.preFrameId=ConvertUtils.byte2unsignedInt(data[8]);
 					}
 				}
 			}

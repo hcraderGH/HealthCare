@@ -30,6 +30,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
@@ -523,7 +524,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
-
 					//TODO 接收数据处理
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					boolean crcIsRight= CommonUtils.IsCRCRight(data);
