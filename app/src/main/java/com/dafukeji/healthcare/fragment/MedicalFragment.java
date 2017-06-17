@@ -121,18 +121,18 @@ public class MedicalFragment extends Fragment {
 				if (data != null) {
 					//TODO 接收数据处理
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
-							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
-							ConvertUtils.byte2unsignedInt(data[5]) +
-							ConvertUtils.byte2unsignedInt(data[6])+
-							ConvertUtils.byte2unsignedInt(data[7])+
-							ConvertUtils.byte2unsignedInt(data[8]);
-					LogUtil.i(TAG,"cmdSum%256="+cmdSum%256);
-					LogUtil.i(TAG,"ConvertUtils.byte2unsignedInt(data[9])="+ConvertUtils.byte2unsignedInt(data[9]));
-					if (!((cmdSum%256)== ConvertUtils.byte2unsignedInt(data[9]))) {
-						LogUtil.i(TAG,"数据校验出现错误");
-						return;
-					}
+//					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
+//							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
+//							ConvertUtils.byte2unsignedInt(data[5]) +
+//							ConvertUtils.byte2unsignedInt(data[6])+
+//							ConvertUtils.byte2unsignedInt(data[7])+
+//							ConvertUtils.byte2unsignedInt(data[8]);
+//					LogUtil.i(TAG,"cmdSum%256="+cmdSum%256);
+//					LogUtil.i(TAG,"ConvertUtils.byte2unsignedInt(data[9])="+ConvertUtils.byte2unsignedInt(data[9]));
+//					if (!((cmdSum%256)== ConvertUtils.byte2unsignedInt(data[9]))) {
+//						LogUtil.i(TAG,"数据校验出现错误");
+//						return;
+//					}
 
 					boolean crcIsRight= CommonUtils.IsCRCRight(data);
 					if (!crcIsRight){
@@ -140,12 +140,11 @@ public class MedicalFragment extends Fragment {
 						return;
 					}
 
-
 					if (mSendNewCmdFlag) {
-						Frame.curFrameId = ConvertUtils.byte2unsignedInt(data[8]);
-						LogUtil.i(TAG,"Frame.curFrameId="+Frame.curFrameId);
-						LogUtil.i(TAG,"Frame.preFrameId="+Frame.preFrameId);
-						if (Frame.preFrameId == Frame.curFrameId) {
+						Frame.curMedFrameId = ConvertUtils.byte2unsignedInt(data[8]);
+						LogUtil.i(TAG,"Frame.curMedFrameId="+Frame.curMedFrameId);
+						LogUtil.i(TAG,"Frame.preMedFrameId="+Frame.preMedFrameId);
+						if (Frame.preMedFrameId == Frame.curMedFrameId) {
 							byte[] settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 									, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
 
@@ -164,7 +163,8 @@ public class MedicalFragment extends Fragment {
 							getActivity().startActivity(intent2);
 						}
 					}else{
-						Frame.preFrameId=ConvertUtils.byte2unsignedInt(data[8]);
+						Frame.preMedFrameId=ConvertUtils.byte2unsignedInt(data[8]);
+						LogUtil.i(TAG,"Frame.preMedFrameId="+Frame.preMedFrameId);
 					}
 				}
 			}

@@ -6,6 +6,9 @@ package com.dafukeji.healthcare.bean;
 
 public class Frame {
 
-	public  static int preFrameId;
-	public  static int curFrameId;
+	public static int prePhyFrameId;
+	public static int curPhyFrameId;
+
+	public static int preMedFrameId;
+	public static int curMedFrameId;
 }

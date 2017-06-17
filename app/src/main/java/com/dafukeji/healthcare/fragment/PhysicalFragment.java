@@ -20,6 +20,7 @@ import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.ui.RunningActivity;
+import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
@@ -120,26 +121,17 @@ public class PhysicalFragment extends Fragment {
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
 					//TODO 接收数据处理
-					//当校验码前面的数据相加不等于校验码时表示数据错误
-					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
-							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
-							ConvertUtils.byte2unsignedInt(data[5]) +
-							ConvertUtils.byte2unsignedInt(data[6])+
-							ConvertUtils.byte2unsignedInt(data[7])+
-							ConvertUtils.byte2unsignedInt(data[8]);
-					LogUtil.i(TAG,"cmdSum%256="+cmdSum%256);
-					LogUtil.i(TAG,"ConvertUtils.byte2unsignedInt(data[9])="+ConvertUtils.byte2unsignedInt(data[9]));
-					if (!((cmdSum%256)== ConvertUtils.byte2unsignedInt(data[9]))) {
+					boolean crcIsRight= CommonUtils.IsCRCRight(data);
+					if (!crcIsRight){
 						LogUtil.i(TAG,"数据校验出现错误");
 						return;
 					}
 
-
 					if (mSendNewCmdFlag) {
-						Frame.curFrameId = ConvertUtils.byte2unsignedInt(data[8]);
-						LogUtil.i(TAG,"Frame.curFrameId="+Frame.curFrameId);
-						LogUtil.i(TAG,"Frame.preFrameId="+Frame.preFrameId);
-						if (Frame.preFrameId == Frame.curFrameId) {
+						Frame.curPhyFrameId = ConvertUtils.byte2unsignedInt(data[8]);
+						LogUtil.i(TAG,"Frame.curPhyFrameId="+Frame.curPhyFrameId);
+						LogUtil.i(TAG,"Frame.prePhyFrameId="+Frame.prePhyFrameId);
+						if (Frame.prePhyFrameId == Frame.curPhyFrameId) {
 							int cauterizeGrade=0;
 							int cauterizeTime=0;
 							LogUtil.i(TAG, "发送的物理治疗的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
@@ -159,7 +151,8 @@ public class PhysicalFragment extends Fragment {
 							getActivity().startActivity(intent2);
 						}
 					}else{
-						Frame.preFrameId=ConvertUtils.byte2unsignedInt(data[8]);
+						Frame.prePhyFrameId=ConvertUtils.byte2unsignedInt(data[8]);
+						LogUtil.i(TAG,"Frame.prePhyFrameId="+Frame.prePhyFrameId);
 					}
 				}
 			}
