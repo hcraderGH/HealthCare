@@ -119,24 +119,27 @@
 -keepclassmembers class * extends android.app.Activity {
    public void *(android.view.View);
 }
-#保持 Parcelable 不被混淆
--keep class * implements android.os.Parcelable {
-  public static final android.os.Parcelable$Creator *;
-}
-#保持 Serializable 不被混淆
--keepnames class * implements java.io.Serializable
-#保持 Serializable 不被混淆并且enum 类也不被混淆
--keepclassmembers class * implements java.io.Serializable {
-    static final long serialVersionUID;
-    private static final java.io.ObjectStreamField[] serialPersistentFields;
-    !static !transient <fields>;
-    !private <fields><span></span>;
-    !private <methods>;
-    private void writeObject(java.io.ObjectOutputStream);
-    private void readObject(java.io.ObjectInputStream);
-    java.lang.Object writeReplace();
-    java.lang.Object readResolve();
-}
+##保持 Parcelable 不被混淆
+#-keep class * implements android.os.Parcelable {
+#  public static final android.os.Parcelable$Creator *;
+#}
+
+##保持 Serializable 不被混淆
+#-keepnames class * implements java.io.Serializable
+
+##保持 Serializable 不被混淆并且enum 类也不被混淆
+#-keepclassmembers class * implements java.io.Serializable {
+#    static final long serialVersionUID;
+#    private static final java.io.ObjectStreamField[] serialPersistentFields;
+#    !static !transient <fields>;
+#    !private <fields><span></span>;
+#    !private <methods>;
+#    private void writeObject(java.io.ObjectOutputStream);
+#    private void readObject(java.io.ObjectInputStream);
+#    java.lang.Object writeReplace();
+#    java.lang.Object readResolve();
+#}
+
 #保持枚举 enum 类不被混淆 如果混淆报错，建议直接使用上面的 -keepclassmembers class * implements java.io.Serializable即可
 #-keepclassmembers enum * {
 #  public static **[] values();
@@ -195,4 +198,4 @@
 }
 
 # for DexGuard only
--keepresourcexmlelements manifest/application/meta-data@value=GlideModule
+#-keepresourcexmlelements manifest/application/meta-data@value=GlideModule

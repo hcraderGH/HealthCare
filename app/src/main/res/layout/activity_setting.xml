@@ -149,6 +149,7 @@
 
 
             <com.balysv.materialripple.MaterialRippleLayout
+                app:mrl_rippleDuration="@integer/mrl_ripple_duration"
                 android:clickable="true"
                 android:id="@+id/rv_check_update"
                 android:layout_width="match_parent"
@@ -186,6 +187,7 @@
             </com.balysv.materialripple.MaterialRippleLayout>
 
             <com.balysv.materialripple.MaterialRippleLayout
+                app:mrl_rippleDuration="@integer/mrl_ripple_duration"
                 android:id="@+id/rv_about_software"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -224,6 +226,7 @@
                 android:textSize="14sp"/>
 
             <com.balysv.materialripple.MaterialRippleLayout
+                app:mrl_rippleDuration="@integer/mrl_ripple_duration"
                 android:id="@+id/rv_clear_cache"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
@@ -252,6 +255,7 @@
 
             <com.balysv.materialripple.MaterialRippleLayout
                 android:id="@+id/rv_clear_database"
+                app:mrl_rippleDuration="@integer/mrl_ripple_duration"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
