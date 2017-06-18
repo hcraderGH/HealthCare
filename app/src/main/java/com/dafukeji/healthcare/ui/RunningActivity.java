@@ -459,7 +459,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			mLineChartView.setInteractive(false);
 			PointValue value = new PointValue(dataCount, temp);
 			mPointValueList.add(value);
-			mAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(currentTime, "MM:ss")));
+			mAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(currentTime, "mm:ss")));
+			LogUtil.i(TAG,TimeUtil.date2String(currentTime, "HH:mm:ss"));
 			dataCount++;
 			float x = value.getX();
 			LogUtil.i(TAG,"x的值："+x);

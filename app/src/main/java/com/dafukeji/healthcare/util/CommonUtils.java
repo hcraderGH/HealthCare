@@ -53,8 +53,6 @@ public class CommonUtils {
 			preEle=20;
 		}else if (ele>=37){
 			preEle=15;
-		}else if (ele>=38.2){
-			preEle=50;
 		}else if (ele>=36.8){
 			preEle=10;
 		}else if (ele>=35){
