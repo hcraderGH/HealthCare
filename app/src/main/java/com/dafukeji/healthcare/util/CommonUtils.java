@@ -32,7 +32,7 @@ public class CommonUtils {
 	}
 
 	public static int eleFormula(int ele){
-		int preEle = 0;
+		int preEle;
 		if (ele>=41.5){
 			preEle=100;
 		}else if(ele>=40.8){
@@ -59,8 +59,9 @@ public class CommonUtils {
 			preEle=10;
 		}else if (ele>=35){
 			preEle=5;
+		}else{
+			preEle=5;
 		}
-
 		return preEle;
 	}
 

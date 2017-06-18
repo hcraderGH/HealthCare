@@ -63,7 +63,6 @@ public class MyApplication extends Application {
 		initUmeng();
 
 		if (isTest){
-
 			//初始化日志
 //			initLogger();//不习惯使用
 
