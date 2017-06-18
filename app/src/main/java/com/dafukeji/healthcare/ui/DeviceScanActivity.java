@@ -388,7 +388,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					// The requested permission is granted.
 					if (mScanning == false) {
-						scanLeDevice(true);
+						tbScan.setChecked(true);
 					}
 				} else{
 					// The user disallowed the requested permission.
@@ -567,7 +567,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	}
 
 	private void startScan() {
-		mScanDialog.show();
+		if(mScanDialog!=null){
+			mScanDialog.show();
+		}
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
 			mBluetoothLEAdapter.getBluetoothLeScanner().startScan(mScanCallback);
 		} else {
@@ -576,7 +578,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	}
 
 	private void stopScan() {
-		mScanDialog.dismiss();
+		if (mScanDialog!=null){
+			mScanDialog.dismiss();
+		}
 		tbScan.setChecked(false);
 
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {

@@ -8,7 +8,7 @@ android {
         applicationId "com.dafukeji.healthcare"
         minSdkVersion 18
         targetSdkVersion 25
-        versionCode 3
+        versionCode 5
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
@@ -47,6 +47,7 @@ dependencies {
     compile 'com.readystatesoftware.systembartint:systembartint:1.0.3'
     //水波纹效果
     compile 'com.skyfishjy.ripplebackground:library:1.0.1'
+    //GreenDao
     compile 'de.greenrobot:greendao:2.1.0'
     //MaterialDialog
     compile 'com.afollestad.material-dialogs:core:0.9.4.5'

@@ -460,7 +460,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			PointValue value = new PointValue(dataCount, temp);
 			mPointValueList.add(value);
 			mAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(currentTime, "mm:ss")));
-			LogUtil.i(TAG,TimeUtil.date2String(currentTime, "HH:mm:ss"));
 			dataCount++;
 			float x = value.getX();
 			LogUtil.i(TAG,"x的值："+x);
@@ -486,6 +485,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			mLineChartView.setLineChartData(mLineChartData);
 			//根据点的横坐标实时变换坐标的视图范围
 			Viewport port;
+			LogUtil.i(TAG,"X的值："+x);
 			if (x > mXDisplayCount) {
 				port = initViewPort(x - mXDisplayCount, x);
 			} else {
