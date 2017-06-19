@@ -33,34 +33,22 @@ public class CommonUtils {
 
 	public static int eleFormula(int ele){
 		int preEle;
-		if (ele>=41.5){
+		preEle= (int) Math.floor((ele-35)*100/(41.5-35));
+		if (preEle>=100){
 			preEle=100;
-		}else if(ele>=40.8){
+		}else if(preEle>=90){
 			preEle=90;
-		}else if (ele>=40){
-			preEle=80;
-		}else if (ele>=39.3){
-			preEle=70;
-		}else if (ele>=38.7){
+		}else if (preEle>=60){
 			preEle=60;
-		}else if (ele>=38.2){
-			preEle=50;
-		}else if (ele>=37.9){
-			preEle=40;
-		}else if (ele>=37.7){
+		}else if (preEle>=45){
+			preEle=45;
+		}else if(preEle>=30){
 			preEle=30;
-		}else if (ele>=37.3){
-			preEle=20;
-		}else if (ele>=37){
+		}else if(preEle>=15){
 			preEle=15;
-		}else if (ele>=36.8){
-			preEle=10;
-		}else if (ele>=35){
-			preEle=5;
 		}else{
 			preEle=5;
 		}
 		return preEle;
 	}
-
 }

@@ -30,23 +30,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
-import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
-import com.dafukeji.healthcare.ui.MainActivity;
 import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import es.dmoral.toasty.Toasty;
 import me.itangqi.waveloadingview.WaveLoadingView;
-
-import static android.app.Activity.RESULT_OK;
 
 public class HomeFragment extends Fragment implements View.OnClickListener {
 
@@ -83,6 +81,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private BlueToothBroadCast mBlueToothBroadCast;
 
 	private int mReceivedDataCount;
+	private List<Integer> mEleList=new ArrayList<>();
+	private int mEleSum;
 
 //	private boolean beginRemindBat =false;//当连接设备成功时，即提醒用户电量
 
@@ -576,11 +576,39 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 
 					mReceivedDataCount++;
+					mEleList.add(mRemindEle);
 					if (mReceivedDataCount%10==0||mReceivedDataCount==1){
+						if (mReceivedDataCount<20){
+							//发送电量的广播
+							Intent batIntent = new Intent();
+							batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
+							getActivity().sendBroadcast(batIntent);
+
+							for (int i = 0; i <mEleList.size() ; i++) {
+								mEleSum = mEleSum +mEleList.get(i);
+							}
+							mRemindEle= (int) Math.floor(mEleSum/mEleList.size());
+							mEleSum=0;
+							mEleList.clear();
+							Message msg=Message.obtain();
+							msg.what=0;
+							msg.arg1=mRemindEle;
+							msg.arg2=mCurrentTemp;
+							mHandler.sendMessage(msg);
+						}
+					}
+					if (mReceivedDataCount%60==0){
 						//发送电量的广播
 						Intent batIntent = new Intent();
 						batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
 						getActivity().sendBroadcast(batIntent);
+
+						for (int i = 0; i <mEleList.size() ; i++) {
+							mEleSum = mEleSum +mEleList.get(i);
+						}
+						mRemindEle= (int) Math.floor(mEleSum/mEleList.size());
+						mEleSum=0;
+						mEleList.clear();
 
 						Message msg=Message.obtain();
 						msg.what=0;

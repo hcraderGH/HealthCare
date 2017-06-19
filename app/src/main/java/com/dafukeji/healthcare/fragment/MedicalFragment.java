@@ -148,7 +148,6 @@ public class MedicalFragment extends Fragment {
 							byte[] settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 									, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
 
-
 							HomeFragment.getBluetoothLeService().WriteValue(settings);
 						} else {
 							mSendNewCmdFlag=false;

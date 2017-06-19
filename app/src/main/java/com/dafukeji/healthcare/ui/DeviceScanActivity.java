@@ -95,8 +95,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 //		setupActionBar();//必须放在setContentView方法前面
 		setContentView(R.layout.activity_device_scan);
 
-		initScanCallback();
 		initWidgets();
+		initScanCallback();
 		mayRequestLocation();
 
 		// Use this check to determine whether BLE is supported on the device.  Then you can
@@ -388,7 +388,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 					// The requested permission is granted.
 					if (mScanning == false) {
-						tbScan.setChecked(true);
+//						tbScan.setChecked(true);
 					}
 				} else{
 					// The user disallowed the requested permission.
@@ -517,7 +517,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		}
 	}
 
-	public Handler mHandler = new Handler() {
+	private Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
@@ -538,6 +538,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					break;
 			}
 		}
+
 	};
 
 
@@ -598,14 +599,18 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						@Override
 						public void onScanResult(int callbackType, final ScanResult result) {
 
-//							LogUtil.i(TAG,"蓝牙的信号强度："+result.getRssi());
-
 							if (result.getDevice().getName().equals(Constants.MATCH_DEVICE_NAME)) {
 								runOnUiThread(new Runnable() {
 									@Override
 									public void run() {
-										mLeDeviceRecyclerAdapter.addDevice(result.getDevice());
-										mHandler.sendEmptyMessage(1);
+										try {
+											mLeDeviceRecyclerAdapter.addDevice(result.getDevice());
+											if (mHandler!=null) {
+												mHandler.sendEmptyMessage(1);
+											}
+										} catch (Exception e) {
+											e.printStackTrace();
+										}
 									}
 								});
 							}
@@ -618,14 +623,18 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						@Override
 						public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
 
-//							LogUtil.i(TAG,"蓝牙的信号强度："+rssi);
-
 							if (device.getName().equals(Constants.MATCH_DEVICE_NAME)) {
 								runOnUiThread(new Runnable() {
 									@Override
 									public void run() {
-										mLeDeviceRecyclerAdapter.addDevice(device);
-										mHandler.sendEmptyMessage(1);
+										try {
+											mLeDeviceRecyclerAdapter.addDevice(device);
+											if (mHandler!=null) {
+												mHandler.sendEmptyMessage(1);
+											}
+										} catch (Exception e) {
+											e.printStackTrace();
+										}
 									}
 								});
 							}
@@ -633,7 +642,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					};
 		}
 	}
-
 
 	@Override
 	protected void onDestroy() {

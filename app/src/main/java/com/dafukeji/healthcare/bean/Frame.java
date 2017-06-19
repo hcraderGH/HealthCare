@@ -11,4 +11,7 @@ public class Frame {
 
 	public static int preMedFrameId;
 	public static int curMedFrameId;
+
+	public static int preRunningFrameId;
+	public static int curRunningFrameId;
 }

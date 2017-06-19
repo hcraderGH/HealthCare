@@ -29,6 +29,7 @@ import com.dafukeji.daogenerator.Point;
 import com.dafukeji.daogenerator.PointDao;
 import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
@@ -55,10 +56,6 @@ import lecho.lib.hellocharts.model.PointValue;
 import lecho.lib.hellocharts.model.ValueShape;
 import lecho.lib.hellocharts.model.Viewport;
 import lecho.lib.hellocharts.view.LineChartView;
-import rx.Observable;
-import rx.Scheduler;
-import rx.Subscriber;
-import rx.schedulers.Schedulers;
 
 /**
  * Created by DevCheng on 2017/4/21.
@@ -89,7 +86,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private static int delay = 1000;//延迟一秒执行
 	private static int period = 1000;
 
-	private byte[] mData;
+	private byte[] data;
 
 	/*=========== 控件相关 ==========*/
 	private LineChartView mLineChartView;               //线性图表控件
@@ -110,9 +107,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private List<PointValue> mPointValueList = new ArrayList<>();
 	private List<Line> mLinesList = new ArrayList<>();
 	private List<AxisValue> mAxisValues = new ArrayList<>();
-	private static String TAG="测试RunningActivity";
+	private static String TAG = "测试RunningActivity";
 
-	private List<Point> points=new ArrayList<>();
+	private List<Point> points = new ArrayList<>();
 	private DaoMaster mMaster;
 	private DaoSession mSession;
 	private DaoMaster.DevOpenHelper mHelper;
@@ -127,8 +124,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private long mCurrentTime;
 
-	private int mReceiveDataCount =0;
-	private int mSum=0;
+	private int mReceiveDataCount = 0;
+	private int mSum = 0;
 
 	private int mStimulate;//强刺激的类型，3表示关机
 	private int mCauterizeGrade = 40;//初始的一档对应的温度
@@ -138,6 +135,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private int mNeedleFrequency = 1;//默认为1档
 	private int mMedicineTime = 20;//默认为3档20分钟
 
+	private boolean mSendStopCmdFlag;
+	private boolean mSendAgainCmdFlag;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -146,8 +146,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		mCureType = getIntent().getIntExtra(Constants.CURE_TYPE, 0);
 		getDb();
 
-		mOriginalTime = (long)(getIntent().getIntExtra(Constants.ORIGINAL_TIME, 0)*60*1000);//获取的是int类型的分钟数，则需要强转
-		LogUtil.i(TAG,"onCreate: mOriginalTime"+mOriginalTime);
+		mOriginalTime = (long) (getIntent().getIntExtra(Constants.ORIGINAL_TIME, 0) * 60 * 1000);//获取的是int类型的分钟数，则需要强转
+		LogUtil.i(TAG, "onCreate: mOriginalTime" + mOriginalTime);
 
 		//获取运行时的时间
 		mStartTime = System.currentTimeMillis();
@@ -166,16 +166,18 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						mTvReminderTime.setText(remindTime[0] + "′" + remindTime[1] + "′" + remindTime[2] + "″");
 						break;
 					case 1:
+						mColorArcProgressBar.setCurrentValues(100);
+						mTvReminderTime.setText("00′00′00″");
 						isOver = true;
-						saveData();//保存数据
+						stopTimer();
 						sendStopSettingData();//为了防止与设备之间疗程时间的不同步，在此直接结束疗程
+						saveData();//保存数据
 						mIvSpace.setVisibility(View.INVISIBLE);
 						mIvAgain.setVisibility(View.VISIBLE);
-						stopTimer();
 						break;
 
 					case 2://接受温度
-						mTvCurrentTemp.setText(msg.arg1+"℃");
+						mTvCurrentTemp.setText(msg.arg1 + "℃");
 						break;
 
 					case 3://显示图表
@@ -234,8 +236,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		mLineChartView.setOnValueTouchListener(new ValueTouchListener());
 
 
-		LogUtil.i(TAG,"接受到的温度："+getIntent().getIntExtra(Constants.CURRENT_TEMP,0));
-		dynamicDataDisplay(getIntent().getLongExtra(Constants.CURRENT_TIME,0),getIntent().getIntExtra(Constants.CURRENT_TEMP,0));
+		LogUtil.i(TAG, "接受到的温度：" + getIntent().getIntExtra(Constants.CURRENT_TEMP, 0));
+		dynamicDataDisplay(getIntent().getLongExtra(Constants.CURRENT_TIME, 0), getIntent().getIntExtra(Constants.CURRENT_TEMP, 0));
 	}
 
 
@@ -279,26 +281,24 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		points.add(point);
 	}
 
-
-
-	//TODO 使用RxJava重构数据库的写入
-	private void saveData(){
+	private void saveData() {
 		new Thread(new Runnable() {
 			@Override
 			public void run() {
-				if (points.size()>0){
-					mStopTime=System.currentTimeMillis();
+				if (points.size() > 0) {
+					mStopTime = System.currentTimeMillis();
 					if (mCure == null) {
 						mCure = new Cure();
 						mCure.setCureType(mCureType);
-						mCure.setStartTime(mStartTime);
+//						mCure.setStartTime(mStartTime);
+						mCure.setStartTime(mStopTime-mRunningTime);//防止不准确采取的方法
 						mCure.setStopTime(mStopTime);
 						mCureId = mCureDao.insert(mCure);
 
-						LogUtil.i(TAG,"当点击again时mCureID会改变"+mCureId);
+						LogUtil.i(TAG, "当点击again时mCureID会改变" + mCureId);
 					}
 
-					for (int i = 0; i <points.size() ; i++) {
+					for (int i = 0; i < points.size(); i++) {
 						points.get(i).setCureId(mCureId);
 						mPointDao.insert(points.get(i));
 					}
@@ -315,14 +315,13 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			mTimerTask = new TimerTask() {
 				@Override
 				public void run() {
-
+					mRunningTime = mRunningTime + 1000;
 					Message msg = Message.obtain();
-					if (mRunningTime == mOriginalTime) {
+					if (mRunningTime >= mOriginalTime) {//应该==就可以了
 						msg.what = 1;
 					} else {
 						msg.what = 0;
 					}
-					mRunningTime = mRunningTime + 1000;
 					mHandler.sendMessage(msg);
 				}
 			};
@@ -368,7 +367,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		public void onReceive(Context context, Intent intent) {
 			final String action = intent.getAction();
 			if (BluetoothLeService.ACTION_GATT_CONNECTED.equals(action)) {  //连接成功
-				LogUtil.i(TAG,"Only gatt, just wait");
+				LogUtil.i(TAG, "Only gatt, just wait");
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				mConnected = false;
 
@@ -379,7 +378,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 				//TODO 断开连接处理
 //				Toasty.error(RunningActivity.this, "与设备断开连接", Toast.LENGTH_SHORT).show();
-				AlertDialog.Builder builder=new AlertDialog.Builder(RunningActivity.this)
+				AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
 						.setMessage("已断开连接，请重新连接")
 						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 							@Override
@@ -396,45 +395,68 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				mConnected = true;
 				LogUtil.i(TAG, "In what we need");
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
-				LogUtil.i(TAG, "DATA");
-				mConnected=true;
 
-				mData = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
-				LogUtil.i(TAG, "onReceive: " + (mData==null?"data为null":Arrays.toString(mData)));
-				if (mData != null) {
+				mConnected = true;
+				data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
+				if (data != null) {
+
 					//TODO 接收数据处理
-
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					boolean crcIsRight= CommonUtils.IsCRCRight(mData);
-					if (!crcIsRight){
-						LogUtil.i(TAG,"数据校验出现错误");
+					boolean crcIsRight = CommonUtils.IsCRCRight(data);
+					if (!crcIsRight) {
+						LogUtil.i(TAG, "数据校验出现错误");
 						return;
 					}
 
+					if (mSendStopCmdFlag || mSendAgainCmdFlag) {
+						Frame.curRunningFrameId = ConvertUtils.byte2unsignedInt(data[8]);
+						if (Frame.preRunningFrameId == Frame.curRunningFrameId) {
+							if (mSendStopCmdFlag) {
+								sendStopSettingData();
+							}
+							if (mSendAgainCmdFlag) {
+								sendAgainSettingData();
+							}
+							return;//在发送命令时则不显示数据了
+						} else {
+							if (mSendStopCmdFlag && (!isOver)) {
+								finish();//只有在下位机接收到命令之后才结束Activity
+							}
+							if (mSendAgainCmdFlag) {
+								startTimer();
+							}
+							mSendStopCmdFlag = false;
+							mSendAgainCmdFlag = false;
+						}
+					} else {
+						Frame.preRunningFrameId = ConvertUtils.byte2unsignedInt(data[8]);
+					}
+
+
 					int temp;
-
-					mSum=mSum+ConvertUtils.byte2unsignedInt(mData[3]);//11个数据的平均值作为一个显示数据
+					mSum = mSum + ConvertUtils.byte2unsignedInt(data[3]);//11个数据的平均值作为一个显示数据
 					mReceiveDataCount++;
-					if (mReceiveDataCount %11==0||mReceiveDataCount==1){
-						mCurrentTime= System.currentTimeMillis();
-						if (mReceiveDataCount==1){
+					if (mReceiveDataCount % 11 == 0 || mReceiveDataCount == 1) {
+						mCurrentTime = System.currentTimeMillis();
+						if (mReceiveDataCount == 1) {
 							insertPoint(mCurrentTime, (int) Math.floor(mSum));
-							temp=(int) Math.floor(mSum);
-						}else{
-							insertPoint(mCurrentTime, (int) Math.floor(mSum/11));
-							temp= (int) Math.floor(mSum/11);//无符号位转换
+							temp = (int) Math.floor(mSum);
+						} else {
+							insertPoint(mCurrentTime, (int) Math.floor(mSum / 11));
+							temp = (int) Math.floor(mSum / 11);//无符号位转换
 
-							mSum=0;
+							mSum = 0;
 						}
 
-						Message msg=Message.obtain();
-						msg.what=2;
-						msg.arg1=temp;
+						Message msg = Message.obtain();
+						msg.what = 2;
+						msg.arg1 = temp;
 						mHandler.sendMessage(msg);
 
-						Message msgTemp=Message.obtain();
-						msgTemp.what=3;
-						msgTemp.arg1=temp;
+						Message msgTemp = Message.obtain();
+						msgTemp.what = 3;
+						msgTemp.arg1 = temp;
 						mHandler.sendMessage(msgTemp);
 					}
 
@@ -462,10 +484,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			mAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(currentTime, "mm:ss")));
 			dataCount++;
 			float x = value.getX();
-			LogUtil.i(TAG,"x的值："+x);
-			LogUtil.i(TAG,"点的个数：dataCount"+dataCount);
+			LogUtil.i(TAG, "x的值：" + x);
+			LogUtil.i(TAG, "点的个数：dataCount" + dataCount);
 
-			Line line = new Line(mPointValueList);
+			Line line;
+			line = new Line(mPointValueList);
 			line.setColor(Color.RED);//设置线的颜色
 			line.setStrokeWidth(2);//设置线的粗细
 			line.setShape(pointsShape);                 //设置点的形状
@@ -485,7 +508,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			mLineChartView.setLineChartData(mLineChartData);
 			//根据点的横坐标实时变换坐标的视图范围
 			Viewport port;
-			LogUtil.i(TAG,"X的值："+x);
+			LogUtil.i(TAG, "X的值：" + x);
 			if (x > mXDisplayCount) {
 				port = initViewPort(x - mXDisplayCount, x);
 			} else {
@@ -493,8 +516,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			}
 			mLineChartView.setCurrentViewport(port);//当前窗口
 
-			Viewport maPort = initMaxViewPort(x);
-			mLineChartView.setMaximumViewport(maPort);//最大窗口
+			Viewport maxPort = initMaxViewPort(x);
+			mLineChartView.setMaximumViewport(maxPort);//最大窗口
 
 		} else {
 			mLineChartView.setInteractive(true);
@@ -527,10 +550,10 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private Viewport initMaxViewPort(float right) {
 		Viewport port = new Viewport();
-		port.top = 80;
-		port.bottom = 0;
+		port.top = 60;
+		port.bottom = 20;
 		port.left = 0;
-		port.right = right + 50;
+		port.right = right + mXDisplayCount;
 		return port;
 	}
 
@@ -553,26 +576,26 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 //			mBluetoothLEAdapter.disable();
 //		}
 
-		LogUtil.i(TAG,"We are in destroy");
+		LogUtil.i(TAG, "We are in destroy");
 	}
 
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 			case R.id.iv_again:
-				mStartTime=System.currentTimeMillis();
+				mStartTime = System.currentTimeMillis();
 				isAgain();
 				break;
 			case R.id.iv_over://实现结束功能(当结束后则直接返回，如果疗程没有进行完则提示)
-				if (mRunningTime != mOriginalTime) {
+				if (mRunningTime < mOriginalTime) {
 					stopTimer();
-					saveData();//此处保存的数据为未做完的
-					if (mConnected){
+					if (mConnected) {
 						sendStopSettingData();//发送结束疗程的配置数据
 					}
+					saveData();//此处保存的数据为未做完的
+				} else {
+					finish();
 				}
-				finish();
-
 				break;
 			case R.id.iv_back:
 				isOver();
@@ -581,27 +604,30 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	}
 
 	private void sendStopSettingData() {
-		int stimulate=2;//停止疗程标志
-		int stimulateGrade=0;
-		int stimulateFrequency=0;
-		int cauterizeGrade=0;
-		int cauterizeTime=0;
-		int needleType=0;
-		int needleGrade=0;
-		int needleFrequency=0;
-		int medicineTime=0;
-		int crc=stimulate+stimulateGrade+stimulateFrequency+cauterizeGrade+cauterizeTime
-				+needleType+needleGrade+needleFrequency+medicineTime;
 
-		byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
-				, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
-				,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
-		Log.i(TAG, "中途停止疗程"+Arrays.toString(setting));
+		mSendStopCmdFlag = true;
 
-		if (HomeFragment.getBluetoothLeService()!=null){//处于连接状态
-			LogUtil.i(TAG,"HomeFragment.getBluetoothLeService()"+HomeFragment.getBluetoothLeService());
+		int stimulate = 2;//停止疗程标志
+		int stimulateGrade = 0;
+		int stimulateFrequency = 0;
+		int cauterizeGrade = 0;
+		int cauterizeTime = 0;
+		int needleType = 0;
+		int needleGrade = 0;
+		int needleFrequency = 0;
+		int medicineTime = 0;
+		int crc = stimulate + stimulateGrade + stimulateFrequency + cauterizeGrade + cauterizeTime
+				+ needleType + needleGrade + needleFrequency + medicineTime;
+
+		byte[] setting = new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
+				, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte) needleType, (byte) needleGrade
+				, (byte) needleFrequency, (byte) medicineTime, (byte) crc};
+		Log.i(TAG, "中途停止疗程" + Arrays.toString(setting));
+
+		if (HomeFragment.getBluetoothLeService() != null) {//处于连接状态
+			LogUtil.i(TAG, "HomeFragment.getBluetoothLeService()" + HomeFragment.getBluetoothLeService());
 			HomeFragment.getBluetoothLeService().WriteValue(setting);
-		}else{
+		} else {
 			//TODO 由于突然断开进行的处理
 		}
 	}
@@ -619,11 +645,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					public void onClick(DialogInterface dialog, int which) {
 						stopTimer();
 						saveData();//此处保存的数据为未做完的
-						if (mConnected){
+						if (mConnected) {
 							sendStopSettingData();//发送结束疗程的配置数据
 						}
 						dialog.dismiss();
-						finish();
+//						finish();
 					}
 				})
 				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -645,16 +671,20 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
-						mRunningTime = 0;//当点击新开始
 						mColorArcProgressBar.setCurrentValues((float) Math.floor((mRunningTime * 100 / mOriginalTime)));
 						isOver = false;
 						//重新发送配置的数据
 						sendAgainSettingData();
-						mCure=null;//设置为null,将会重新新建cure对象
+						saveData();
 
+						getDb();//如果要将重新开始的保存为另一份；
+						mCure=null;//设置为null,将会重新新建cure对象
+						points=null;
+						points=new ArrayList<>();
 						dialog.dismiss();
 
-						mIvAgain.setVisibility(View.INVISIBLE);
+						mRunningTime = 0;//当点击新开始
+						mIvAgain.setVisibility(View.GONE);
 						mIvSpace.setVisibility(View.GONE);
 						mIvOver.setVisibility(View.VISIBLE);
 					}
@@ -669,33 +699,36 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	}
 
 	private void sendAgainSettingData() {
-		if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE,this)){
-			mStimulate = CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE,this);
+
+		mSendAgainCmdFlag = true;
+
+		if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE, this)) {
+			mStimulate = CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE, this);
 		}
 
-		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_GRADE,this)) {
-			mCauterizeGrade = CureSPUtil.getTempByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE,this));
+		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_GRADE, this)) {
+			mCauterizeGrade = CureSPUtil.getTempByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE, this));
 		}
-		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_TIME_GRADE,this)) {
-			mCauterizeTime = CureSPUtil.getCauterizeTimeByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE,this));
+		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_TIME_GRADE, this)) {
+			mCauterizeTime = CureSPUtil.getCauterizeTimeByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE, this));
 		}
-		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_TYPE,this)) {
-			mNeedleType = CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE,this);
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_TYPE, this)) {
+			mNeedleType = CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE, this);
 		}
-		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE,this)) {
-			mNeedleGrade = CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE,this);
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE, this)) {
+			mNeedleGrade = CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE, this);
 		}
-		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_FREQUENCY,this)) {
-			mNeedleFrequency = CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY,this);
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_FREQUENCY, this)) {
+			mNeedleFrequency = CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY, this);
 		}
-		if (CureSPUtil.isSaved(Constants.SP_MEDICINE_TIME_GRADE,this)) {
-			mMedicineTime = CureSPUtil.getMedicineTimeByPosition(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE,this));
+		if (CureSPUtil.isSaved(Constants.SP_MEDICINE_TIME_GRADE, this)) {
+			mMedicineTime = CureSPUtil.getMedicineTimeByPosition(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE, this));
 		}
 
 		LogUtil.i(TAG, "发送的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime)));
 
-		if (HomeFragment.getBluetoothLeService()==null){
+		if (HomeFragment.getBluetoothLeService() == null) {
 			return;
 		}
 

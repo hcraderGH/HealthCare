@@ -202,12 +202,13 @@
 #-keepresourcexmlelements manifest/application/meta-data@value=GlideModule
 
 #GreenDao
--keepclassmembers class * extends org.greenrobot.greendao.AbstractDao {
-public static java.lang.String TABLENAME;
+-keepclassmembers class * extends de.greenrobot.dao.AbstractDao {
+    public static java.lang.String TABLENAME;
 }
 -keep class **$Properties
 
-# If you do not use SQLCipher:
--dontwarn org.greenrobot.greendao.database.**
-# If you do not use Rx:
--dontwarn rx.**
+
+#实体类所在的包
+-keep class com.dafukeji.daogenerator.**{ *; }
+-keep class com.dafukeji.healthcare.bean.**{ *; }
+-keep class com.dafukeji.healthcare.constants.**{ *; }
