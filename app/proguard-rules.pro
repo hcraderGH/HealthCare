@@ -16,9 +16,13 @@
 #   public *;
 #}
 
+
+#Bugly混淆规则
 -dontwarn com.tencent.bugly.**
 -keep public class com.tencent.bugly.**{*;}
 -keep class android.support.**{*;}
+
+
 
 #指定代码的压缩级别
 -optimizationpasses 5
@@ -165,6 +169,7 @@
 #}
 
 
+#UMeng混淆规则
 -dontwarn com.taobao.**
 -dontwarn anet.channel.**
 -dontwarn anetwork.channel.**
@@ -192,6 +197,8 @@
 }
 
 
+
+
 -keep public class * implements com.bumptech.glide.module.GlideModule
 -keep public enum com.bumptech.glide.load.resource.bitmap.ImageHeaderParser$** {
   **[] $VALUES;
@@ -206,8 +213,6 @@
     public static java.lang.String TABLENAME;
 }
 -keep class **$Properties
-
-
 #实体类所在的包
 -keep class com.dafukeji.daogenerator.**{ *; }
 -keep class com.dafukeji.healthcare.bean.**{ *; }

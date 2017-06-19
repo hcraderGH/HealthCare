@@ -675,7 +675,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						isOver = false;
 						//重新发送配置的数据
 						sendAgainSettingData();
-						saveData();
 
 						getDb();//如果要将重新开始的保存为另一份；
 						mCure=null;//设置为null,将会重新新建cure对象

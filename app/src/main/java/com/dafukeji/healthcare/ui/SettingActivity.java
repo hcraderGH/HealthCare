@@ -19,7 +19,6 @@ import android.widget.TextView;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.andexert.library.RippleView;
 import com.balysv.materialripple.MaterialRippleLayout;
 import com.blankj.utilcode.util.AppUtils;
 import com.blankj.utilcode.util.NetworkUtils;
@@ -33,6 +32,8 @@ import com.dafukeji.healthcare.util.SettingManager;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.tencent.bugly.beta.Beta;
 import com.tencent.bugly.beta.UpgradeInfo;
+import com.umeng.message.IUmengCallback;
+import com.umeng.message.PushAgent;
 
 import java.util.Arrays;
 
@@ -55,6 +56,7 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 
 	private boolean isGATTConnected=false;
 	private BlueToothBroadCast mBlueToothBroadCast;
+	private PushAgent mPushAgent;
 
 	private static String TAG="测试SettingActivity";
 
@@ -68,6 +70,8 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		IntentFilter filter=new IntentFilter();
 		filter.addAction(Constants.RECEIVE_GATT_STATUS);
 		registerReceiver(mBlueToothBroadCast,filter);
+
+		mPushAgent =PushAgent.getInstance(this);
 
 		initViews();
 	}
@@ -224,19 +228,45 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 
 			case R.id.sc_notification:
 				if (isChecked){
-					//TODO 接受推送消息
+					mPushAgent.enable(new IUmengCallback() {
+						@Override
+						public void onSuccess() {
+							ToastUtil.showToast(SettingActivity.this,"开启消息推送功能",1000);
+						}
+
+						@Override
+						public void onFailure(String s, String s1) {
+
+						}
+					});
 					llNoDisturbing.setVisibility(View.VISIBLE);
 				}else{
+					mPushAgent.disable(new IUmengCallback() {
+						@Override
+						public void onSuccess() {
+							ToastUtil.showToast(SettingActivity.this,"关闭消息推送功能",1000);
+						}
+
+						@Override
+						public void onFailure(String s, String s1) {
+
+						}
+					});
 					scNoDisturbing.setChecked(false);
 					llNoDisturbing.setVisibility(View.GONE);
 				}
+
+
 				SettingManager.getInstance().setNOTIFICATION(isChecked);
 				break;
 			case R.id.sc_no_disturbing:
-				if (isChecked){
-					//TODO 开启免打扰模式
-				}else{
-
+				if (scNotification.isChecked()) {
+					if (isChecked){
+						//TODO 开启免打扰模式
+						mPushAgent.setNoDisturbMode(23,0,7,0);
+					}else{
+						mPushAgent.setNoDisturbMode(0,0,0,0);
+					}
 				}
 				SettingManager.getInstance().setNO_DISTURBING(isChecked);
 				break;

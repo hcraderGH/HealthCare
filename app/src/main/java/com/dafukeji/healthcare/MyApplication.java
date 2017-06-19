@@ -166,14 +166,16 @@ public class MyApplication extends Application {
 
 	private void initUmeng() {
 		PushAgent mPushAgent = PushAgent.getInstance(this);
+
 		//注册推送服务，每次调用register方法都会回调该接口
 		//注册推送服务，无论推送是否开启都需要调用此方法
+
 		mPushAgent.register(new IUmengRegisterCallback() {
 
 			@Override
 			public void onSuccess(String deviceToken) {
 				//注册成功会返回device token
-				Log.i("device token",deviceToken);
+				LogUtil.i("device token",deviceToken);
 			}
 
 			@Override
