@@ -41,12 +41,12 @@ import java.util.Arrays;
  * Created by DevCheng on 2017/5/31.
  */
 
-public class SettingActivity extends BaseActivity implements View.OnClickListener,CompoundButton.OnCheckedChangeListener{
+public class SettingActivity extends BaseActivity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
 
 	private ImageView ivBack;
 	private MaterialRippleLayout mrlAboutSoftware, mrlCheckUpdate, mrlClearDb;
-	private SwitchCompat scAutoUpdate,scNotification,scNoDisturbing;
+	private SwitchCompat scAutoUpdate, scNotification, scNoDisturbing;
 	private LinearLayout llNoDisturbing;
 	private Button btnExit;
 	private TextView tvVersionInfo;
@@ -54,11 +54,11 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 	private String newVersion;
 	private String currentVersion;
 
-	private boolean isGATTConnected=false;
+	private boolean isGATTConnected = false;
 	private BlueToothBroadCast mBlueToothBroadCast;
 	private PushAgent mPushAgent;
 
-	private static String TAG="测试SettingActivity";
+	private static String TAG = "测试SettingActivity";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -66,12 +66,12 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		setContentView(R.layout.activity_setting);
 
 		//注册接受蓝牙信息的广播
-		mBlueToothBroadCast=new BlueToothBroadCast();
-		IntentFilter filter=new IntentFilter();
+		mBlueToothBroadCast = new BlueToothBroadCast();
+		IntentFilter filter = new IntentFilter();
 		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-		registerReceiver(mBlueToothBroadCast,filter);
+		registerReceiver(mBlueToothBroadCast, filter);
 
-		mPushAgent =PushAgent.getInstance(this);
+		mPushAgent = PushAgent.getInstance(this);
 
 		initViews();
 	}
@@ -81,39 +81,39 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的服务连接
-			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
+			isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS, false);
 		}
 	}
 
 	private void initViews() {
 
-		llNoDisturbing= (LinearLayout) findViewById(R.id.ll_no_disturbing);
+		llNoDisturbing = (LinearLayout) findViewById(R.id.ll_no_disturbing);
 
-		btnExit= (Button) findViewById(R.id.btn_exit);
+		btnExit = (Button) findViewById(R.id.btn_exit);
 		btnExit.setOnClickListener(this);
 
-		ivBack= (ImageView) findViewById(R.id.iv_back);
+		ivBack = (ImageView) findViewById(R.id.iv_back);
 		ivBack.setOnClickListener(this);
 
-		tvVersionInfo= (TextView) findViewById(R.id.tv_version_info);
-		currentVersion=AppUtils.getAppVersionName()+"."+AppUtils.getAppVersionCode();
-		if (NetworkUtils.isConnected()){
-			UpgradeInfo upgradeInfo=Beta.getUpgradeInfo();
-			if (upgradeInfo!=null){//如果Bugly中没有发布新的版本，在此需要进行判断
-				newVersion=upgradeInfo.versionName+"."+upgradeInfo.versionCode;
-				if (currentVersion.equals(newVersion)){
+		tvVersionInfo = (TextView) findViewById(R.id.tv_version_info);
+		currentVersion = AppUtils.getAppVersionName() + "." + AppUtils.getAppVersionCode();
+		if (NetworkUtils.isConnected()) {
+			UpgradeInfo upgradeInfo = Beta.getUpgradeInfo();
+			if (upgradeInfo != null) {//如果Bugly中没有发布新的版本，在此需要进行判断
+				newVersion = upgradeInfo.versionName + "." + upgradeInfo.versionCode;
+				if (currentVersion.equals(newVersion)) {
 					tvVersionInfo.setText("已经是最新版本");
-				}else{
-					tvVersionInfo.setText("有更新版本 "+newVersion);
+				} else {
+					tvVersionInfo.setText("有更新版本 " + newVersion);
 				}
-			}else{
+			} else {
 				tvVersionInfo.setText("已经是最新版本");
 			}
-		}else{
-			if (SettingManager.getInstance().getNEW_VERSION(currentVersion).equals(currentVersion)){
+		} else {
+			if (SettingManager.getInstance().getNEW_VERSION(currentVersion).equals(currentVersion)) {
 				tvVersionInfo.setText("已经是最新版本");
-			}else{
-				tvVersionInfo.setText("有更新版本 "+SettingManager.getInstance().getNEW_VERSION(currentVersion));
+			} else {
+				tvVersionInfo.setText("有更新版本 " + SettingManager.getInstance().getNEW_VERSION(currentVersion));
 			}
 		}
 
@@ -121,10 +121,10 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		mrlCheckUpdate.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				if (NetworkUtils.isConnected()){
+				if (NetworkUtils.isConnected()) {
 					Beta.checkUpgrade();//检查更新
-				}else{
-					ToastUtil.showToast(SettingActivity.this,"网络已断开!",1000);
+				} else {
+					ToastUtil.showToast(SettingActivity.this, "网络已断开!", 1000);
 				}
 			}
 		});
@@ -133,15 +133,15 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		mrlClearDb.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				AlertDialog.Builder builder=new AlertDialog.Builder(SettingActivity.this)
+				AlertDialog.Builder builder = new AlertDialog.Builder(SettingActivity.this)
 						.setTitle("警告")
 						.setMessage("确定清空本地数据库吗？")
 						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 							@Override
 							public void onClick(DialogInterface dialog, int which) {
-								DataCleanManager.cleanDatabaseByName(SettingActivity.this,Constants.CURE_DB_NAME);
+								DataCleanManager.cleanDatabaseByName(SettingActivity.this, Constants.CURE_DB_NAME);
 								dialog.dismiss();
-								ToastUtil.showToast(SettingActivity.this,"已清空本地数据库",1000);
+								ToastUtil.showToast(SettingActivity.this, "已清空本地数据库", 1000);
 							}
 						})
 						.setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -159,20 +159,20 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 		mrlAboutSoftware.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				startActivity(new Intent(SettingActivity.this,AboutSoftwareActivity.class));
+				startActivity(new Intent(SettingActivity.this, AboutSoftwareActivity.class));
 			}
 		});
 
 		//scNoDisturbing需要先初始化，否则当scNotification设置偏好设置保存的值时，后触发监听，而此时scNoDisturbing没有初始化的话，会导致空指针
-		scNoDisturbing= (SwitchCompat) findViewById(R.id.sc_no_disturbing);
+		scNoDisturbing = (SwitchCompat) findViewById(R.id.sc_no_disturbing);
 		scNoDisturbing.setOnCheckedChangeListener(this);
 		scNoDisturbing.setChecked(SettingManager.getInstance().isNO_DISTURBING());
 
-		scAutoUpdate= (SwitchCompat) findViewById(R.id.sc_auto_update);
+		scAutoUpdate = (SwitchCompat) findViewById(R.id.sc_auto_update);
 		scAutoUpdate.setOnCheckedChangeListener(this);
 		scAutoUpdate.setChecked(SettingManager.getInstance().isAUTO_UPDATE());
 
-		scNotification= (SwitchCompat) findViewById(R.id.sc_notification);
+		scNotification = (SwitchCompat) findViewById(R.id.sc_notification);
 		scNotification.setOnCheckedChangeListener(this);
 		scNotification.setChecked(SettingManager.getInstance().isNOTIFICATION());
 	}
@@ -180,7 +180,7 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 
 	@Override
 	public void onClick(View v) {
-		switch (v.getId()){
+		switch (v.getId()) {
 			case R.id.iv_back:
 				finish();
 				break;
@@ -192,23 +192,23 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 						.onPositive(new MaterialDialog.SingleButtonCallback() {
 							@Override
 							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-								if (isGATTConnected){
-									int stimulate=3;//关机标志
-									int stimulateGrade=0;
-									int stimulateFrequency=0;
-									int cauterizeGrade=0;
-									int cauterizeTime=0;
-									int needleType=0;
-									int needleGrade=0;
-									int needleFrequency=0;
-									int medicineTime=0;
-									int crc=stimulate+stimulateGrade+stimulateFrequency+cauterizeGrade+cauterizeTime
-											+needleType+needleGrade+needleFrequency+medicineTime;
+								if (isGATTConnected) {
+									int stimulate = 3;//关机标志
+									int stimulateGrade = 0;
+									int stimulateFrequency = 0;
+									int cauterizeGrade = 0;
+									int cauterizeTime = 0;
+									int needleType = 0;
+									int needleGrade = 0;
+									int needleFrequency = 0;
+									int medicineTime = 0;
+									int crc = stimulate + stimulateGrade + stimulateFrequency + cauterizeGrade + cauterizeTime
+											+ needleType + needleGrade + needleFrequency + medicineTime;
 
-									byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
-											, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
-											,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
-									Log.i(TAG, "onClick: off"+ Arrays.toString(setting));
+									byte[] setting = new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
+											, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte) needleType, (byte) needleGrade
+											, (byte) needleFrequency, (byte) medicineTime, (byte) crc};
+									Log.i(TAG, "onClick: off" + Arrays.toString(setting));
 									HomeFragment.getBluetoothLeService().WriteValue(setting);
 								}
 								MyApplication.getInstance().exit();
@@ -221,17 +221,17 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 
 	@Override
 	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-		switch (buttonView.getId()){
+		switch (buttonView.getId()) {
 			case R.id.sc_auto_update:
 				SettingManager.getInstance().setAUTO_UPDATE(isChecked);
 				break;
 
 			case R.id.sc_notification:
-				if (isChecked){
+				if (isChecked) {
 					mPushAgent.enable(new IUmengCallback() {
 						@Override
 						public void onSuccess() {
-							ToastUtil.showToast(SettingActivity.this,"开启消息推送功能",1000);
+							ToastUtil.showToast(SettingActivity.this, "开启消息推送功能", 1000);
 						}
 
 						@Override
@@ -240,11 +240,11 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 						}
 					});
 					llNoDisturbing.setVisibility(View.VISIBLE);
-				}else{
+				} else {
 					mPushAgent.disable(new IUmengCallback() {
 						@Override
 						public void onSuccess() {
-							ToastUtil.showToast(SettingActivity.this,"关闭消息推送功能",1000);
+							ToastUtil.showToast(SettingActivity.this, "关闭消息推送功能", 1000);
 						}
 
 						@Override
@@ -260,13 +260,11 @@ public class SettingActivity extends BaseActivity implements View.OnClickListene
 				SettingManager.getInstance().setNOTIFICATION(isChecked);
 				break;
 			case R.id.sc_no_disturbing:
-				if (scNotification.isChecked()) {
-					if (isChecked){
-						//TODO 开启免打扰模式
-						mPushAgent.setNoDisturbMode(23,0,7,0);
-					}else{
-						mPushAgent.setNoDisturbMode(0,0,0,0);
-					}
+				if (isChecked) {
+					//TODO 开启免打扰模式
+					mPushAgent.setNoDisturbMode(23, 0, 7, 0);
+				} else {
+					mPushAgent.setNoDisturbMode(0, 0, 0, 0);
 				}
 				SettingManager.getInstance().setNO_DISTURBING(isChecked);
 				break;
