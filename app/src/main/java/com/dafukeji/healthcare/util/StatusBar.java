@@ -22,9 +22,9 @@ public class StatusBar {
 	 * @param activity
 	 * @param color toolbar的颜色
 	 */
-	@TargetApi(19)
+	@TargetApi(23)
 	public static void setImmersiveStatusBar(Activity activity,int color){
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT){
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
 			activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 			activity.getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
 			tintManager = new SystemBarTintManager(activity);

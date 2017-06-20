@@ -42,7 +42,7 @@ public class MyApplication extends Application {
 	private static String TAG="测试MyApplication";
 	private static boolean isClearSP=false;
 	private static boolean isClearDB=false;
-	private static boolean isTest=true;//TODO 当不处于测试的时候应该设置为false
+	private static boolean isTest=false;//TODO 当不处于测试的时候应该设置为false
 
 
 	private SPUtils mSpUtils;
@@ -67,10 +67,10 @@ public class MyApplication extends Application {
 //			initLogger();//不习惯使用
 
 			//初始化内存泄露
-			LeakCanary.install(this);
+//			LeakCanary.install(this);
 
 			//初始化性能检测组件，找到卡顿元凶
-			BlockCanary.install(this,new AppBlockCanaryContext()).start();
+//			BlockCanary.install(this,new AppBlockCanaryContext()).start();
 
 			//初始化Stetho
 			Stetho.initializeWithDefaults(this);
