@@ -30,12 +30,14 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
+import com.dafukeji.healthcare.util.ToastUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,9 +58,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 	private int mCurrentTemp;
 	private boolean mSendNewCmdFlag;
-	private int mCurrentFrameId;
-	private int mPreFrameId;
-	private int mSendCmdCount;
 
 	private MedicalFragment mMedicalFragment;
 	private PhysicalFragment mPhysicalFragment;
@@ -87,6 +86,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 //	private boolean beginRemindBat =false;//当连接设备成功时，即提醒用户电量
 
 	private static String TAG = "测试HomeFragment";
+
+	private byte[] frontData;
+	private byte[] wholeData;
 
 	@Override
 	public void onAttach(Context context) {
@@ -124,8 +126,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				case BluetoothDevice.ACTION_ACL_DISCONNECTED:
 					LogUtil.i(TAG,"设备断开了");
 					LogUtil.i(TAG,"设备断开所需的时间："+(System.currentTimeMillis()-cmdOffTime));
-
-					stopTimerOff();
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
@@ -142,6 +142,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					LogUtil.i(TAG, "连接状态isGATTConnected=" + isGATTConnected);
 
 					if (isGATTConnected) {
+
+						startSensorTimer();//当连接时，则开始发送传感命令
+
 						getActivity().runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
@@ -267,21 +270,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 					cmdOffTime=System.currentTimeMillis();
 
-					//采用定时器的方式
-//					mBatTime=5000;//主要是为了当关机的时候不等于5000秒时，不能显示电量的颜色了
-//					stopTimer();
-//					setDisplayStatus(false);//TODO
-//					mSendNewCmdFlag = true;
-//					Intent intent = new Intent();
-//					intent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
-//					intent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
-//					getActivity().sendBroadcast(intent);
-
 					mSendNewCmdFlag = true;
 					setDisplayStatus(false);//先直接变灰
-
-					startTimerOff();
-					sendPowerOffCmd();
+					stopTimer();
+					startConfigTimer();
 				}
 				break;
 			case R.id.rb_medical:
@@ -309,65 +301,109 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	};
 
 
-	private Timer mTimerOff;
-	private TimerTask mTimerTaskOff;
-	private int offTime=0;
-	private int mDataCountAfterOff;
-	private void startTimerOff() {
 
-		stopTimerOff();//java.lang.IllegalStateException: TimerTask is scheduled already
-
-		if (mTimerOff == null) {
-			mTimerOff = new Timer();
+	//发送传感命令
+	private static Timer mTimer;
+	private static TimerTask mTimerTask;
+	private int retrySensorCount;
+	private boolean isSensorReceived =false;
+	private long mCurSendSensorTime;
+	private void startSensorTimer(){
+		if (mTimer==null){
+			mTimer=new Timer();
 		}
-		if (mTimerTaskOff == null) {
-			mTimerTaskOff = new TimerTask() {
+		if (mTimerTask==null){
+			mTimerTask=new TimerTask() {
 				@Override
 				public void run() {
-					offTime=offTime+10;
-					if (offTime>=2000){
-//						mSendNewCmdFlag=false;
-						getActivity().runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								stopTimerOff();
-								setDisplayStatus(false);
-							}
-						});
-					}else {
-						if (mDataCountAfterOff>=3){
+					if (!isSensorReceived){
+						if (retrySensorCount>=6) {
 							getActivity().runOnUiThread(new Runnable() {
 								@Override
 								public void run() {
-									setDisplayStatus(true);
+									ToastUtil.showToast(getActivity(),"断开连接",1000);
+									setDisplayStatus(false);
 								}
 							});
-							sendPowerOffCmd();
+
+							stopTimer();
+						}else{
+							retrySensorCount++;
+							mCurSendSensorTime =System.currentTimeMillis();
+							isSensorReceived=false;
+							byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
+							mBluetoothLeService.WriteValue(sensorCmd);
 						}
+					}else{
+						retrySensorCount=0;
+						mCurSendSensorTime =System.currentTimeMillis();
+						isSensorReceived=false;
+						LogUtil.i(TAG,"HomeFragment发送的传感命令");
+						byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
+						mBluetoothLeService.WriteValue(sensorCmd);
 					}
 
 				}
 			};
 		}
-		if (mTimerOff != null && mTimerTaskOff != null) {
-			mTimerOff.schedule(mTimerTaskOff, 0,10);
-		}
-	}
-
-	private void stopTimerOff() {
-		offTime=0;
-		if (mTimerOff != null) {
-			mTimerOff.cancel();
-			mTimerOff = null;
-		}
-
-		if (mTimerTaskOff != null) {
-			mTimerTaskOff.cancel();
-			mTimerTaskOff = null;
+		if (mTimer!=null&&mTimerTask!=null){
+			mTimer.schedule(mTimerTask,0,400);
 		}
 	}
 
 
+	private int retryConfigCount;
+	private boolean isConfigReceived;
+	private void startConfigTimer(){
+		if (mTimer!=null){
+			mTimer=new Timer();
+		}
+		if (mTimerTask!=null){
+			mTimerTask=new TimerTask() {
+				@Override
+				public void run() {
+					if (isSensorReceived){
+						if (!isConfigReceived){
+							if (retryConfigCount>=6){
+
+								stopTimer();
+								getActivity().runOnUiThread(new Runnable() {
+									@Override
+									public void run() {
+										setDisplayStatus(false);
+										ToastUtil.showToast(getActivity(),"断开连接",1000);
+									}
+								});
+							}else{
+								retryConfigCount++;
+								isConfigReceived=false;
+								sendPowerOffCmd();
+							}
+						}else{
+							try {
+								Thread.sleep(400-(System.currentTimeMillis()- mCurSendSensorTime));
+								isConfigReceived=false;
+								sendPowerOffCmd();
+							} catch (InterruptedException e) {
+								e.printStackTrace();
+							}
+						}
+					}
+				}
+			};
+		}
+	}
+
+	public static void stopTimer(){
+		if (mTimer!=null){
+			mTimer.cancel();
+			mTimer=null;
+		}
+		if (mTimerTask!=null){
+			mTimerTask.cancel();
+			mTimerTask=null;
+		}
+	}
 
 	/**
 	 * 发送关机命令
@@ -511,7 +547,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 				mSendNewCmdFlag = false;
 				mConnected = false;
-				mDataCountAfterOff=0;
 
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 
@@ -521,104 +556,102 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 				mConnected = true;
 
-				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
 					//TODO 接收数据处理
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					boolean crcIsRight= CommonUtils.IsCRCRight(data);
-					if (!crcIsRight){
-						LogUtil.i(TAG,"数据校验出现错误");
-						return;
+					boolean crcIsRight = CommonUtils.IsCRCRight(data);
+					if (!crcIsRight) {
+						LogUtil.i(TAG, "数据校验出现错误");
+						if (data.length > 11) {
+							frontData = new byte[data.length - 11];
+							System.arraycopy(data, 11, frontData, 0, frontData.length);
+							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
+							data = Arrays.copyOfRange(data, 0, 11);
+							if (!CommonUtils.IsCRCRight(data)) {
+								return;
+							}
+							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
+						} else if (data.length < 11) {
+							wholeData = new byte[11];
+							if (frontData != null) {
+								System.arraycopy(frontData, 0, wholeData, 0, frontData.length);
+								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
+								data = wholeData;
+								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
+								if (!CommonUtils.IsCRCRight(data)) {
+									return;
+								}
+								wholeData = null;
+								frontData = null;
+							} else {
+								return;
+							}
+						} else {//data.length==11
+
+						}
 					}
 
 					//当接受下位机的强刺激位为4时表示下位机收到了关机命令
-					if (data[2]==4){
+					if (data[2]== 3) {
+						setDisplayStatus(false);
+						stopTimer();
+					}
 
-						mBluetoothLeService.disconnect();
-						mBluetoothLeService.close();
-
-						mDataCountAfterOff=0;
-						mSendNewCmdFlag=false;
-						LogUtil.i(TAG,"接受到4");
-						getActivity().runOnUiThread(new Runnable() {
-							@Override
-							public void run() {
-								setDisplayStatus(false);
-							}
-						});
-
-						stopTimerOff();
+					if (data[2]==6) {
+						isSensorReceived=true;
 						Intent gattIntent = new Intent();
-						gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+						gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
 						gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
 						getActivity().sendBroadcast(gattIntent);
 
-						return;
-					}
-
-					//通过关机后1秒内有没有收到数据为准，如果1秒内收不到数据则重新发送
-					if (mSendNewCmdFlag){
-						mDataCountAfterOff++;
-
-						LogUtil.i(TAG,"关机后接收到的信息数据的个数:"+mDataCountAfterOff);
-//						stopTimerOff();
-						offTime=0;
-					}
-
-					Intent gattIntent = new Intent();
-					gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
-					gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
-					getActivity().sendBroadcast(gattIntent);
-
-					mCurrentTemp = ConvertUtils.byte2unsignedInt(data[3]);
-					mRemindEle = ConvertUtils.byte2unsignedInt(data[7]);
+						mCurrentTemp = ConvertUtils.byte2unsignedInt(data[3]);
+						mRemindEle = ConvertUtils.byte2unsignedInt(data[7]);
 
 
-					mReceivedDataCount++;
-					mEleList.add(mRemindEle);
-					if (mReceivedDataCount%10==0||mReceivedDataCount==1){
-						if (mReceivedDataCount<20){
+						mReceivedDataCount++;
+						mEleList.add(mRemindEle);
+						if (mReceivedDataCount % 10 == 0 || mReceivedDataCount == 1) {
+							if (mReceivedDataCount < 20) {
+								//发送电量的广播
+								Intent batIntent = new Intent();
+								batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
+								getActivity().sendBroadcast(batIntent);
+
+								for (int i = 0; i < mEleList.size(); i++) {
+									mEleSum = mEleSum + mEleList.get(i);
+								}
+								mRemindEle = (int) Math.floor(mEleSum / mEleList.size());
+								mEleSum = 0;
+								mEleList.clear();
+								Message msg = Message.obtain();
+								msg.what = 0;
+								msg.arg1 = mRemindEle;
+								msg.arg2 = mCurrentTemp;
+								mHandler.sendMessage(msg);
+							}
+						}
+						if (mReceivedDataCount % 60 == 0) {
 							//发送电量的广播
 							Intent batIntent = new Intent();
 							batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
 							getActivity().sendBroadcast(batIntent);
 
-							for (int i = 0; i <mEleList.size() ; i++) {
-								mEleSum = mEleSum +mEleList.get(i);
+							for (int i = 0; i < mEleList.size(); i++) {
+								mEleSum = mEleSum + mEleList.get(i);
 							}
-							mRemindEle= (int) Math.floor(mEleSum/mEleList.size());
-							mEleSum=0;
+							mRemindEle = (int) Math.floor(mEleSum / mEleList.size());
+							mEleSum = 0;
 							mEleList.clear();
-							Message msg=Message.obtain();
-							msg.what=0;
-							msg.arg1=mRemindEle;
-							msg.arg2=mCurrentTemp;
+
+							Message msg = Message.obtain();
+							msg.what = 0;
+							msg.arg1 = mRemindEle;
+							msg.arg2 = mCurrentTemp;
 							mHandler.sendMessage(msg);
 						}
 					}
-					if (mReceivedDataCount%60==0){
-						//发送电量的广播
-						Intent batIntent = new Intent();
-						batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mRemindEle);
-						getActivity().sendBroadcast(batIntent);
-
-						for (int i = 0; i <mEleList.size() ; i++) {
-							mEleSum = mEleSum +mEleList.get(i);
-						}
-						mRemindEle= (int) Math.floor(mEleSum/mEleList.size());
-						mEleSum=0;
-						mEleList.clear();
-
-						Message msg=Message.obtain();
-						msg.what=0;
-						msg.arg1=mRemindEle;
-						msg.arg2=mCurrentTemp;
-						mHandler.sendMessage(msg);
-					}
-
-				} else {
-					Toasty.warning(getActivity(), "请重启设备", Toast.LENGTH_LONG).show();//TODO 测试能够连接上设备，但是获取不到数据的情况
 				}
 			}
 		}
@@ -628,9 +661,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	 * 根据电量来设置Ware的颜色
 	 */
 	private void JudgeEleSetWare(int ele) {
-//		if (!mConnected) {//此处多余，应该当断开时就已经不执行此方法了
-//			return;
-//		}
 
 		mWaveLoadingView.startAnimation();//当断开接连时,停止了动画，所以要开始动画
 
@@ -645,23 +675,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		} else {
 			Intent intent = new Intent(getActivity(), BatteryService.class);
 			getActivity().startService(intent);
-//			if (!beginRemindBat){
-//				if (mMaterialDialog==null){//此处需要判断是否为空，求变量要为全局，否则，在对话框后，一直会new出新的对话框
-//					mMaterialDialog=new MaterialDialog.Builder(getActivity())
-//							.title("提示")
-//							.positiveText("确定")
-//							.onPositive(new MaterialDialog.SingleButtonCallback() {
-//								            @Override
-//								            public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-//									            beginRemindBat =true;
-//								            }
-//							            }
-//							).content("设备电量过低，请及时充电")
-//							.iconRes(R.mipmap.ic_warn_red)
-//							.maxIconSize(64).build();
-//					mMaterialDialog.show();
-//				}
-//			}
 			mWaveLoadingView.setCenterTitleColor(getResources().getColor(R.color.battery_electric_quantity_danger));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_danger));
 		}
@@ -685,7 +698,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	public static boolean getConnectStatus(){
 		return mConnected;
 	}
-
 
 	public void disConnect() {
 

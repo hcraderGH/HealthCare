@@ -80,8 +80,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private ColorArcProgressBar mColorArcProgressBar;
 
 	private boolean isOver = false;
-	private TimerTask mTimerTask;
-	private Timer mTimer;
 	private Handler mHandler;
 	private static int delay = 1000;//延迟一秒执行
 	private static int period = 1000;
@@ -138,6 +136,10 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private boolean mSendStopCmdFlag;
 	private boolean mSendAgainCmdFlag;
 
+
+	private byte[] frontData;
+	private byte[] wholeData;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -187,8 +189,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			}
 		};
 
-		startTimer();
-
 		// Initializes a Bluetooth adapter.  For API level 18 and above, get a reference to
 		// BluetoothAdapter through BluetoothManager.
 		final BluetoothManager bluetoothManager =
@@ -204,6 +204,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 //		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 //		Logger.d( "Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));//已经在HomeFragment中进行绑定服务了
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
+
+		startSensorTimer();
+		new Thread(new MyThread()).start();
 	}
 
 	private void initViews() {
@@ -307,28 +310,129 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		}).start();
 	}
 
-	private void startTimer() {
-		if (mTimer == null) {
-			mTimer = new Timer();
-		}
-		if (mTimerTask == null) {
-			mTimerTask = new TimerTask() {
-				@Override
-				public void run() {
+
+	private class MyThread implements Runnable {
+
+		@Override
+		public void run() {
+			try {
+				while (true){
+					Thread.sleep(1000);
 					mRunningTime = mRunningTime + 1000;
 					Message msg = Message.obtain();
 					if (mRunningTime >= mOriginalTime) {//应该==就可以了
 						msg.what = 1;
+						mHandler.sendMessage(msg);
+						break;
 					} else {
 						msg.what = 0;
+						mHandler.sendMessage(msg);
 					}
-					mHandler.sendMessage(msg);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	//发送传感命令
+	private static Timer mTimer;
+	private static TimerTask mTimerTask;
+	private int retrySensorCount;
+	private boolean isSensorReceived =false;
+	private long mCurSendSensorTime;
+	private void startSensorTimer(){
+		if (mTimer==null){
+			mTimer=new Timer();
+		}
+		if (mTimerTask==null){
+			mTimerTask=new TimerTask() {
+				@Override
+				public void run() {
+					if (!isSensorReceived){
+						if (retrySensorCount>=6) {
+							AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
+									.setMessage("已断开连接，请重新连接")
+									.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											saveData();//需要在此保存数据
+											dialog.dismiss();
+											finish();
+										}
+									});
+							builder.create().show();
+							stopTimer();
+
+						}else{
+							retrySensorCount++;
+							mCurSendSensorTime =System.currentTimeMillis();
+							isSensorReceived=false;
+							byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
+							mBluetoothLeService.WriteValue(sensorCmd);
+						}
+					}else{
+						retrySensorCount=0;
+						mCurSendSensorTime =System.currentTimeMillis();
+						isSensorReceived=false;
+						byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
+						mBluetoothLeService.WriteValue(sensorCmd);
+					}
+
 				}
 			};
 		}
+		if (mTimer!=null&&mTimerTask!=null){
+			mTimer.schedule(mTimerTask,0,400);
+		}
+	}
 
-		if (mTimer != null && mTimerTask != null) {
-			mTimer.schedule(mTimerTask, delay, period);
+
+	private int retryConfigCount;
+	private boolean isConfigReceived;
+	private void startConfigTimer(){
+		if (mTimer!=null){
+			mTimer=new Timer();
+		}
+		if (mTimerTask!=null){
+			mTimerTask=new TimerTask() {
+				@Override
+				public void run() {
+					if (!isConfigReceived){
+						if (retryConfigCount>=6){
+							AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
+									.setMessage("已断开连接，请重新连接")
+									.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+										@Override
+										public void onClick(DialogInterface dialog, int which) {
+											saveData();//需要在此保存数据
+											dialog.dismiss();
+											finish();
+										}
+									});
+							builder.create().show();
+							stopTimer();
+							Intent intent=new Intent();
+							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
+							intent.setAction(Constants.RECEIVE_GATT_STATUS);
+							sendBroadcast(intent);
+						}else{
+							retryConfigCount++;
+							isConfigReceived=false;
+							if (mSendStopCmdFlag){
+								sendStopSettingData();
+							}
+
+							if (mSendAgainCmdFlag){
+								sendAgainSettingData();
+							}
+						}
+					}
+				}
+			};
+		}
+		if (mTimer!=null&&mTimerTask!=null){
+			mTimer.schedule(mTimerTask,0,400);
 		}
 	}
 
@@ -378,18 +482,18 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 				//TODO 断开连接处理
 //				Toasty.error(RunningActivity.this, "与设备断开连接", Toast.LENGTH_SHORT).show();
-				AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
-						.setMessage("已断开连接，请重新连接")
-						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-								saveData();//需要在此保存数据
-								dialog.dismiss();
-								finish();
-							}
-						});
-				builder.create().show();
-				stopTimer();
+//				AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
+//						.setMessage("已断开连接，请重新连接")
+//						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+//							@Override
+//							public void onClick(DialogInterface dialog, int which) {
+//								saveData();//需要在此保存数据
+//								dialog.dismiss();
+//								finish();
+//							}
+//						});
+//				builder.create().show();
+//				stopTimer();
 
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 				mConnected = true;
@@ -405,59 +509,71 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					//当校验码前面的数据相加不等于校验码时表示数据错误
 					boolean crcIsRight = CommonUtils.IsCRCRight(data);
 					if (!crcIsRight) {
-						LogUtil.i(TAG, "数据校验出现错误");
-						return;
+						//误码纠正
+						if (data.length > 11) {
+							frontData = new byte[data.length - 11];
+							System.arraycopy(data, 11, frontData, 0, frontData.length);
+							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
+							data = Arrays.copyOfRange(data, 0, 11);
+							if (!CommonUtils.IsCRCRight(data)) {
+								return;
+							}
+							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
+						} else if (data.length < 11) {
+							wholeData = new byte[11];
+							if (frontData != null) {
+								System.arraycopy(frontData, 0, wholeData, 0, frontData.length);
+								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
+								data = wholeData;
+								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
+								if (!CommonUtils.IsCRCRight(data)) {
+									return;
+								}
+								wholeData = null;
+								frontData = null;
+							} else {
+								return;
+							}
+						} else {//data.length==11
+
+						}
 					}
 
 					if (mSendStopCmdFlag || mSendAgainCmdFlag) {
-						Frame.curRunningFrameId = ConvertUtils.byte2unsignedInt(data[8]);
-						if (Frame.preRunningFrameId == Frame.curRunningFrameId) {
-							if (mSendStopCmdFlag) {
-								sendStopSettingData();
-							}
-							if (mSendAgainCmdFlag) {
-								sendAgainSettingData();
-							}
-							return;//在发送命令时则不显示数据了
-						} else {
-							if (mSendStopCmdFlag && (!isOver)) {
-								finish();//只有在下位机接收到命令之后才结束Activity
-							}
-							if (mSendAgainCmdFlag) {
-								startTimer();
-							}
-							mSendStopCmdFlag = false;
-							mSendAgainCmdFlag = false;
+						if (data[2]!=6){
+							stopTimer();
+							startSensorTimer();
+							mSendAgainCmdFlag=false;
+							mSendStopCmdFlag=false;
 						}
-					} else {
-						Frame.preRunningFrameId = ConvertUtils.byte2unsignedInt(data[8]);
 					}
 
+					if (data[2]==6) {
+						int temp;
+						mSum = mSum + ConvertUtils.byte2unsignedInt(data[3]);//11个数据的平均值作为一个显示数据
+						mReceiveDataCount++;
+						if (mReceiveDataCount % 11 == 0 || mReceiveDataCount == 1) {
+							mCurrentTime = System.currentTimeMillis();
+							if (mReceiveDataCount == 1) {
+								insertPoint(mCurrentTime, (int) Math.floor(mSum));
+								temp = (int) Math.floor(mSum);
+							} else {
+								insertPoint(mCurrentTime, (int) Math.floor(mSum / 11));
+								temp = (int) Math.floor(mSum / 11);//无符号位转换
 
-					int temp;
-					mSum = mSum + ConvertUtils.byte2unsignedInt(data[3]);//11个数据的平均值作为一个显示数据
-					mReceiveDataCount++;
-					if (mReceiveDataCount % 11 == 0 || mReceiveDataCount == 1) {
-						mCurrentTime = System.currentTimeMillis();
-						if (mReceiveDataCount == 1) {
-							insertPoint(mCurrentTime, (int) Math.floor(mSum));
-							temp = (int) Math.floor(mSum);
-						} else {
-							insertPoint(mCurrentTime, (int) Math.floor(mSum / 11));
-							temp = (int) Math.floor(mSum / 11);//无符号位转换
+								mSum = 0;
+							}
 
-							mSum = 0;
+							Message msg = Message.obtain();
+							msg.what = 2;
+							msg.arg1 = temp;
+							mHandler.sendMessage(msg);
+
+							Message msgTemp = Message.obtain();
+							msgTemp.what = 3;
+							msgTemp.arg1 = temp;
+							mHandler.sendMessage(msgTemp);
 						}
-
-						Message msg = Message.obtain();
-						msg.what = 2;
-						msg.arg1 = temp;
-						mHandler.sendMessage(msg);
-
-						Message msgTemp = Message.obtain();
-						msgTemp.what = 3;
-						msgTemp.arg1 = temp;
-						mHandler.sendMessage(msgTemp);
 					}
 
 //					//TODO 测试添加到数据库中的数据
@@ -474,6 +590,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			}
 		}
 	};
+
 
 
 	private void dynamicDataDisplay(long currentTime, int temp) {
@@ -583,14 +700,17 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	public void onClick(View v) {
 		switch (v.getId()) {
 			case R.id.iv_again:
+				mSendAgainCmdFlag=true;
 				mStartTime = System.currentTimeMillis();
 				isAgain();
 				break;
 			case R.id.iv_over://实现结束功能(当结束后则直接返回，如果疗程没有进行完则提示)
+				mSendStopCmdFlag=true;
 				if (mRunningTime < mOriginalTime) {
 					stopTimer();
 					if (mConnected) {
-						sendStopSettingData();//发送结束疗程的配置数据
+						stopTimer();
+						startConfigTimer();//发送结束疗程的配置数据
 					}
 					saveData();//此处保存的数据为未做完的
 				} else {
@@ -598,6 +718,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				}
 				break;
 			case R.id.iv_back:
+				mSendStopCmdFlag=true;
 				isOver();
 				break;
 		}
@@ -646,7 +767,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						stopTimer();
 						saveData();//此处保存的数据为未做完的
 						if (mConnected) {
-							sendStopSettingData();//发送结束疗程的配置数据
+							stopTimer();
+							startConfigTimer();
 						}
 						dialog.dismiss();
 //						finish();
@@ -674,7 +796,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						mColorArcProgressBar.setCurrentValues((float) Math.floor((mRunningTime * 100 / mOriginalTime)));
 						isOver = false;
 						//重新发送配置的数据
-						sendAgainSettingData();
+						stopTimer();
+						startConfigTimer();
 
 						getDb();//如果要将重新开始的保存为另一份；
 						mCure=null;//设置为null,将会重新新建cure对象
@@ -698,8 +821,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	}
 
 	private void sendAgainSettingData() {
-
-		mSendAgainCmdFlag = true;
 
 		if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE, this)) {
 			mStimulate = CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE, this);
@@ -753,6 +874,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	@Override
 	public void onBackPressed() {
+		mSendStopCmdFlag=true;
 		isOver();
 //		super.onBackPressed();//调用父类的方法，使得点击返回键时直接返回上一个Activity，去掉此方法则不会直接退出
 	}

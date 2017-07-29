@@ -191,6 +191,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						while (!isReceivedData){
 							try {
 								Thread.sleep(300);
+								LogUtil.i(TAG,"DeviceSanActivity发送的传感命令");
 								byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,6,0,0,0,0,0,0,0,0,6};
 								HomeFragment.getBluetoothLeService().WriteValue(init);
 							} catch (InterruptedException e) {

@@ -23,11 +23,14 @@ import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
+import com.dafukeji.healthcare.util.ToastUtil;
 import com.dafukeji.healthcare.viewpagercards.CardItem;
 import com.dafukeji.healthcare.viewpagercards.CardPagerMedicalAdapter;
 import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
 
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import es.dmoral.toasty.Toasty;
 
@@ -58,6 +61,10 @@ public class MedicalFragment extends Fragment {
 	private boolean mSendNewCmdFlag;
 
 	private BlueToothBroadCast mBlueToothBroadCast;
+
+	private byte[] frontData;
+	private byte[] wholeData;
+
 	@Override
 	public void onAttach(Context context) {
 		//注册接受蓝牙信息的广播
@@ -116,59 +123,105 @@ public class MedicalFragment extends Fragment {
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
 				isGATTConnected = true;
 
-				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
 					//TODO 接收数据处理
-					//当校验码前面的数据相加不等于校验码时表示数据错误
-//					int cmdSum=ConvertUtils.byte2unsignedInt(data[2]) +
-//							ConvertUtils.byte2unsignedInt(data[3])+ConvertUtils.byte2unsignedInt(data[4] )+
-//							ConvertUtils.byte2unsignedInt(data[5]) +
-//							ConvertUtils.byte2unsignedInt(data[6])+
-//							ConvertUtils.byte2unsignedInt(data[7])+
-//							ConvertUtils.byte2unsignedInt(data[8]);
-//					LogUtil.i(TAG,"cmdSum%256="+cmdSum%256);
-//					LogUtil.i(TAG,"ConvertUtils.byte2unsignedInt(data[9])="+ConvertUtils.byte2unsignedInt(data[9]));
-//					if (!((cmdSum%256)== ConvertUtils.byte2unsignedInt(data[9]))) {
-//						LogUtil.i(TAG,"数据校验出现错误");
-//						return;
-//					}
-
 					boolean crcIsRight= CommonUtils.IsCRCRight(data);
 					if (!crcIsRight){
-						LogUtil.i(TAG,"数据校验出现错误");
-						return;
+						//误码纠正
+						if (data.length > 11) {
+							frontData = new byte[data.length - 11];
+							System.arraycopy(data, 11, frontData, 0, frontData.length);
+							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
+							data = Arrays.copyOfRange(data, 0, 11);
+							if (!CommonUtils.IsCRCRight(data)) {
+								return;
+							}
+							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
+						} else if (data.length < 11) {
+							wholeData = new byte[11];
+							if (frontData != null) {
+								System.arraycopy(frontData, 0, wholeData, 0, frontData.length);
+								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
+								data = wholeData;
+								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
+								if (!CommonUtils.IsCRCRight(data)) {
+									return;
+								}
+								wholeData = null;
+								frontData = null;
+							} else {
+								return;
+							}
+						}else {//data.length==11
+
+						}
 					}
 
-					if (mSendNewCmdFlag) {
-						Frame.curMedFrameId = ConvertUtils.byte2unsignedInt(data[8]);
-						LogUtil.i(TAG,"Frame.curMedFrameId="+Frame.curMedFrameId);
-						LogUtil.i(TAG,"Frame.preMedFrameId="+Frame.preMedFrameId);
-						if (Frame.preMedFrameId == Frame.curMedFrameId) {
-							byte[] settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
-									, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
+					if (data[2]!=6&&mSendNewCmdFlag){
 
-							HomeFragment.getBluetoothLeService().WriteValue(settings);
-						} else {
-							mSendNewCmdFlag=false;
+						mSendNewCmdFlag=false;
+						retryConfigCount=0;
 
-//							Frame.preFrameId=Frame.curFrameId;
-							LogUtil.i(TAG,"已经进入了方法");
-							Intent intent2 = new Intent(getActivity(), RunningActivity.class);
-							intent2.putExtra(Constants.CURE_TYPE, Constants.CURE_MEDICAL);
-							intent2.putExtra(Constants.ORIGINAL_TIME, mCauterizeTime + mMedicineTime);
-							intent2.putExtra(Constants.CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
-							intent2.putExtra(Constants.CURRENT_TIME,System.currentTimeMillis());
-							getActivity().startActivity(intent2);
-						}
-					}else{
-						Frame.preMedFrameId=ConvertUtils.byte2unsignedInt(data[8]);
-						LogUtil.i(TAG,"Frame.preMedFrameId="+Frame.preMedFrameId);
+						stopTimer();
+						Intent intent2 = new Intent(getActivity(), RunningActivity.class);
+						intent2.putExtra(Constants.CURE_TYPE, Constants.CURE_MEDICAL);
+						intent2.putExtra(Constants.ORIGINAL_TIME, mCauterizeTime + mMedicineTime);
+						intent2.putExtra(Constants.CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
+						intent2.putExtra(Constants.CURRENT_TIME,System.currentTimeMillis());
+						getActivity().startActivity(intent2);
 					}
 				}
 			}
 		}
 	};
+
+
+	private Timer mTimer;
+	private TimerTask mTimerTask;
+	private int retryConfigCount;
+	private boolean isConfigReceived;
+	private void startConfigTimer(){
+		if (mTimer!=null){
+			mTimer=new Timer();
+		}
+		if (mTimerTask!=null){
+			mTimerTask=new TimerTask() {
+				@Override
+				public void run() {
+					if (!isConfigReceived){
+						if (retryConfigCount>=6){
+							ToastUtil.showToast(getActivity(),"断开连接",1000);
+							stopTimer();
+							Intent intent=new Intent();
+							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
+							intent.setAction(Constants.RECEIVE_GATT_STATUS);
+							getActivity().sendBroadcast(intent);
+						}else{
+							retryConfigCount++;
+							isConfigReceived=false;
+							sendMedicalCmd();
+						}
+					}
+				}
+			};
+		}
+		if (mTimer!=null&&mTimerTask!=null){
+			mTimer.schedule(mTimerTask,0,400);
+		}
+	}
+
+	private void stopTimer(){
+		if (mTimer!=null){
+			mTimer.cancel();
+			mTimer=null;
+		}
+		if (mTimerTask!=null){
+			mTimerTask.cancel();
+			mTimerTask=null;
+		}
+	}
 
 	private void initViews() {
 		//初始化ViewPagerCard
@@ -225,18 +278,19 @@ public class MedicalFragment extends Fragment {
 					return;
 				}
 
+				HomeFragment.stopTimer();
 
-				LogUtil.i(TAG, "HomeFragment.getBluetoothLeService()" + HomeFragment.getBluetoothLeService());
-
-				mSendNewCmdFlag = true;
-
-				byte[] settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
-						, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
-
-				HomeFragment.getBluetoothLeService().WriteValue(settings);
+				mSendNewCmdFlag=true;
+				startConfigTimer();
 
 			}
 		});
+	}
+
+	private void sendMedicalCmd(){
+		byte[] settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
+				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
+		HomeFragment.getBluetoothLeService().WriteValue(settings);
 	}
 
 

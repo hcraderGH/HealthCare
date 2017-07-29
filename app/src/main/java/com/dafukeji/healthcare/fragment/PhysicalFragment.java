@@ -24,11 +24,14 @@ import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
+import com.dafukeji.healthcare.util.ToastUtil;
 import com.dafukeji.healthcare.viewpagercards.CardItem;
 import com.dafukeji.healthcare.viewpagercards.CardPagerPhysicalAdapter;
 import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
 
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import es.dmoral.toasty.Toasty;
 
@@ -51,20 +54,24 @@ public class PhysicalFragment extends Fragment {
 	private int mKneadFrequency = 1;//默认为1档
 	private int mKneadTime = 20;//默认为3档20分钟
 
-	private static String TAG="测试PhysicalFragment";
+	private static String TAG = "测试PhysicalFragment";
 
 	private boolean isGATTConnected;
 
 	private boolean mSendNewCmdFlag;
 
+	private byte[] frontData;
+	private byte[] wholeData;
+
 	private BlueToothBroadCast mBlueToothBroadCast;
+
 	@Override
 	public void onAttach(Context context) {
 		//注册接受蓝牙信息的广播
-		mBlueToothBroadCast=new BlueToothBroadCast();
-		IntentFilter filter=new IntentFilter();
+		mBlueToothBroadCast = new BlueToothBroadCast();
+		IntentFilter filter = new IntentFilter();
 		filter.addAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
-		getActivity().registerReceiver(mBlueToothBroadCast,filter);
+		getActivity().registerReceiver(mBlueToothBroadCast, filter);
 		super.onAttach(context);
 	}
 
@@ -73,14 +80,14 @@ public class PhysicalFragment extends Fragment {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的服务连接
-			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME,false);
-			LogUtil.i(TAG,"onReceive  isGATTConnectedFromHome:"+isGATTConnected);
+			isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+			LogUtil.i(TAG, "onReceive  isGATTConnectedFromHome:" + isGATTConnected);
 		}
 	}
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-		mView=inflater.inflate(R.layout.fragment_home_physical,container,false);
+		mView = inflater.inflate(R.layout.fragment_home_physical, container, false);
 		initViews();
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 		return mView;
@@ -117,53 +124,109 @@ public class PhysicalFragment extends Fragment {
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
 				isGATTConnected = true;
 
-				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
-				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
+				byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
+				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
 					//TODO 接收数据处理
-					boolean crcIsRight= CommonUtils.IsCRCRight(data);
-					if (!crcIsRight){
-						LogUtil.i(TAG,"数据校验出现错误");
-						return;
+					boolean crcIsRight = CommonUtils.IsCRCRight(data);
+					if (!crcIsRight) {
+						//误码纠正
+						if (data.length > 11) {
+							frontData = new byte[data.length - 11];
+							System.arraycopy(data, 11, frontData, 0, frontData.length);
+							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
+							data = Arrays.copyOfRange(data, 0, 11);
+							if (!CommonUtils.IsCRCRight(data)) {
+								return;
+							}
+							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
+						} else if (data.length < 11) {
+							wholeData = new byte[11];
+							if (frontData != null) {
+								System.arraycopy(frontData, 0, wholeData, 0, frontData.length);
+								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
+								data = wholeData;
+								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
+								if (!CommonUtils.IsCRCRight(data)) {
+									return;
+								}
+								wholeData = null;
+								frontData = null;
+							} else {
+								return;
+							}
+						} else {//data.length==11
+
+						}
 					}
 
-					if (mSendNewCmdFlag) {
-						Frame.curPhyFrameId = ConvertUtils.byte2unsignedInt(data[8]);
-						LogUtil.i(TAG,"Frame.curPhyFrameId="+Frame.curPhyFrameId);
-						LogUtil.i(TAG,"Frame.prePhyFrameId="+Frame.prePhyFrameId);
-						if (Frame.prePhyFrameId == Frame.curPhyFrameId) {
-							int cauterizeGrade=0;
-							int cauterizeTime=0;
-							LogUtil.i(TAG, "发送的物理治疗的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
-									, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime)));
-							HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
-									, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime));
-						} else {
-							mSendNewCmdFlag=false;
+					if (mSendNewCmdFlag && data[2] != 6) {
 
-//							Frame.preFrameId=Frame.curFrameId;
-							LogUtil.i(TAG,"已经进入了方法");
-							Intent intent2 = new Intent(getActivity(), RunningActivity.class);
-							intent2.putExtra(Constants.CURE_TYPE,Constants.CURE_PHYSICAL);
-							intent2.putExtra(Constants.ORIGINAL_TIME, mKneadTime);
-							intent2.putExtra(Constants.CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
-							intent2.putExtra(Constants.CURRENT_TIME,System.currentTimeMillis());
-							getActivity().startActivity(intent2);
-						}
-					}else{
-						Frame.prePhyFrameId=ConvertUtils.byte2unsignedInt(data[8]);
-						LogUtil.i(TAG,"Frame.prePhyFrameId="+Frame.prePhyFrameId);
+						mSendNewCmdFlag=false;
+						stopTimer();
+
+						Intent intent2 = new Intent(getActivity(), RunningActivity.class);
+						intent2.putExtra(Constants.CURE_TYPE, Constants.CURE_PHYSICAL);
+						intent2.putExtra(Constants.ORIGINAL_TIME, mKneadTime);
+						intent2.putExtra(Constants.CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
+						intent2.putExtra(Constants.CURRENT_TIME, System.currentTimeMillis());
+						getActivity().startActivity(intent2);
 					}
 				}
 			}
 		}
 	};
 
+	private Timer mTimer;
+	private TimerTask mTimerTask;
+	private int retryConfigCount;
+	private boolean isConfigReceived;
+	private void startConfigTimer(){
+		if (mTimer!=null){
+			mTimer=new Timer();
+		}
+		if (mTimerTask!=null){
+			mTimerTask=new TimerTask() {
+				@Override
+				public void run() {
+					if (!isConfigReceived){
+						if (retryConfigCount>=6){
+							ToastUtil.showToast(getActivity(),"断开连接",1000);
+							stopTimer();
+							Intent intent=new Intent();
+							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
+							intent.setAction(Constants.RECEIVE_GATT_STATUS);
+							getActivity().sendBroadcast(intent);
+						}else{
+							retryConfigCount++;
+							isConfigReceived=false;
+							sendPhysicalCmd();
+						}
+					}
+				}
+			};
+		}
+		if (mTimer!=null&&mTimerTask!=null){
+			mTimer.schedule(mTimerTask,0,400);
+		}
+	}
+
+	private void stopTimer(){
+		if (mTimer!=null){
+			mTimer.cancel();
+			mTimer=null;
+		}
+		if (mTimerTask!=null){
+			mTimerTask.cancel();
+			mTimerTask=null;
+		}
+	}
+
 	private void initViews() {
 		//初始化ViewPagerCard
-		mViewPager = (ViewPager)mView.findViewById(R.id.vp_cure);
+		mViewPager = (ViewPager) mView.findViewById(R.id.vp_cure);
 
-		mCardAdapter=new CardPagerPhysicalAdapter(getActivity(),getActivity().getSupportFragmentManager());
+		mCardAdapter = new CardPagerPhysicalAdapter(getActivity(), getActivity().getSupportFragmentManager());
 		mCardAdapter.addCardItem(new CardItem(R.string.needle));
 		mCardAdapter.addCardItem(new CardItem(R.string.needle));
 
@@ -173,55 +236,56 @@ public class PhysicalFragment extends Fragment {
 		mViewPager.setPageTransformer(false, mCardShadowTransformer);
 		mViewPager.setOffscreenPageLimit(2);
 
-		btnStart= (Button) mView.findViewById(R.id.btn_physical_start);
+		btnStart = (Button) mView.findViewById(R.id.btn_physical_start);
 		btnStart.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View v) {
 
 
-				if (!isGATTConnected){
-					Toasty.warning(getActivity(),"请连接设备",  getResources().getInteger(R.integer.toasty_duration)).show();
+				if (!isGATTConnected) {
+					Toasty.warning(getActivity(), "请连接设备", getResources().getInteger(R.integer.toasty_duration)).show();
 					return;
 				}
-				if (CureSPUtil.isSaved(Constants.SP_PHYSICAL_STIMULATE,getActivity())){
-					mStimulate=CureSPUtil.getSP(Constants.SP_PHYSICAL_STIMULATE,getActivity());
+				if (CureSPUtil.isSaved(Constants.SP_PHYSICAL_STIMULATE, getActivity())) {
+					mStimulate = CureSPUtil.getSP(Constants.SP_PHYSICAL_STIMULATE, getActivity());
 				}
 
-				if (CureSPUtil.isSaved(Constants.SP_KNEAD_TYPE,getActivity())){
-					mKneadType=CureSPUtil.getSP(Constants.SP_KNEAD_TYPE,getActivity());
+				if (CureSPUtil.isSaved(Constants.SP_KNEAD_TYPE, getActivity())) {
+					mKneadType = CureSPUtil.getSP(Constants.SP_KNEAD_TYPE, getActivity());
 				}
 
-				if (CureSPUtil.isSaved(Constants.SP_KNEAD_GRADE,getActivity())){
-					mKneadGrade=CureSPUtil.getSP(Constants.SP_KNEAD_GRADE,getActivity());
+				if (CureSPUtil.isSaved(Constants.SP_KNEAD_GRADE, getActivity())) {
+					mKneadGrade = CureSPUtil.getSP(Constants.SP_KNEAD_GRADE, getActivity());
 				}
 
-				if (CureSPUtil.isSaved(Constants.SP_KNEAD_FREQUENCY,getActivity())){
-					mKneadFrequency=CureSPUtil.getSP(Constants.SP_KNEAD_FREQUENCY,getActivity());
+				if (CureSPUtil.isSaved(Constants.SP_KNEAD_FREQUENCY, getActivity())) {
+					mKneadFrequency = CureSPUtil.getSP(Constants.SP_KNEAD_FREQUENCY, getActivity());
 				}
 
-				if (CureSPUtil.isSaved(Constants.SP_KNEAD_TIME_GRADE,getActivity())){
-					mKneadTime=CureSPUtil.getKneadTimeByPosition(CureSPUtil.getSP(Constants.SP_KNEAD_TIME_GRADE,getActivity()));
+				if (CureSPUtil.isSaved(Constants.SP_KNEAD_TIME_GRADE, getActivity())) {
+					mKneadTime = CureSPUtil.getKneadTimeByPosition(CureSPUtil.getSP(Constants.SP_KNEAD_TIME_GRADE, getActivity()));
 				}
 
-//				if (HomeFragment.getBluetoothLeService()==null){
-//					return;
-//				}
+				HomeFragment.stopTimer();
 
-				mSendNewCmdFlag=true;
+				mSendNewCmdFlag = true;
+				startConfigTimer();
 
-				int cauterizeGrade=0;
-				int cauterizeTime=0;
-				LogUtil.i(TAG, "发送的物理治疗的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
-						, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime)));
-				HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
-						, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime));
+
 			}
 		});
 	}
 
+	private void sendPhysicalCmd(){
+		int cauterizeGrade = 0;
+		int cauterizeTime = 0;
+		HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
+				, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime));
+	}
+
 	@Override
 	public void onDestroy() {
-		LogUtil.i(TAG,"onDestroy()");
+		LogUtil.i(TAG, "onDestroy()");
 		getActivity().unregisterReceiver(mGattUpdateReceiver);
 		getActivity().unregisterReceiver(mBlueToothBroadCast);
 		super.onDestroy();

@@ -68,6 +68,8 @@
 
         <service android:name=".service.BatteryService"/>
 
+        <service android:name=".service.SendCmdService"/>
+
         <!--<receiver android:name=".BaseActivity$BlueToothBroadCast"/>-->
         <!--<receiver android:name=".fragment.HomeFragment$BlueToothBroadCast"/>-->
         <!--<receiver android:name=".BaseActivity$BlueToothBroadCast"/>-->
