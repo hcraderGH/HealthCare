@@ -32,13 +32,6 @@
 
         </android.support.v7.widget.Toolbar>
 
-        <FrameLayout
-            android:id="@+id/fl_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_above="@+id/rg_tab"
-            android:layout_below="@+id/toolbar"/>
-
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
@@ -49,7 +42,7 @@
             android:id="@+id/rg_tab"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:weightSum="3"
+            android:weightSum="5"
             android:paddingTop="5dp"
             android:paddingBottom="5dp"
             android:orientation="horizontal"
@@ -73,22 +66,8 @@
                 android:paddingLeft="0dp"
                 android:text="@string/title_home"
                 android:textColor="@color/selector_tab_color"
-                android:textSize="10sp"/>
-            <!--</LinearLayout>-->
-            <!--给中间凸起按钮预留位置-->
-            <LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:gravity="center">
+                android:textSize="11sp"/>
 
-
-            </LinearLayout>
-            <!--<LinearLayout
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:layout_weight="1">-->
             <RadioButton
                 android:layout_width="0dp"
                 android:id="@+id/rb_record"
@@ -101,11 +80,60 @@
                 android:paddingLeft="0dp"
                 android:text="@string/title_record"
                 android:textColor="@color/selector_tab_color"
-                android:textSize="10sp"/>
-            <!-- </LinearLayout>-->
+                android:textSize="11sp"/>
+            <!--给中间凸起按钮预留位置-->
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center">
+
+                <ImageButton
+                    android:id="@+id/iv_scan"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginBottom="2dp"
+                    android:background="@mipmap/ic_controller_off"/>
+
+            </LinearLayout>
+
+
+
+            <RadioButton
+                android:layout_width="0dp"
+                android:id="@+id/rb_share"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:button="@null"
+                android:drawableTop="@drawable/selector_share"
+                android:gravity="center"
+                android:paddingLeft="0dp"
+                android:text="分享"
+                android:textColor="@color/selector_tab_color"
+                android:textSize="11sp"/>
+
+            <RadioButton
+                android:layout_width="0dp"
+                android:id="@+id/rb_setting"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@android:color/transparent"
+                android:button="@null"
+                android:drawableTop="@drawable/selector_setting"
+                android:gravity="center"
+                android:paddingLeft="0dp"
+                android:text="设置"
+                android:textColor="@color/selector_tab_color"
+                android:textSize="11sp"/>
         </RadioGroup>
 
-
+        <FrameLayout
+            android:id="@+id/fl_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/rg_tab"
+            android:layout_below="@+id/toolbar"/>
         <!--<ImageView-->
         <!--android:id="@+id/iv_controller"-->
         <!--android:layout_width="wrap_content"-->
@@ -117,6 +145,7 @@
 
 
         <com.nightonke.boommenu.BoomMenuButton
+            android:visibility="gone"
             android:id="@+id/boom"
             android:background="@drawable/selector_controller"
             android:layout_centerHorizontal="true"
@@ -138,6 +167,6 @@
     </RelativeLayout>
 
     <!--DrawerLayout的布局界面必须放在整个主界面布局的最下面-->
-    <include layout="@layout/draw_layout_left"/>
+    <!--<include layout="@layout/draw_layout_left"/>-->
 
 </android.support.v4.widget.DrawerLayout>

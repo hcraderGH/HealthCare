@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res-auto"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:clipToPadding="true"
+              android:fitsSystemWindows="true"
+              android:orientation="vertical">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:layout_marginLeft="@dimen/setting_item_padding_right_left"
+                android:layout_marginTop="16dp"
+                android:text="通知"
+                android:textColor="@color/setting_title_color"
+                android:textSize="14sp"/>
+
+            <LinearLayout
+                style="@style/SettingItemStyle"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="接受消息推送"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"/>
+
+
+                <android.support.v7.widget.SwitchCompat
+                    android:id="@+id/sc_notification"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:checked="true"
+                    android:clickable="true"
+                    android:theme="@style/switchStyle"/>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/ll_no_disturbing"
+                style="@style/SettingItemStyle"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="免打扰模式"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="23:00~7:00"
+                    android:layout_gravity="center_vertical"
+                    android:textColor="@color/done_disabled_dark"
+                    android:layout_marginRight="5dp"
+                    android:textSize="14sp"/>
+
+
+                <android.support.v7.widget.SwitchCompat
+                    android:id="@+id/sc_no_disturbing"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:checked="true"
+                    android:theme="@style/switchStyle"/>
+
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:layout_marginLeft="@dimen/setting_item_padding_right_left"
+                android:layout_marginTop="16dp"
+                android:text="软件"
+                android:textColor="@color/setting_title_color"
+                android:textSize="14sp"/>
+
+            <LinearLayout
+                style="@style/SettingItemStyle"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="自动检查更新"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="16sp"/>
+
+                <android.support.v7.widget.SwitchCompat
+                    android:id="@+id/sc_auto_update"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@null"
+                    android:checked="true"
+                    android:clickable="true"
+                    android:theme="@style/switchStyle"/>
+
+            </LinearLayout>
+
+
+            <com.balysv.materialripple.MaterialRippleLayout
+                app:mrl_rippleDuration="@integer/mrl_ripple_duration"
+                android:clickable="true"
+                android:id="@+id/rv_check_update"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/ll_check_update"
+                    style="@style/SettingItemStyle"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="检查更新"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"/>
+
+                    <TextView
+                        android:id="@+id/tv_version_info"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:textColor="@color/done_disabled_dark"
+                        android:layout_marginRight="5dp"
+                        android:textSize="14sp"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@mipmap/ic_arrow_right_gray"/>
+
+                </LinearLayout>
+            </com.balysv.materialripple.MaterialRippleLayout>
+
+            <com.balysv.materialripple.MaterialRippleLayout
+                app:mrl_rippleDuration="@integer/mrl_ripple_duration"
+                android:id="@+id/rv_about_software"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/ll_about_software"
+                    style="@style/SettingItemStyle"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:id="@+id/textView"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="关于软件"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@mipmap/ic_arrow_right_gray"/>
+
+                </LinearLayout>
+            </com.balysv.materialripple.MaterialRippleLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="5dp"
+                android:layout_marginLeft="@dimen/setting_item_padding_right_left"
+                android:layout_marginTop="16dp"
+                android:text="其他"
+                android:textColor="@color/setting_title_color"
+                android:textSize="14sp"/>
+
+            <com.balysv.materialripple.MaterialRippleLayout
+                app:mrl_rippleDuration="@integer/mrl_ripple_duration"
+                android:id="@+id/rv_clear_cache"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/ll_clear_cache"
+                    style="@style/SettingItemStyle"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="清除缓存"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@mipmap/ic_arrow_right_gray"/>
+
+                </LinearLayout>
+            </com.balysv.materialripple.MaterialRippleLayout>
+
+            <com.balysv.materialripple.MaterialRippleLayout
+                android:id="@+id/rv_clear_database"
+                app:mrl_rippleDuration="@integer/mrl_ripple_duration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/ll_clear_database"
+                    style="@style/SettingItemStyle"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="清空数据库"
+                        android:textColor="?android:attr/textColorPrimary"
+                        android:textSize="16sp"/>
+
+                    <ImageView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@mipmap/ic_arrow_right_gray"/>
+
+                </LinearLayout>
+            </com.balysv.materialripple.MaterialRippleLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"/>
+
+
+    <Button
+        android:id="@+id/btn_exit"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginBottom="24dp"
+        android:layout_marginLeft="32dp"
+        android:layout_marginRight="32dp"
+        android:background="@drawable/selector_exit_button"
+        android:text="退出"
+        android:textColor="#fff"
+        android:textSize="18sp" />
+
+</LinearLayout>

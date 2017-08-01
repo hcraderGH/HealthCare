@@ -23,6 +23,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -36,6 +37,8 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.fragment.RecordFragment;
+import com.dafukeji.healthcare.fragment.SettingFragment;
+import com.dafukeji.healthcare.fragment.ShareFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
@@ -56,13 +59,17 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 	private HomeFragment homeFragment;
 	private RecordFragment recordFragment;
+	private ShareFragment shareFragment;
+	private SettingFragment settingFragment;
 	private List<Fragment> mFragments;
 	private int mIndex=0;
 
-	private RadioButton rbHome,rbRecord;
+	private RadioButton rbHome,rbRecord,rbShare,rbSetting;
 	private RadioGroup rgTab;
 	private Toolbar mToolbar;
 	private TextView mTvTitle;
+
+	private ImageView ivScan;
 
 	private BoomMenuButton mBmbController;
 	private String[] content=new String[]{"连接设备","断开连接"};
@@ -73,8 +80,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	private boolean isGATTConnected=false;
 	private BlueToothBroadCast mBlueToothBroadCast;
 
-	private DrawerLayout mDrawer;
-	private ActionBarDrawerToggle mDrawerToggle;
+//	private DrawerLayout mDrawer;
+//	private ActionBarDrawerToggle mDrawerToggle;
 
 	private MaterialRippleLayout mrlExit;
 	private MaterialRippleLayout mrlShare;
@@ -103,20 +110,20 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	@Override
 	protected void onPostCreate(Bundle savedInstanceState) {
 		super.onPostCreate(savedInstanceState);
-		mDrawerToggle.syncState();
+//		mDrawerToggle.syncState();
 	}
 
 	@Override
 	public void onConfigurationChanged(Configuration newConfig) {
 		super.onConfigurationChanged(newConfig);
-		mDrawerToggle.onConfigurationChanged(newConfig);
+//		mDrawerToggle.onConfigurationChanged(newConfig);
 	}
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
-		return mDrawerToggle.onOptionsItemSelected(item) ||
-				super.onOptionsItemSelected(item);
-	}
+//	@Override
+//	public boolean onOptionsItemSelected(MenuItem item) {
+//		return mDrawerToggle.onOptionsItemSelected(item) ||
+//				super.onOptionsItemSelected(item);
+//	}
 
 	private void registerGATTReceiver() {
 		//注册接受蓝牙信息的广播
@@ -140,6 +147,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 		rbHome= (RadioButton) findViewById(R.id.rb_home);
 		rbRecord= (RadioButton) findViewById(R.id.rb_record);
+		rbShare= (RadioButton) findViewById(R.id.rb_share);
+		rbSetting= (RadioButton) findViewById(R.id.rb_setting);
 		mTvTitle= (TextView) findViewById(R.id.tv_toolbar_title);
 
 		rgTab= (RadioGroup) findViewById(R.id.rg_tab);
@@ -147,32 +156,34 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		mToolbar= (Toolbar) findViewById(R.id.toolbar);
 
 
-		mDrawer = (DrawerLayout) findViewById(R.id.draw_layout);
+		ivScan= (ImageView) findViewById(R.id.iv_scan);
+
+//		mDrawer = (DrawerLayout) findViewById(R.id.draw_layout);
 		//设置左上角导航抽屉图标
-		mDrawerToggle=new ActionBarDrawerToggle(this, mDrawer,mToolbar
-				, R.string.navigation_drawer_open,R.string.navigation_drawer_close){//如果实现的方式中没有ToolBar参数，那么在ToolBar中就不会显示图标
-			@Override
-			public void onDrawerClosed(View drawerView) {
-				super.onDrawerClosed(drawerView);
-			}
-
-			@Override
-			public void onDrawerOpened(View drawerView) {
-				mDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
-				super.onDrawerOpened(drawerView);
-			}
-
-			@Override
-			public void onDrawerSlide(View drawerView, float slideOffset) {
-				super.onDrawerSlide(drawerView, slideOffset);
-			}
-
-			@Override
-			public void onDrawerStateChanged(int newState) {
-				super.onDrawerStateChanged(newState);
-			}
-		};
-		mDrawer.setDrawerListener(mDrawerToggle);
+//		mDrawerToggle=new ActionBarDrawerToggle(this, mDrawer,mToolbar
+//				, R.string.navigation_drawer_open,R.string.navigation_drawer_close){//如果实现的方式中没有ToolBar参数，那么在ToolBar中就不会显示图标
+//			@Override
+//			public void onDrawerClosed(View drawerView) {
+//				super.onDrawerClosed(drawerView);
+//			}
+//
+//			@Override
+//			public void onDrawerOpened(View drawerView) {
+//				mDrawer.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
+//				super.onDrawerOpened(drawerView);
+//			}
+//
+//			@Override
+//			public void onDrawerSlide(View drawerView, float slideOffset) {
+//				super.onDrawerSlide(drawerView, slideOffset);
+//			}
+//
+//			@Override
+//			public void onDrawerStateChanged(int newState) {
+//				super.onDrawerStateChanged(newState);
+//			}
+//		};
+//		mDrawer.setDrawerListener(mDrawerToggle);
 
 		mBmbController = (BoomMenuButton) findViewById(R.id.boom);
 		mBmbController.setButtonBottomMargin(400);
@@ -186,72 +197,76 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 		ReinitializeBoom();
 
-		mrlExit= (MaterialRippleLayout)mDrawer.findViewById(R.id.mrl_exit);
-		mrlHome= (MaterialRippleLayout)mDrawer.findViewById(R.id.mrl_home);
-		mrlShare= (MaterialRippleLayout) mDrawer.findViewById(R.id.mrl_share);
-		mrlSetting= (MaterialRippleLayout) mDrawer.findViewById(R.id.mrl_settings);
+//		mrlExit= (MaterialRippleLayout)mDrawer.findViewById(R.id.mrl_exit);
+//		mrlHome= (MaterialRippleLayout)mDrawer.findViewById(R.id.mrl_home);
+//		mrlShare= (MaterialRippleLayout) mDrawer.findViewById(R.id.mrl_share);
+//		mrlSetting= (MaterialRippleLayout) mDrawer.findViewById(R.id.mrl_settings);
 	}
 
 	private void setListeners() {
 		rbHome.setOnClickListener(this);
 		rbRecord.setOnClickListener(this);
+		rbShare.setOnClickListener(this);
+		rbSetting.setOnClickListener(this);
 
-		mrlExit.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mDrawer.closeDrawers();
-				new MaterialDialog.Builder(MainActivity.this)
-						.content("确定退出本程序吗？")
-						.positiveText(R.string.dialog_ok)
-						.negativeText(R.string.dialog_cancel)
-						.onPositive(new MaterialDialog.SingleButtonCallback() {
-							@Override
-							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
-								if (isGATTConnected){
-									int stimulate=3;//关机标志
-									int stimulateGrade=0;
-									int stimulateFrequency=0;
-									int cauterizeGrade=0;
-									int cauterizeTime=0;
-									int needleType=0;
-									int needleGrade=0;
-									int needleFrequency=0;
-									int medicineTime=0;
-									int crc=stimulate+stimulateGrade+stimulateFrequency+cauterizeGrade+cauterizeTime
-											+needleType+needleGrade+needleFrequency+medicineTime;
+		ivScan.setOnClickListener(this);
 
-									byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
-											, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
-											,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
-									Log.i(TAG, "onClick: off"+ Arrays.toString(setting));
-									HomeFragment.getBluetoothLeService().WriteValue(setting);
-								}
-								MyApplication.getInstance().exit();
-							}
-						}).show();
-			}
-		});
-		mrlHome.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mDrawer.closeDrawers();
-				setIndexSelected(0);
-			}
-		});
-		mrlSetting.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mDrawer.closeDrawers();
-				startActivity(new Intent(MainActivity.this,SettingActivity.class));
-			}
-		});
-		mrlShare.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View v) {
-				mDrawer.closeDrawers();
-				startActivity(new Intent(MainActivity.this,ShareActivity.class));
-			}
-		});
+//		mrlExit.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				mDrawer.closeDrawers();
+//				new MaterialDialog.Builder(MainActivity.this)
+//						.content("确定退出本程序吗？")
+//						.positiveText(R.string.dialog_ok)
+//						.negativeText(R.string.dialog_cancel)
+//						.onPositive(new MaterialDialog.SingleButtonCallback() {
+//							@Override
+//							public void onClick(@NonNull MaterialDialog dialog, @NonNull DialogAction which) {
+//								if (isGATTConnected){
+//									int stimulate=3;//关机标志
+//									int stimulateGrade=0;
+//									int stimulateFrequency=0;
+//									int cauterizeGrade=0;
+//									int cauterizeTime=0;
+//									int needleType=0;
+//									int needleGrade=0;
+//									int needleFrequency=0;
+//									int medicineTime=0;
+//									int crc=stimulate+stimulateGrade+stimulateFrequency+cauterizeGrade+cauterizeTime
+//											+needleType+needleGrade+needleFrequency+medicineTime;
+//
+//									byte[] setting=new byte[]{(byte) 0xFA, (byte) 0xFB, (byte) stimulate, (byte) stimulateGrade
+//											, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte)needleType, (byte) needleGrade
+//											,(byte)needleFrequency,(byte)medicineTime,(byte)crc};
+//									Log.i(TAG, "onClick: off"+ Arrays.toString(setting));
+//									HomeFragment.getBluetoothLeService().WriteValue(setting);
+//								}
+//								MyApplication.getInstance().exit();
+//							}
+//						}).show();
+//			}
+//		});
+//		mrlHome.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				mDrawer.closeDrawers();
+//				setIndexSelected(0);
+//			}
+//		});
+//		mrlSetting.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				mDrawer.closeDrawers();
+//				startActivity(new Intent(MainActivity.this,SettingActivity.class));
+//			}
+//		});
+//		mrlShare.setOnClickListener(new View.OnClickListener() {
+//			@Override
+//			public void onClick(View v) {
+//				mDrawer.closeDrawers();
+//				startActivity(new Intent(MainActivity.this,ShareActivity.class));
+//			}
+//		});
 	}
 
 	@Override
@@ -264,6 +279,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			case R.id.rb_record:
 				setIndexSelected(1);
 				mTvTitle.setText(rbRecord.getText().toString());
+				break;
+			case R.id.rb_share:
+				setIndexSelected(2);
+				mTvTitle.setText(rbShare.getText().toString());
+				break;
+			case R.id.rb_setting:
+				setIndexSelected(3);
+				mTvTitle.setText(rbSetting.getText().toString());
+				break;
+
+			case R.id.iv_scan:
+				startActivity(new Intent(MainActivity.this,DeviceScanActivity.class));
 				break;
 		}
 	}
@@ -383,9 +410,19 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		if (recordFragment==null){
 			recordFragment=new RecordFragment();
 		}
+		if (shareFragment==null){
+			shareFragment=new ShareFragment();
+		}
+		if (settingFragment==null){
+			settingFragment=new SettingFragment();
+		}
+
+
 		mFragments=new ArrayList<>();
 		mFragments.add(homeFragment);
 		mFragments.add(recordFragment);
+		mFragments.add(shareFragment);
+		mFragments.add(settingFragment);
 		
 		//开始事务
 		FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
@@ -435,9 +472,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			}
 		}
 
-		if (mDrawer.isDrawerOpen(GravityCompat.START)) {
-			mDrawer.closeDrawers();
-		}
+//		if (mDrawer.isDrawerOpen(GravityCompat.START)) {
+//			mDrawer.closeDrawers();
+//		}
 
 //		super.onBackPressed();//此处不能调用父类的方法，否则直接退出程序
 	}
@@ -451,6 +488,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			case 1:
 				rbRecord.setChecked(true);
 				break;
+			case 2:
+				rbShare.setChecked(true);
+				break;
+			case 3:
+				rbSetting.setChecked(true);
+				break;
+
 		}
 
 		if (mIndex==index){
@@ -462,6 +506,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			recordFragment=null;
 			recordFragment=new RecordFragment();
 			mFragments.set(index,recordFragment);
+		}
+
+		if (index==3){
+			//
 		}
 
 		//隐藏
@@ -477,6 +525,15 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		mIndex=index;
 	}
 
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+
+		if (resultCode==RESULT_OK&&homeFragment!=null){
+			homeFragment.onActivityResult(requestCode,resultCode,data);
+		}
+	}
 
 	@Override
 	protected void onDestroy() {

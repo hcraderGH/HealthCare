@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#45b0d7</color>
+    <color name="colorPrimary">#017FFF</color>
     <color name="colorPrimaryDark">#17b6e7</color>
     <color name="colorAccent">#FF4081</color>
 
@@ -14,9 +14,9 @@
 
     <color name="function_button_text_color">#FFF</color>
 
-    <color name="tab_text_color_checked">#1296db</color>
+    <color name="tab_text_color_checked">#017FFF</color>
     <color name="tab_text_color_unchecked">#5c5c5c</color>
-    <color name="app_bar_color">#1296db</color>
+    <color name="app_bar_color">#017FFF</color>
 
     <color name="item_divider">#cccccccc</color>
 
@@ -34,7 +34,7 @@
 
     <color name="cover_color">#aa333333</color>
 
-    <color name="draw_layout_item_logo_color">#2196F3</color>
+    <color name="draw_layout_item_logo_color">#017FFF</color>
     <color name="drawer_text">#212121</color>
 
     <color name="setting_title_color">#ff80bd01</color>

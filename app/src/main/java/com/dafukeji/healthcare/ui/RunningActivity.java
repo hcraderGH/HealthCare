@@ -29,7 +29,6 @@ import com.dafukeji.daogenerator.Point;
 import com.dafukeji.daogenerator.PointDao;
 import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.R;
-import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
@@ -139,6 +138,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private byte[] frontData;
 	private byte[] wholeData;
+	private byte[] configSetting;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -150,9 +150,12 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 		mOriginalTime = (long) (getIntent().getIntExtra(Constants.ORIGINAL_TIME, 0) * 60 * 1000);//获取的是int类型的分钟数，则需要强转
 		LogUtil.i(TAG, "onCreate: mOriginalTime" + mOriginalTime);
+		configSetting=getIntent().getByteArrayExtra(Constants.SETTING);
 
 		//获取运行时的时间
 		mStartTime = System.currentTimeMillis();
+
+		mBluetoothLeService=HomeFragment.getBluetoothLeService();
 
 		initViews();
 
@@ -205,8 +208,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 //		Logger.d( "Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));//已经在HomeFragment中进行绑定服务了
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
 
-		startSensorTimer();
+		startConfigTimer();
 		new Thread(new MyThread()).start();
+
+
+		setResult(RESULT_OK);
 	}
 
 	private void initViews() {
@@ -339,9 +345,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private static Timer mTimer;
 	private static TimerTask mTimerTask;
 	private int retrySensorCount;
-	private boolean isSensorReceived =false;
+	private boolean isConfigReceived =false;
 	private long mCurSendSensorTime;
-	private void startSensorTimer(){
+	private void startConfigTimer(){
 		if (mTimer==null){
 			mTimer=new Timer();
 		}
@@ -349,34 +355,37 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			mTimerTask=new TimerTask() {
 				@Override
 				public void run() {
-					if (!isSensorReceived){
+					if (!isConfigReceived){
 						if (retrySensorCount>=6) {
-							AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
-									.setMessage("已断开连接，请重新连接")
-									.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											saveData();//需要在此保存数据
-											dialog.dismiss();
-											finish();
-										}
-									});
-							builder.create().show();
+							runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
+											.setMessage("已断开连接，请重新连接")
+											.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+												@Override
+												public void onClick(DialogInterface dialog, int which) {
+//													saveData();//需要在此保存数据 TODO PRIMARY KEY must be unique (code 19)
+													dialog.dismiss();
+													finish();
+												}
+											});
+									builder.create().show();
+								}
+							});
 							stopTimer();
 
 						}else{
 							retrySensorCount++;
 							mCurSendSensorTime =System.currentTimeMillis();
-							isSensorReceived=false;
-							byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
-							mBluetoothLeService.WriteValue(sensorCmd);
+							isConfigReceived =false;
+							mBluetoothLeService.WriteValue(configSetting);
 						}
 					}else{
 						retrySensorCount=0;
 						mCurSendSensorTime =System.currentTimeMillis();
-						isSensorReceived=false;
-						byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
-						mBluetoothLeService.WriteValue(sensorCmd);
+						isConfigReceived =false;
+						mBluetoothLeService.WriteValue(configSetting);
 					}
 
 				}
@@ -388,37 +397,47 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	}
 
 
-	private int retryConfigCount;
-	private boolean isConfigReceived;
-	private void startConfigTimer(){
-		if (mTimer!=null){
+	private int retryStopCount;
+	private boolean isStopReceived;
+	private void startStopTimer(){
+		if (mTimer==null){
 			mTimer=new Timer();
 		}
-		if (mTimerTask!=null){
+		if (mTimerTask==null){
 			mTimerTask=new TimerTask() {
 				@Override
 				public void run() {
-					if (!isConfigReceived){
-						if (retryConfigCount>=6){
-							AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
-									.setMessage("已断开连接，请重新连接")
-									.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-										@Override
-										public void onClick(DialogInterface dialog, int which) {
-											saveData();//需要在此保存数据
-											dialog.dismiss();
-											finish();
-										}
-									});
-							builder.create().show();
+					if (!isStopReceived){
+//						if (retryStopCount >=6){
+//							runOnUiThread(new Runnable() {
+//								@Override
+//								public void run() {
+//									AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
+//											.setMessage("已断开连接，请重新连接")
+//											.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+//												@Override
+//												public void onClick(DialogInterface dialog, int which) {
+////													saveData();//需要在此保存数据 TODO PRIMARY KEY must be unique (code 19)
+//													dialog.dismiss();
+//													finish();
+//												}
+//											});
+//									builder.create().show();
+//								}
+//							});
+//							stopTimer();
+//							Intent intent=new Intent();
+//							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
+//							intent.setAction(Constants.RECEIVE_GATT_STATUS);
+//							sendBroadcast(intent);
+
+						if (retryStopCount>=2) {//TODO 发2底层没有应答
+							finish();
 							stopTimer();
-							Intent intent=new Intent();
-							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
-							intent.setAction(Constants.RECEIVE_GATT_STATUS);
-							sendBroadcast(intent);
+
 						}else{
-							retryConfigCount++;
-							isConfigReceived=false;
+							retryStopCount++;
+							isStopReceived =false;
 							if (mSendStopCmdFlag){
 								sendStopSettingData();
 							}
@@ -539,16 +558,28 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						}
 					}
 
-					if (mSendStopCmdFlag || mSendAgainCmdFlag) {
-						if (data[2]!=6){
+					if (mSendAgainCmdFlag) {
+						if (data[2]==configSetting[2]){
 							stopTimer();
-							startSensorTimer();
+							startConfigTimer();
 							mSendAgainCmdFlag=false;
-							mSendStopCmdFlag=false;
 						}
 					}
 
-					if (data[2]==6) {
+					if (mSendStopCmdFlag){
+						if (data[2]==2){
+							retryStopCount=0;
+							isStopReceived=true;
+							stopTimer();
+							mSendStopCmdFlag=false;
+							finish();
+						}
+					}
+
+					if (data[2]==configSetting[2]) {
+
+						isConfigReceived =true;
+
 						int temp;
 						mSum = mSum + ConvertUtils.byte2unsignedInt(data[3]);//11个数据的平均值作为一个显示数据
 						mReceiveDataCount++;
@@ -709,8 +740,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				if (mRunningTime < mOriginalTime) {
 					stopTimer();
 					if (mConnected) {
-						stopTimer();
-						startConfigTimer();//发送结束疗程的配置数据
+						startStopTimer();//发送结束疗程的配置数据
 					}
 					saveData();//此处保存的数据为未做完的
 				} else {
@@ -768,7 +798,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						saveData();//此处保存的数据为未做完的
 						if (mConnected) {
 							stopTimer();
-							startConfigTimer();
+							startStopTimer();
 						}
 						dialog.dismiss();
 //						finish();
@@ -797,7 +827,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						isOver = false;
 						//重新发送配置的数据
 						stopTimer();
-						startConfigTimer();
+						startStopTimer();
 
 						getDb();//如果要将重新开始的保存为另一份；
 						mCure=null;//设置为null,将会重新新建cure对象

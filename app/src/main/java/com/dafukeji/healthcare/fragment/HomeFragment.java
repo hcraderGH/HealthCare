@@ -48,6 +48,8 @@ import java.util.TimerTask;
 import es.dmoral.toasty.Toasty;
 import me.itangqi.waveloadingview.WaveLoadingView;
 
+import static android.app.Activity.RESULT_OK;
+
 public class HomeFragment extends Fragment implements View.OnClickListener {
 
 	private WaveLoadingView mWaveLoadingView;
@@ -301,6 +303,14 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	};
 
 
+	@Override
+	public void onActivityResult(int requestCode, int resultCode, Intent data) {
+		LogUtil.i(TAG,"关闭Running后重新发送传感命令");
+		super.onActivityResult(requestCode, resultCode, data);
+		if (resultCode==RESULT_OK){
+			startSensorTimer();
+		}
+	}
 
 	//发送传感命令
 	private static Timer mTimer;
@@ -355,17 +365,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private int retryConfigCount;
 	private boolean isConfigReceived;
 	private void startConfigTimer(){
-		if (mTimer!=null){
+		if (mTimer==null){
 			mTimer=new Timer();
 		}
-		if (mTimerTask!=null){
+		if (mTimerTask==null){
 			mTimerTask=new TimerTask() {
 				@Override
 				public void run() {
 					if (isSensorReceived){
 						if (!isConfigReceived){
 							if (retryConfigCount>=6){
-
 								stopTimer();
 								getActivity().runOnUiThread(new Runnable() {
 									@Override
@@ -379,19 +388,23 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 								isConfigReceived=false;
 								sendPowerOffCmd();
 							}
-						}else{
-							try {
-								Thread.sleep(400-(System.currentTimeMillis()- mCurSendSensorTime));
-								isConfigReceived=false;
-								sendPowerOffCmd();
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
+						}
+					}else{
+						try {
+							Thread.sleep(400-(System.currentTimeMillis()- mCurSendSensorTime));
+							isConfigReceived=false;
+							sendPowerOffCmd();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
 						}
 					}
 				}
 			};
 		}
+		if (mTimer!=null&&mTimerTask!=null){
+			mTimer.schedule(mTimerTask,0,400);
+		}
+
 	}
 
 	public static void stopTimer(){
@@ -594,7 +607,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					}
 
 					//当接受下位机的强刺激位为4时表示下位机收到了关机命令
-					if (data[2]== 3) {
+					if (data[2]== 4) {
+						LogUtil.i(TAG,"发送关机命令成功");
+						Intent gattIntent = new Intent();
+						gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+						gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+						getActivity().sendBroadcast(gattIntent);
 						setDisplayStatus(false);
 						stopTimer();
 					}
@@ -602,7 +620,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					if (data[2]==6) {
 						isSensorReceived=true;
 						Intent gattIntent = new Intent();
-						gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, mConnected);
+						gattIntent.putExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, true);
 						gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
 						getActivity().sendBroadcast(gattIntent);
 
@@ -658,7 +676,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	};
 
 	/**
-	 * 根据电量来设置Ware的颜色
+	 * 根据电量来设置Ware的颜色-
 	 */
 	private void JudgeEleSetWare(int ele) {
 

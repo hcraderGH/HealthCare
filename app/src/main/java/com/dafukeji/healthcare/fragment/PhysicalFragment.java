@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -62,6 +63,7 @@ public class PhysicalFragment extends Fragment {
 
 	private byte[] frontData;
 	private byte[] wholeData;
+	private byte[] setting;
 
 	private BlueToothBroadCast mBlueToothBroadCast;
 
@@ -82,6 +84,13 @@ public class PhysicalFragment extends Fragment {
 			//得到蓝牙的服务连接
 			isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
 			LogUtil.i(TAG, "onReceive  isGATTConnectedFromHome:" + isGATTConnected);
+//			if (isGATTConnected){
+//				btnStart.setBackgroundResource(R.drawable.selector_connect);
+//				btnStart.setTextColor(Color.WHITE);
+//			}else{
+//				btnStart.setBackgroundResource(R.drawable.shape_disconnect);
+//				btnStart.setTextColor(getResources().getColor(R.color.item_divider));
+//			}
 		}
 	}
 
@@ -168,6 +177,7 @@ public class PhysicalFragment extends Fragment {
 						Intent intent2 = new Intent(getActivity(), RunningActivity.class);
 						intent2.putExtra(Constants.CURE_TYPE, Constants.CURE_PHYSICAL);
 						intent2.putExtra(Constants.ORIGINAL_TIME, mKneadTime);
+						intent2.putExtra(Constants.SETTING,setting);
 						intent2.putExtra(Constants.CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
 						intent2.putExtra(Constants.CURRENT_TIME, System.currentTimeMillis());
 						getActivity().startActivity(intent2);
@@ -182,16 +192,21 @@ public class PhysicalFragment extends Fragment {
 	private int retryConfigCount;
 	private boolean isConfigReceived;
 	private void startConfigTimer(){
-		if (mTimer!=null){
+		if (mTimer==null){
 			mTimer=new Timer();
 		}
-		if (mTimerTask!=null){
+		if (mTimerTask==null){
 			mTimerTask=new TimerTask() {
 				@Override
 				public void run() {
 					if (!isConfigReceived){
 						if (retryConfigCount>=6){
-							ToastUtil.showToast(getActivity(),"断开连接",1000);
+							getActivity().runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									ToastUtil.showToast(getActivity(),"断开连接",1000);
+								}
+							});
 							stopTimer();
 							Intent intent=new Intent();
 							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
@@ -279,8 +294,9 @@ public class PhysicalFragment extends Fragment {
 	private void sendPhysicalCmd(){
 		int cauterizeGrade = 0;
 		int cauterizeTime = 0;
-		HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
-				, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime));
+		setting=CureSPUtil.setSettingData(mStimulate, cauterizeGrade, cauterizeTime
+				, mKneadType, mKneadGrade, mKneadFrequency, mKneadTime);
+		HomeFragment.getBluetoothLeService().WriteValue(setting);
 	}
 
 	@Override

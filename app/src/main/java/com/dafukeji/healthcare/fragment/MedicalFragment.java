@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -28,7 +29,9 @@ import com.dafukeji.healthcare.viewpagercards.CardItem;
 import com.dafukeji.healthcare.viewpagercards.CardPagerMedicalAdapter;
 import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -64,6 +67,7 @@ public class MedicalFragment extends Fragment {
 
 	private byte[] frontData;
 	private byte[] wholeData;
+	private byte[] settings;
 
 	@Override
 	public void onAttach(Context context) {
@@ -84,6 +88,13 @@ public class MedicalFragment extends Fragment {
 			//得到蓝牙的服务连接
 			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME,false);
 			LogUtil.i(TAG,"onReceive  isGATTConnectedFromHome:"+isGATTConnected);
+//			if (isGATTConnected){
+//				btnStart.setBackgroundResource(R.drawable.selector_connect);
+//				btnStart.setTextColor(Color.WHITE);
+//			}else{
+//				btnStart.setBackgroundResource(R.drawable.shape_disconnect);
+//				btnStart.setTextColor(getResources().getColor(R.color.item_divider));
+//			}
 		}
 	}
 
@@ -170,7 +181,8 @@ public class MedicalFragment extends Fragment {
 						intent2.putExtra(Constants.ORIGINAL_TIME, mCauterizeTime + mMedicineTime);
 						intent2.putExtra(Constants.CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
 						intent2.putExtra(Constants.CURRENT_TIME,System.currentTimeMillis());
-						getActivity().startActivity(intent2);
+						intent2.putExtra(Constants.SETTING,settings);
+						getActivity().startActivityForResult(intent2,0);
 					}
 				}
 			}
@@ -181,18 +193,23 @@ public class MedicalFragment extends Fragment {
 	private Timer mTimer;
 	private TimerTask mTimerTask;
 	private int retryConfigCount;
-	private boolean isConfigReceived;
+	private boolean isConfigReceived=false;
 	private void startConfigTimer(){
-		if (mTimer!=null){
+		if (mTimer==null){
 			mTimer=new Timer();
 		}
-		if (mTimerTask!=null){
+		if (mTimerTask==null){
 			mTimerTask=new TimerTask() {
 				@Override
 				public void run() {
 					if (!isConfigReceived){
 						if (retryConfigCount>=6){
-							ToastUtil.showToast(getActivity(),"断开连接",1000);
+							getActivity().runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									ToastUtil.showToast(getActivity(),"断开连接",1000);
+								}
+							});
 							stopTimer();
 							Intent intent=new Intent();
 							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
@@ -278,6 +295,8 @@ public class MedicalFragment extends Fragment {
 					return;
 				}
 
+				LogUtil.i(TAG,"HomeFragment.getBluetoothLeService()"+HomeFragment.getBluetoothLeService());
+
 				HomeFragment.stopTimer();
 
 				mSendNewCmdFlag=true;
@@ -288,8 +307,9 @@ public class MedicalFragment extends Fragment {
 	}
 
 	private void sendMedicalCmd(){
-		byte[] settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
+		settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
+		LogUtil.i(TAG,"发送的配置命令:"+Arrays.toString(settings));
 		HomeFragment.getBluetoothLeService().WriteValue(settings);
 	}
 

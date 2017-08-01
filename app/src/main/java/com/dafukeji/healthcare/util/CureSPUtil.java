@@ -17,19 +17,19 @@ public class CureSPUtil {
 		int temp = 0;
 		switch (position) {
 			case 0:
-				temp = 35;
+				temp = 39;
 				break;
 			case 1:
-				temp = 40;
+				temp = 42;
 				break;
 			case 2:
 				temp = 45;
 				break;
 			case 3:
-				temp = 50;
+				temp = 48;
 				break;
 			case 4:
-				temp = 55;
+				temp = 51;
 				break;
 		}
 		return temp;
@@ -74,13 +74,13 @@ public class CureSPUtil {
 		int time = 0;
 		switch (position) {
 			case 0:
-				time = 10;
+				time = 5;
 				break;
 			case 1:
-				time = 20;
+				time = 10;
 				break;
 			case 2:
-				time = 30;
+				time = 15;
 				break;
 		}
 		return time;

@@ -48,8 +48,10 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 
 	private static String TAG = "测试CardPagerMedicalAdapter";
 
-	private String[] mCauterizeGrades = new String[]{"一档", "二档", "三档", "四档", "五档"};
-	private String[] mCauterizeTimeGrades = new String[]{"10分钟", "20分钟", "30分钟"};
+//	private String[] mCauterizeGrades = new String[]{"一档", "二档", "三档", "四档", "五档"};
+	private String[] mCauterizeGrades = new String[]{"微热", "热", "很热", "灼热"};
+//	private String[] mCauterizeTimeGrades = new String[]{"10分钟", "20分钟", "30分钟"};
+	private String[] mCauterizeTimeGrades = new String[]{"5分钟", "10分钟", "15分钟"};
 
 	private String[] mNeedleTypes = new String[]{"按", "提", "左旋按", "右旋按", "左旋提", "右旋提"};
 	private String[] mNeedleGrades = new String[]{"一档", "二档", "三档", "四档", "五档", "六档", "七档", "八档", "九档"};
