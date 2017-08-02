@@ -5,7 +5,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
@@ -13,14 +12,11 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
-import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.ui.RunningActivity;
-import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
@@ -29,9 +25,7 @@ import com.dafukeji.healthcare.viewpagercards.CardItem;
 import com.dafukeji.healthcare.viewpagercards.CardPagerMedicalAdapter;
 import com.dafukeji.healthcare.viewpagercards.ShadowTransformer;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -138,26 +132,26 @@ public class MedicalFragment extends Fragment {
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
 					//TODO 接收数据处理
-					boolean crcIsRight= CommonUtils.IsCRCRight(data);
+					boolean crcIsRight= ConvertUtils.CommonUtils.IsCRCRight(data);
 					if (!crcIsRight){
 						//误码纠正
-						if (data.length > 11) {
-							frontData = new byte[data.length - 11];
-							System.arraycopy(data, 11, frontData, 0, frontData.length);
+						if (data.length > 13) {
+							frontData = new byte[data.length - 13];
+							System.arraycopy(data, 13, frontData, 0, frontData.length);
 							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
-							data = Arrays.copyOfRange(data, 0, 11);
-							if (!CommonUtils.IsCRCRight(data)) {
+							data = Arrays.copyOfRange(data, 0, 13);
+							if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
 								return;
 							}
 							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
-						} else if (data.length < 11) {
-							wholeData = new byte[11];
+						} else if (data.length < 13) {
+							wholeData = new byte[13];
 							if (frontData != null) {
 								System.arraycopy(frontData, 0, wholeData, 0, frontData.length);
 								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
 								data = wholeData;
 								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
-								if (!CommonUtils.IsCRCRight(data)) {
+								if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
 									return;
 								}
 								wholeData = null;
@@ -307,6 +301,7 @@ public class MedicalFragment extends Fragment {
 	}
 
 	private void sendMedicalCmd(){
+
 		settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
 				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
 		LogUtil.i(TAG,"发送的配置命令:"+Arrays.toString(settings));

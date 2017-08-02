@@ -30,11 +30,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
-import com.dafukeji.healthcare.bean.Frame;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
-import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
@@ -45,7 +43,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import es.dmoral.toasty.Toasty;
 import me.itangqi.waveloadingview.WaveLoadingView;
 
 import static android.app.Activity.RESULT_OK;
@@ -294,7 +291,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			switch (msg.what){
 				case 0://接受到的电量
 
-					JudgeEleSetWare(CommonUtils.eleFormula(msg.arg1));//TODO 电量的计算公式
+					JudgeEleSetWare(ConvertUtils.CommonUtils.eleFormula(msg.arg1));//TODO 电量的计算公式
 
 					tvCurrentTemp.setText(msg.arg2+"℃");//温度的显示
 					break;
@@ -574,26 +571,26 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				if (data != null) {
 					//TODO 接收数据处理
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					boolean crcIsRight = CommonUtils.IsCRCRight(data);
+					boolean crcIsRight = ConvertUtils.CommonUtils.IsCRCRight(data);
 					if (!crcIsRight) {
 						LogUtil.i(TAG, "数据校验出现错误");
-						if (data.length > 11) {
-							frontData = new byte[data.length - 11];
-							System.arraycopy(data, 11, frontData, 0, frontData.length);
+						if (data.length > 13) {
+							frontData = new byte[data.length - 13];
+							System.arraycopy(data, 13, frontData, 0, frontData.length);
 							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
-							data = Arrays.copyOfRange(data, 0, 11);
-							if (!CommonUtils.IsCRCRight(data)) {
+							data = Arrays.copyOfRange(data, 0, 13);
+							if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
 								return;
 							}
 							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
-						} else if (data.length < 11) {
-							wholeData = new byte[11];
+						} else if (data.length < 13) {
+							wholeData = new byte[13];
 							if (frontData != null) {
 								System.arraycopy(frontData, 0, wholeData, 0, frontData.length);
 								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
 								data = wholeData;
 								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
-								if (!CommonUtils.IsCRCRight(data)) {
+								if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
 									return;
 								}
 								wholeData = null;

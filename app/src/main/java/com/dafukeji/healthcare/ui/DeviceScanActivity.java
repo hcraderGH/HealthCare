@@ -16,7 +16,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -40,7 +39,6 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
-import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
@@ -215,7 +213,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
 
-					boolean crcIsRight= CommonUtils.IsCRCRight(data);
+					boolean crcIsRight= ConvertUtils.CommonUtils.IsCRCRight(data);
 					if (!crcIsRight){
 						LogUtil.i(TAG,"数据校验出现错误");
 						return;
@@ -240,7 +238,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 					Intent intent3 =new Intent();
 					intent3.putExtra(Constants.RECEIVE_CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
-					intent3.putExtra(Constants.RECEIVE_CURRENT_ELE, CommonUtils.eleFormula(ConvertUtils.byte2unsignedInt(data[7])));
+					intent3.putExtra(Constants.RECEIVE_CURRENT_ELE, ConvertUtils.CommonUtils.eleFormula(ConvertUtils.byte2unsignedInt(data[7])));
 					intent3.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
 					sendBroadcast(intent3);
 
