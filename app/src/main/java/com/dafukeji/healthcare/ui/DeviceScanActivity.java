@@ -30,6 +30,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
@@ -37,7 +38,6 @@ import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.LeRecyclerAdapter;
 import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
-import com.dafukeji.healthcare.fragment.HomeFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
@@ -46,7 +46,10 @@ import com.romainpiel.shimmer.Shimmer;
 import com.romainpiel.shimmer.ShimmerTextView;
 import com.skyfishjy.library.RippleBackground;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -64,6 +67,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private ToggleButton tbScan;
 	private RippleBackground mRippleBackground;
 	private ShimmerTextView mSBScanString;
+
+	private LinearLayout llNoBluetooth;
 
 	private ScanCallback mScanCallback;
 	// Device scan callback.
@@ -85,6 +90,10 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private boolean isItemClicked=false;
 	private static boolean isConnected=false;
 	private boolean isReceivedData=false;
+
+	//电压显示相关
+	private int mVoltageCount;
+	private List<Integer> mVoltages =new ArrayList<>();
 
 	@TargetApi(Build.VERSION_CODES.LOLLIPOP)
 	@Override
@@ -191,7 +200,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 								Thread.sleep(300);
 								LogUtil.i(TAG,"DeviceSanActivity发送的传感命令");
 								byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,6,0,0,0,0,0,0,0,0,6};
-								HomeFragment.getBluetoothLeService().WriteValue(init);
+								mBluetoothLeService.WriteValue(init);
 							} catch (InterruptedException e) {
 								e.printStackTrace();
 							}
@@ -219,8 +228,14 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						return;
 					}
 
-					isReceivedData=true;
+					mVoltageCount++;
+					mVoltages.add(ConvertUtils.byte2unsignedInt(data[7]));
+					LogUtil.i(TAG,"mVoltageCount="+ mVoltageCount);
+					if (mVoltageCount <=10){
+						return;
+					}
 
+					isReceivedData=true;
 					isItemClicked=false;
 
 					stopProgressTimer();//获取到数据的情况下，停止计时
@@ -238,7 +253,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 					Intent intent3 =new Intent();
 					intent3.putExtra(Constants.RECEIVE_CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
-					intent3.putExtra(Constants.RECEIVE_CURRENT_ELE, ConvertUtils.CommonUtils.eleFormula(ConvertUtils.byte2unsignedInt(data[7])));
+					intent3.putExtra(Constants.RECEIVE_CURRENT_ELE, ConvertUtils.CommonUtils.eleFormula(getMaxVoltage(mVoltages)));
 					intent3.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
 					sendBroadcast(intent3);
 
@@ -266,6 +281,18 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	};
 
 
+	private int getAverageVoltage(List<Integer> voltages){
+		int sum = 0;
+		for (int i = 0; i < voltages.size(); i++) {
+			sum+=voltages.get(i);
+		}
+		LogUtil.i(TAG,"电压平均值："+(int) Math.ceil(sum/voltages.size()));
+		return (int) Math.ceil(sum/voltages.size());
+	}
+
+	private int getMaxVoltage(List<Integer> voltages){
+		return Collections.max(voltages);
+	}
 
 	private TimerTask mProgressTask;
 //	private TimerTask mSendInitTask;
@@ -275,7 +302,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 		stopProgressTimer();
 
-		mOverTime=20000;//连接断开的时间（华为与其他机器是否一样）
+		mOverTime=8000;//连接断开的时间
 		if (mTimer == null) {
 			mTimer = new Timer();
 		}
@@ -399,6 +426,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private void initWidgets() {
 
+		llNoBluetooth= (LinearLayout) findViewById(R.id.ll_no_bluetooth);
+
 		mRecyclerView = (RecyclerView) findViewById(R.id.rlv_scan_devices);
 		mRecyclerView.setLayoutManager(new LinearLayoutManager(this));
 		mLeDeviceRecyclerAdapter = new LeRecyclerAdapter(this);
@@ -521,6 +550,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 				case 1: // Notify change
+					llNoBluetooth.setVisibility(View.GONE);
+					mRecyclerView.setVisibility(View.VISIBLE);
+
 					mLeDeviceRecyclerAdapter.notifyDataSetChanged();
 					break;
 				case 2://连接超时
@@ -645,6 +677,14 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	@Override
 	protected void onDestroy() {
 		LogUtil.i(TAG,"onDestroy()");
+		if (mProgressDialog!=null&&mProgressDialog.isShowing()){
+			mProgressDialog.dismiss();
+			mProgressDialog=null;
+		}
+		if (mScanDialog!=null&&mScanDialog.isShowing()){
+			mScanDialog.dismiss();
+			mScanDialog=null;
+		}
 		unbindService(mServiceConnection);
 		unregisterReceiver(mGattUpdateReceiver);
 		super.onDestroy();

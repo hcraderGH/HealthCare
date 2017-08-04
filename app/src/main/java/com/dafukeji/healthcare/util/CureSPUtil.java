@@ -163,18 +163,37 @@ public class CureSPUtil {
 	public static byte[] setSettingData(int stimulate,
 	                              int cauterizeGrade, int cauterizeTime, int needleType,
 	                              int needleGrade, int needleFrequency, int medicineTime) {
+//		byte[] s = new byte[12];
+//		s[0] = (byte) 0xFA;
+//		s[1] = (byte) 0xFB;
+//		s[2] = (byte) stimulate;
+//		s[3] = (byte) CureSPUtil.getStimulateLevel(needleGrade);
+//		s[4] = (byte) CureSPUtil.getStimulateLevel(needleFrequency);
+//		s[5] = (byte) cauterizeGrade;
+//		s[6] = (byte) cauterizeTime;
+////		s[7] = (byte) needleType;//
+//		s[7]=1;//TODO 目前只有按的功能
+//		s[8] = (byte) (needleGrade+1);
+//		s[9] = (byte) (needleFrequency+1);
+//		s[10] = (byte) medicineTime;
+
 		byte[] s = new byte[12];
 		s[0] = (byte) 0xFA;
 		s[1] = (byte) 0xFB;
 		s[2] = (byte) stimulate;
-		s[3] = (byte) CureSPUtil.getStimulateLevel(needleGrade);
-		s[4] = (byte) CureSPUtil.getStimulateLevel(needleFrequency);
+		if (stimulate==1){
+			s[3] = (byte) CureSPUtil.getStimulateLevel(needleGrade);
+			s[4] = (byte) CureSPUtil.getStimulateLevel(needleFrequency);
+		}else if (stimulate==0){
+			s[3]=0;
+			s[4]=0;
+		}
 		s[5] = (byte) cauterizeGrade;
 		s[6] = (byte) cauterizeTime;
 //		s[7] = (byte) needleType;//
 		s[7]=1;//TODO 目前只有按的功能
-		s[8] = (byte) (needleGrade+1);
-		s[9] = (byte) (needleFrequency+1);
+		s[8] = (byte) (needleGrade);
+		s[9] = (byte) (needleFrequency);
 		s[10] = (byte) medicineTime;
 
 		s[11] = (byte) (s[2] + s[3] + s[4] + s[5] + s[6] + s[7] + s[8] + s[9] + s[10]);

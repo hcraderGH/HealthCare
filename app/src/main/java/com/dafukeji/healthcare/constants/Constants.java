@@ -8,7 +8,7 @@ public class Constants {
 
 	public static final String CURE_DB_NAME="treat.db";
 
-
+	public static final String USED_ELE="used_ele";
 
 	public static final String MATCH_DEVICE_NAME="USR-BLE101";
 
@@ -18,7 +18,7 @@ public class Constants {
 
 	public static final String ORIGINAL_TIME="original_time";
 	public static final String CURRENT_TEMP="current_temp";
-	public static final String CURRENT_TIME="current__time";
+	public static final String CURRENT_TIME="current_time";
 	public static final String SETTING="setting";
 
 	public static final String RECEIVE_BLUETOOTH_INFO="receive_bluetooth_info";

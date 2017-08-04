@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$/app" />
             <option value="$PROJECT_DIR$/daogenerator" />
             <option value="$PROJECT_DIR$/notifyutil" />
+            <option value="$PROJECT_DIR$/progressroundbutton" />
             <option value="$PROJECT_DIR$/pushsdk" />
           </set>
         </option>

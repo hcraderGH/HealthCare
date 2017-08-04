@@ -525,11 +525,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		mIndex=index;
 	}
 
-
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-
+		setIndexSelected(0);//当从搜索界面连接成功后跳回主页面
 		if (resultCode==RESULT_OK&&homeFragment!=null){
 			homeFragment.onActivityResult(requestCode,resultCode,data);
 		}

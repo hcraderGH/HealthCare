@@ -302,12 +302,18 @@ public class MedicalFragment extends Fragment {
 
 	private void sendMedicalCmd(){
 
-		settings = CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
+		settings = CureSPUtil.setSettingData(0, mCauterizeGrade, mCauterizeTime
 				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime);
 		LogUtil.i(TAG,"发送的配置命令:"+Arrays.toString(settings));
 		HomeFragment.getBluetoothLeService().WriteValue(settings);
 	}
 
+
+	@Override
+	public void onDestroyView() {
+		stopTimer();
+		super.onDestroyView();
+	}
 
 	@Override
 	public void onDestroy() {

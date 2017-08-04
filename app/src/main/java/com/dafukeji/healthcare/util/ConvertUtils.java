@@ -167,19 +167,20 @@ public class ConvertUtils {
 
 		public static int eleFormula(int ele){
 			int preEle;
-			preEle= (int) Math.floor((ele-35)*100/(41.5-35));
-			if (preEle>=100){
+			if (ele>=42){
 				preEle=100;
-			}else if(preEle>=90){
+			}else if (ele==41){
 				preEle=90;
-			}else if (preEle>=60){
+			}else if (ele==40){
+				preEle=80;
+			}else if (ele==39){
 				preEle=60;
-			}else if (preEle>=45){
-				preEle=45;
-			}else if(preEle>=30){
-				preEle=30;
-			}else if(preEle>=15){
-				preEle=15;
+			}else if (ele==38){
+				preEle=40;
+			}else if (ele==37){
+				preEle=20;
+			}else if (ele==36){
+				preEle=10;
 			}else{
 				preEle=5;
 			}

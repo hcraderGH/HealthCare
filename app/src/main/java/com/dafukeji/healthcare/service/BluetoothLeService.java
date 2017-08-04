@@ -34,6 +34,7 @@ import android.util.Log;
 
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.constants.GattAttributes;
+import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 
 import java.util.Arrays;
@@ -78,6 +79,12 @@ public class BluetoothLeService extends Service {
     private BluetoothGattCharacteristic mReadCharacteristic;
 
     private static int mConnectionState = STATE_DISCONNECTED;
+
+    //和电量相关
+    private long mPreTime;
+    private long mCurTime;
+    private long mEleSum;
+    private int mDataCount;
 
     public void WriteValue(byte[] bytesValue) {
         LogUtil.i(TAG, "WriteValue: bytesValue"+ Arrays.toString(bytesValue));
@@ -243,6 +250,12 @@ public class BluetoothLeService extends Service {
         sendBroadcast(intent);
     }
 
+
+
+    //校正相关
+    private byte[] frontData;
+    private byte[] wholeData;
+
     private void broadcastUpdate(final String action,
                                  final BluetoothGattCharacteristic characteristic) {
         final Intent intent = new Intent(action);
@@ -251,12 +264,60 @@ public class BluetoothLeService extends Service {
         // carried out as per profile specifications:
         // http://developer.bluetooth.org/gatt/characteristics/Pages/CharacteristicViewer.aspx?u=org.bluetooth.characteristic.heart_rate_measurement.xml
         // For all other profiles, writes the data formatted in HEX.
-        final byte[] data = characteristic.getValue();
+        byte[] data = characteristic.getValue();
         if (data != null && data.length > 0) {
             //final StringBuilder stringBuilder = new StringBuilder(data.length);
             //for(byte byteChar : data)
             //    stringBuilder.append(String.format("%02X ", byteChar));
             //intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
+
+            /*==在此进行校正，那么其他地方则可不再使用此方法==*/
+            boolean crcIsRight= ConvertUtils.CommonUtils.IsCRCRight(data);
+            if (!crcIsRight){
+                //误码纠正
+                if (data.length > 13) {
+                    frontData = new byte[data.length - 13];
+                    System.arraycopy(data, 13, frontData, 0, frontData.length);
+                    LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
+                    data = Arrays.copyOfRange(data, 0, 13);
+                    if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
+                        return;
+                    }
+                    LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
+                } else if (data.length < 13) {
+                    wholeData = new byte[13];
+                    if (frontData != null) {
+                        System.arraycopy(frontData, 0, wholeData, 0, frontData.length);
+                        System.arraycopy(data, 0, wholeData, frontData.length, data.length);
+                        data = wholeData;
+                        LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
+                        if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
+                            return;
+                        }
+                        wholeData = null;
+                        frontData = null;
+                    } else {
+                        return;
+                    }
+                }else {//data.length==13
+
+                }
+            }
+            mDataCount++;
+            if(mDataCount==1){
+                mPreTime=System.currentTimeMillis();
+            }else{
+                mCurTime=System.currentTimeMillis();
+                mEleSum+=(ConvertUtils.byte2unsignedInt(data[8])*256
+                        +ConvertUtils.byte2unsignedInt(data[9]))*(mCurTime-mPreTime);
+                mPreTime=mCurTime;
+            }
+
+            intent.putExtra(Constants.USED_ELE,mEleSum);
+
+             /*==在此进行校正，那么其他地方则可不再使用此方法==*/
+
+
             intent.putExtra(EXTRA_DATA, data);
         }
         sendBroadcast(intent);

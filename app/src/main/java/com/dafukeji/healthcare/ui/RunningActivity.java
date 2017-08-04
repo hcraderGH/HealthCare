@@ -19,6 +19,7 @@ import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.dafukeji.daogenerator.Cure;
@@ -84,6 +85,10 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private byte[] data;
 
+	/*=========== 配置命令相关 ===========*/
+	private LinearLayout llCauterize;
+	private TextView tvCauterizeGrade,tvNeedleGrade,tvNeedleRequency;
+
 	/*=========== 控件相关 ==========*/
 	private LineChartView mLineChartView;               //线性图表控件
 
@@ -139,10 +144,15 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private byte[] wholeData;
 	private byte[] configSetting;
 
+	//电量相关
+	private long mEleSum;
+	private long mPreDataTime;
+	private long mCurDataTime;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_running);
+		setContentView(R.layout.activity_running_2);
 
 		mCureType = getIntent().getIntExtra(Constants.CURE_TYPE, 0);
 		getDb();
@@ -167,11 +177,17 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 							mColorArcProgressBar.setCurrentValues((float) Math.floor((mRunningTime * 100 / mOriginalTime)));
 						}
 						String[] remindTime = TimeUtil.getSubtractedString(mOriginalTime, mRunningTime);
-						mTvReminderTime.setText(remindTime[0] + "′" + remindTime[1] + "′" + remindTime[2] + "″");
+						if(remindTime[0].equals("00")){
+							mTvReminderTime.setText(remindTime[1] + "′" + remindTime[2] + "″");
+						}else{
+							mTvReminderTime.setText(remindTime[0] + "′" + remindTime[1] + "′" + remindTime[2] + "″");
+						}
+
 						break;
 					case 1:
 						mColorArcProgressBar.setCurrentValues(100);
-						mTvReminderTime.setText("00′00′00″");
+//						mTvReminderTime.setText("00′00′00″");
+						mTvReminderTime.setText("00′00″");
 						isOver = true;
 						stopTimer();
 						sendStopSettingData();//为了防止与设备之间疗程时间的不同步，在此直接结束疗程
@@ -209,12 +225,27 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 		startConfigTimer();
 		new Thread(new MyThread()).start();
-
-
-		setResult(RESULT_OK);
 	}
 
 	private void initViews() {
+
+
+
+		/*=========配置命令相关=========*/
+		llCauterize= (LinearLayout) findViewById(R.id.ll_cauterize);
+		tvCauterizeGrade=(TextView)findViewById(R.id.tv_running_cauterize_grade);
+		tvNeedleGrade=(TextView)findViewById(R.id.tv_running_needle_grade);
+		tvNeedleRequency=(TextView)findViewById(R.id.tv_running_needle_frequency);
+		if (mCureType==1){
+			llCauterize.setVisibility(View.VISIBLE);
+			tvCauterizeGrade.setText(getCauterizeGrade(configSetting[5]));
+		}else{
+			llCauterize.setVisibility(View.GONE);
+		}
+		tvNeedleGrade.setText((configSetting[8]+1)+"档");//档位是从0开始的，显示是从1开始的
+		tvNeedleRequency.setText((configSetting[9]+1)+"档");
+
+
 		mTvCurrentTemp = (TextView) findViewById(R.id.tv_current_temp);
 		mTvReminderTime = (TextView) findViewById(R.id.tv_reminder_time);
 
@@ -246,6 +277,29 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 		LogUtil.i(TAG, "接受到的温度：" + getIntent().getIntExtra(Constants.CURRENT_TEMP, 0));
 		dynamicDataDisplay(getIntent().getLongExtra(Constants.CURRENT_TIME, 0), getIntent().getIntExtra(Constants.CURRENT_TEMP, 0));
+	}
+
+
+	/**
+	 * 根据setting中的灸的温度判断档位
+	 */
+	private String getCauterizeGrade(int temp){
+		String grade = null;
+		switch (temp){
+			case 39:
+				grade="微热";
+				break;
+			case 42:
+				grade="热";
+				break;
+			case 45:
+				grade="很热";
+				break;
+			case 48:
+				grade="灼热";
+				break;
+		}
+		return grade;
 	}
 
 
@@ -345,7 +399,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private static TimerTask mTimerTask;
 	private int retrySensorCount;
 	private boolean isConfigReceived =false;
-	private long mCurSendSensorTime;
+	private long mSendSensorTime;
 	private void startConfigTimer(){
 		if (mTimer==null){
 			mTimer=new Timer();
@@ -366,6 +420,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 												public void onClick(DialogInterface dialog, int which) {
 //													saveData();//需要在此保存数据 TODO PRIMARY KEY must be unique (code 19)
 													dialog.dismiss();
+
+													sendEle();
 													finish();
 												}
 											});
@@ -376,13 +432,13 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 						}else{
 							retrySensorCount++;
-							mCurSendSensorTime =System.currentTimeMillis();
+							mSendSensorTime =System.currentTimeMillis();
 							isConfigReceived =false;
 							mBluetoothLeService.WriteValue(configSetting);
 						}
 					}else{
 						retrySensorCount=0;
-						mCurSendSensorTime =System.currentTimeMillis();
+						mSendSensorTime =System.currentTimeMillis();
 						isConfigReceived =false;
 						mBluetoothLeService.WriteValue(configSetting);
 					}
@@ -407,30 +463,10 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				@Override
 				public void run() {
 					if (!isStopReceived){
-//						if (retryStopCount >=6){
-//							runOnUiThread(new Runnable() {
-//								@Override
-//								public void run() {
-//									AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
-//											.setMessage("已断开连接，请重新连接")
-//											.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-//												@Override
-//												public void onClick(DialogInterface dialog, int which) {
-////													saveData();//需要在此保存数据 TODO PRIMARY KEY must be unique (code 19)
-//													dialog.dismiss();
-//													finish();
-//												}
-//											});
-//									builder.create().show();
-//								}
-//							});
-//							stopTimer();
-//							Intent intent=new Intent();
-//							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
-//							intent.setAction(Constants.RECEIVE_GATT_STATUS);
-//							sendBroadcast(intent);
 
 						if (retryStopCount>=2) {//TODO 发2底层没有应答
+
+							sendEle();
 							finish();
 							stopTimer();
 
@@ -493,26 +529,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			} else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) { //断开连接
 				mConnected = false;
 
-//				Intent disConnectIntent=new Intent();
-//				disConnectIntent.putExtra(Constants.EXTRAS_GATT_STATUS,mConnected);
-//				disConnectIntent.setAction(Constants.RECEIVE_GATT_STATUS);
-//				sendBroadcast(disConnectIntent);
-
-				//TODO 断开连接处理
-//				Toasty.error(RunningActivity.this, "与设备断开连接", Toast.LENGTH_SHORT).show();
-//				AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
-//						.setMessage("已断开连接，请重新连接")
-//						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-//							@Override
-//							public void onClick(DialogInterface dialog, int which) {
-//								saveData();//需要在此保存数据
-//								dialog.dismiss();
-//								finish();
-//							}
-//						});
-//				builder.create().show();
-//				stopTimer();
-
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 				mConnected = true;
 				LogUtil.i(TAG, "In what we need");
@@ -571,17 +587,29 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 							isStopReceived=true;
 							stopTimer();
 							mSendStopCmdFlag=false;
+							sendEle();
 							finish();
 						}
 					}
 
 					if (data[2]==configSetting[2]) {
 
-						isConfigReceived =true;
+						mReceiveDataCount++;
 
+						//目前只计算正常运行时使用的电量
+						if (mReceiveDataCount==1){
+							mPreDataTime=System.currentTimeMillis();
+						}else {
+							mCurDataTime=System.currentTimeMillis();
+							mEleSum+=(mCurDataTime-mPreDataTime)*getEle(data[8],data[9]);
+							mPreDataTime=mCurDataTime;
+							LogUtil.i(TAG,"运行时消耗的电量："+mEleSum);
+						}
+
+						isConfigReceived =true;
 						int temp;
 						mSum = mSum + ConvertUtils.byte2unsignedInt(data[3]);//11个数据的平均值作为一个显示数据
-						mReceiveDataCount++;
+
 						if (mReceiveDataCount % 11 == 0 || mReceiveDataCount == 1) {
 							mCurrentTime = System.currentTimeMillis();
 							if (mReceiveDataCount == 1) {
@@ -621,6 +649,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		}
 	};
 
+
+	//通过接收到的数据计算电流的大小
+	private int getEle(byte high,byte low){
+		return ConvertUtils.byte2unsignedInt(high)*256+ConvertUtils.byte2unsignedInt(low);
+	}
 
 
 	private void dynamicDataDisplay(long currentTime, int temp) {
@@ -743,6 +776,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					}
 					saveData();//此处保存的数据为未做完的
 				} else {
+
+					sendEle();
 					finish();
 				}
 				break;
@@ -751,6 +786,13 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				isOver();
 				break;
 		}
+	}
+
+
+	private void sendEle(){
+		Intent intent=new Intent();
+		intent.putExtra("ele",mEleSum);
+		setResult(RESULT_OK,intent);
 	}
 
 	private void sendStopSettingData() {

@@ -294,6 +294,13 @@ public class PhysicalFragment extends Fragment {
 		HomeFragment.getBluetoothLeService().WriteValue(setting);
 	}
 
+
+	@Override
+	public void onDestroyView() {
+		super.onDestroyView();
+		stopTimer();
+	}
+
 	@Override
 	public void onDestroy() {
 		LogUtil.i(TAG, "onDestroy()");
