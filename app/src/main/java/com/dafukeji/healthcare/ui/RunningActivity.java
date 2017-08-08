@@ -109,8 +109,10 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private int dataCount = 0;//接受到的数据的个数
 	private int intervalCount;
 	private List<PointValue> mPointValueList = new ArrayList<>();
+	private List<PointValue> mCurPointValueList=new ArrayList<>();
 	private List<Line> mLinesList = new ArrayList<>();
 	private List<AxisValue> mAxisValues = new ArrayList<>();
+	private List<AxisValue> mCurAxisValues=new ArrayList<>();
 	private static String TAG = "测试RunningActivity";
 
 	private List<Point> points = new ArrayList<>();
@@ -191,6 +193,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 //						mTvReminderTime.setText("00′00′00″");
 						mTvReminderTime.setText("00′00″");
 						isOver = true;
+						dynamicDataDisplay(System.currentTimeMillis(),0);//结束时能够显示完整波形变动
 
 						mLineChartView.setInteractive(true);
 
@@ -665,50 +668,84 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		if (!isOver) {
 			mLineChartView.setInteractive(false);
 			PointValue value = new PointValue(dataCount, grade);
+			if (mCurPointValueList.size()<=mXDisplayCount){
+				mCurPointValueList.add(value);
+				mCurAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(currentTime, "mm:ss")));
+			}else{
+				mCurPointValueList.remove(0);
+				mCurPointValueList.add(value);
+				mCurAxisValues.remove(0);
+				mCurAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(currentTime, "mm:ss")));
+			}
 			mPointValueList.add(value);
 			mAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(currentTime, "mm:ss")));
 			dataCount++;
 			float x = value.getX();
-
-			Line line;
-			line = new Line(mPointValueList);
-			line.setColor(Color.parseColor("#ff0033"));//设置线的颜色
-			line.setStrokeWidth(2);//设置线的粗细
-			line.setShape(pointsShape);                 //设置点的形状
-			line.setPointRadius(2);
-			line.setPointColor(Color.parseColor("#006600"));
-			line.setHasLines(true);               //设置是否显示线
-			line.setHasPoints(true);             //设置是否显示节点
-			line.setCubic(true);                     //设置线是否立体或其他效果
-			line.setFilled(false);                   //设置是否填充线下方区域
-			line.setHasLabels(false);       //设置是否显示节点标签
-			//设置节点点击的效果
-			line.setHasLabelsOnlyForSelected(true);
-
 			mLinesList.clear();
-			mLinesList.add(line);
+			mLinesList.add(setLine(mCurPointValueList));
 			mLineChartData = initDatas(mLinesList);
 			mLineChartView.setLineChartData(mLineChartData);
 			//根据点的横坐标实时变换坐标的视图范围
 			Viewport port;
-			LogUtil.i(TAG,"图表中的X="+x);
-			LogUtil.i(TAG,"图表中的dataCount="+(dataCount-1));
+			port = initViewPort(x - mXDisplayCount, x);
+			mLineChartView.setCurrentViewport(port);//当前窗口
+			mLineChartView.setMaximumViewport(port);//使用此方法则结束后不能显示出全部的波形
+
+		} else {
+			mLineChartView.setInteractive(true);
+			float x=mPointValueList.get(mPointValueList.size()-1).getX();
+
+			mLinesList.clear();
+			mLinesList.add(setLine(mPointValueList));
+
+			LineChartData lineData = new LineChartData(mLinesList);
+			Axis axisX = new Axis();
+			Axis axisY = new Axis().setHasLines(true);
+			axisX.setTextColor(Color.GRAY);
+			axisX.setValues(mAxisValues);
+			axisX.setMaxLabelChars(6);
+			axisX.setHasLines(true);//x轴分割线
+
+			axisY.setTextColor(Color.GRAY);
+			axisX.setName("时间");
+			axisY.setName("强度/V");//设置名称
+			lineData.setAxisXBottom(axisX);//设置X轴位置 下方
+			lineData.setAxisYLeft(axisY);//设置Y轴位置 左边
+			mLineChartView.setLineChartData(lineData);
+			//根据点的横坐标实时变换坐标的视图范围
+			Viewport port;
 			if (x > mXDisplayCount) {
 				port = initViewPort(x - mXDisplayCount, x);
 			} else {
 				port = initViewPort(0, mXDisplayCount);
 			}
-
 			mLineChartView.setCurrentViewport(port);//当前窗口
-			mLineChartView.setMaximumViewport(port);
-
-//			Viewport maxPort = initMaxViewPort(x);
-//			mLineChartView.setMaximumViewport(maxPort);//最大窗口
-
-
-		} else {
-			mLineChartView.setInteractive(true);
+			Viewport maxPort = null;
+			if (mPointValueList.size()<=mXDisplayCount) {
+				maxPort = initMaxViewPort(x,mXDisplayCount);
+			}else{
+				maxPort=initMaxViewPort(x,0);
+			}
+			mLineChartView.setMaximumViewport(maxPort);//最大窗口
 		}
+	}
+
+	private Line setLine(List<PointValue> pointValues){
+		Line line;
+		line = new Line(pointValues);
+		line.setColor(Color.parseColor("#ff0033"));//设置线的颜色
+		line.setStrokeWidth(2);//设置线的粗细
+		line.setShape(pointsShape);                 //设置点的形状
+		line.setPointRadius(2);
+		line.setPointColor(Color.parseColor("#006600"));
+		line.setHasLines(true);               //设置是否显示线
+		line.setHasPoints(true);             //设置是否显示节点
+		line.setCubic(true);                     //设置线是否立体或其他效果
+		line.setFilled(false);                   //设置是否填充线下方区域
+		line.setHasLabels(false);       //设置是否显示节点标签
+		//设置节点点击的效果
+		line.setHasLabelsOnlyForSelected(true);
+		return line;
 	}
 
 	private LineChartData initDatas(List<Line> lines) {
@@ -716,13 +753,13 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		Axis axisX = new Axis();
 		Axis axisY = new Axis().setHasLines(true);
 		axisX.setTextColor(Color.GRAY);
-		axisX.setValues(mAxisValues);
-		if (mPointValueList.size()<=16){
-			axisX.setMaxLabelChars(12);
-		}else {
-			axisX.setMaxLabelChars(6);
-		}
-//		axisX.setMaxLabelChars(6);
+		axisX.setValues(mCurAxisValues);
+//		if (mPointValueList.size()<=mXDisplayCount){
+//			axisX.setMaxLabelChars(mXDisplayCount);
+//		}else {
+//			axisX.setMaxLabelChars(6);
+//		}
+		axisX.setMaxLabelChars(6);
 		axisX.setHasLines(true);//x轴分割线
 
 		axisY.setTextColor(Color.GRAY);
@@ -744,13 +781,14 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 
 	//TODO 此方法可以删除
-	private Viewport initMaxViewPort(float right) {
+	private Viewport initMaxViewPort(float right,float offset) {
 		Viewport port = new Viewport();
 		port.top = 200;
 		port.bottom = 0;
 		port.left = 0;
-		port.right = right + mXDisplayCount;
+		port.right = right + offset;
 		return port;
+
 	}
 
 
