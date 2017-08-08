@@ -5,6 +5,7 @@ import android.app.Application;
 import android.app.Notification;
 import android.content.Context;
 import android.os.Environment;
+import android.os.Process;
 import android.util.Log;
 
 import com.blankj.utilcode.util.CleanUtils;
@@ -14,6 +15,7 @@ import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.ui.MainActivity;
 import com.dafukeji.healthcare.util.AppBlockCanaryContext;
 import com.dafukeji.healthcare.util.LogUtil;
+import com.dafukeji.healthcare.util.MyUncaughtExceptionHandler;
 import com.dafukeji.healthcare.util.SPUtils;
 import com.dafukeji.healthcare.util.SettingManager;
 import com.facebook.stetho.DumperPluginsProvider;
@@ -40,9 +42,20 @@ public class MyApplication extends Application {
 	private static MyApplication instance;
 
 	private static String TAG="测试MyApplication";
-	private static boolean isClearSP=false;
-	private static boolean isClearDB=false;
+	private boolean isClearSP=false;
+	private boolean isClearDB=false;
 	private static boolean isTest=true;//TODO 当不处于测试的时候应该设置为false
+
+
+	private boolean mIsGATTConnected=false;
+
+	public void setGATTConnectStatus(boolean isGaTTConnected){
+		this.mIsGATTConnected=isGaTTConnected;
+	}
+
+	public boolean getGATTConnectStatus(){
+		return this.mIsGATTConnected;
+	}
 
 	private SPUtils mSpUtils;
 	@Override
@@ -62,6 +75,7 @@ public class MyApplication extends Application {
 		initUmeng();
 
 		if (isTest){
+
 			//初始化日志
 //			initLogger();//不习惯使用
 
@@ -73,6 +87,10 @@ public class MyApplication extends Application {
 
 			//初始化Stetho
 			Stetho.initializeWithDefaults(this);
+		}else{
+			//异常时重启APP
+			MyUncaughtExceptionHandler exceptionHandler=new MyUncaughtExceptionHandler(this);
+			Thread.setDefaultUncaughtExceptionHandler(exceptionHandler);
 		}
 
 	}
@@ -238,11 +256,14 @@ public class MyApplication extends Application {
 					activity.finish();
 				}
 			}
+			//杀死该应用进程
+			Process.killProcess(Process.myPid());
 		} catch (Exception e) {
 			e.printStackTrace();
-		} finally {
-			System.exit(0);
 		}
+//		finally {
+//			System.exit(0);
+//		}
 	}
 
 }

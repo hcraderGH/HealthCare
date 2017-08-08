@@ -30,9 +30,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.bean.Battery;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BatteryService;
 import com.dafukeji.healthcare.service.BluetoothLeService;
+import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
@@ -72,12 +74,15 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private String mDeviceAddress;
 	private static BluetoothLeService mBluetoothLeService;
 	private static boolean mConnected = false;
+	private static boolean isGATTConnected;
+
 
 	private View mView;
 
 	private BlueToothBroadCast mBlueToothBroadCast;
 
 	private int mVoltage;
+	private int mOriginalVoltage;
 	private int mDisplayVoltage;//正在显示的电压值
 	private int mReceivedDataCount;
 	private List<Integer> mVoltages = new ArrayList<>();
@@ -137,13 +142,12 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					break;
 				case Constants.RECEIVE_GATT_STATUS:
 					LogUtil.i(TAG, "mBluetoothLeService=" + mBluetoothLeService);
-					boolean isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS, false);
+					isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS, false);
 					LogUtil.i(TAG, "连接状态isGATTConnected=" + isGATTConnected);
 
 					if (isGATTConnected) {
-
+						stopTimer();
 						startSensorTimer();//当连接时，则开始发送传感命令
-
 						getActivity().runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
@@ -151,6 +155,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 							}
 						});
 					} else {
+						if (mBluetoothLeService!=null){
+							mBluetoothLeService.disconnect();
+						}
+						stopTimer();
 						getActivity().runOnUiThread(new Runnable() {
 							@Override
 							public void run() {
@@ -164,7 +172,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 					getActivity().runOnUiThread(new Runnable() {
 						@Override
 						public void run() {
-							JudgeEleSetWare(intent.getIntExtra(Constants.RECEIVE_CURRENT_ELE, 0));
+							mOriginalVoltage=intent.getIntExtra(Constants.RECEIVE_CURRENT_VOLTAGE, 0);
+							JudgeEleSetWare(CommonUtils.eleFormula(
+									intent.getIntExtra(Constants.RECEIVE_CURRENT_VOLTAGE, 0)));
 							tvCurrentTemp.setText(intent.getIntExtra(Constants.RECEIVE_CURRENT_TEMP, 0) + "℃");
 						}
 					});
@@ -175,6 +185,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 	// Code to manage Service lifecycle.
 	public final ServiceConnection mServiceConnection = new ServiceConnection() {
+
 
 		@Override
 		public void onServiceConnected(ComponentName componentName, IBinder service) {
@@ -191,6 +202,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 		@Override
 		public void onServiceDisconnected(ComponentName componentName) {
+			LogUtil.i(TAG,"mBluetoothLeService is null");
 			mBluetoothLeService = null;
 		}
 	};
@@ -199,6 +211,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	@Nullable
 	@Override
 	public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+
+		LogUtil.i(TAG,"=================================onCreateView()");
 		mView = inflater.inflate(R.layout.fragment_home, container, false);
 		initViews();
 
@@ -253,7 +267,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		btnDeviceStatus.setClickable(true);
 		btnDeviceStatus.setOnClickListener(this);
 
-
 		rbMedical = (RadioButton) mView.findViewById(R.id.rb_medical);
 		rbPhysical = (RadioButton) mView.findViewById(R.id.rb_physical);
 		rbMedical.setOnClickListener(this);
@@ -268,7 +281,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				if (mConnected) {
 
 					cmdOffTime = System.currentTimeMillis();
-
 					mSendNewCmdFlag = true;
 					setDisplayStatus(false);//先直接变灰
 					stopTimer();
@@ -290,9 +302,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 		public void handleMessage(Message msg) {
 			switch (msg.what) {
 				case 0://接受到的电量
-
-					JudgeEleSetWare(ConvertUtils.CommonUtils.eleFormula(msg.arg1));//TODO 电量的计算公式
-
+					Battery.REMINDER_PER_ELE=CommonUtils.getOptimizePerEle(msg.arg1);
+					JudgeEleSetWare(CommonUtils.getOptimizePerEle(msg.arg1));//TODO 电量的计算公式
 					tvCurrentTemp.setText(msg.arg2 + "℃");//温度的显示
 					break;
 			}
@@ -302,18 +313,27 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 	@Override
 	public void onActivityResult(int requestCode, int resultCode, Intent data) {
-		LogUtil.i(TAG, "关闭Running后重新发送传感命令");
+		LogUtil.i(TAG, "关闭RunningActivity后重新发送传感命令");
 		super.onActivityResult(requestCode, resultCode, data);
 
 		if (resultCode == RESULT_OK) {
-			startSensorTimer();
-			//接收到的数据单位为mAms
-			long eleSum = data.getLongExtra("ele", 0);
-			JudgeEleSetWare(ConvertUtils.CommonUtils.eleFormula(getVoltageDependOnEle(eleSum,mDisplayVoltage)));
+
+			retryConfigCount=0;
+			isSensorReceived=false;
+			retrySensorCount=0;
+
+			if (isGATTConnected){
+				stopTimer();
+				startSensorTimer();
+				setDisplayStatus(true);
+			}else{
+				stopTimer();
+				setDisplayStatus(false);
+			}
 		}
 	}
 
-
+	//TODO 此方法可以删除
 	private int getVoltageDependOnEle(long ele, int curVoltage) {
 		int voltage = 42;
 		if (curVoltage >= 42) {
@@ -414,7 +434,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	private static Timer mTimer;
 	private static TimerTask mTimerTask;
 	private int retrySensorCount;
-	private boolean isSensorReceived = false;
+	private static boolean isSensorReceived = false;
 	private long mCurSendSensorTime;
 
 	private void startSensorTimer() {
@@ -434,26 +454,24 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 									setDisplayStatus(false);
 								}
 							});
-
+							if (mBluetoothLeService!=null){
+								mBluetoothLeService.disconnect();
+							}
 							stopTimer();
 						} else {
 							retrySensorCount++;
-							mCurSendSensorTime = System.currentTimeMillis();
-							isSensorReceived = false;
-							byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
-							if (mBluetoothLeService != null) {
-								mBluetoothLeService.WriteValue(sensorCmd);
-							}
 						}
 					} else {
 						retrySensorCount = 0;
-						mCurSendSensorTime = System.currentTimeMillis();
-						isSensorReceived = false;
-						LogUtil.i(TAG, "HomeFragment发送的传感命令");
-						byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
-						if (mBluetoothLeService != null) {
-							mBluetoothLeService.WriteValue(sensorCmd);
-						}
+					}
+
+					mCurSendSensorTime = System.currentTimeMillis();
+					isSensorReceived = false;
+					LogUtil.i(TAG, "HomeFragment发送的传感命令");
+					LogUtil.i(TAG,"mBluetoothLeService为null吗"+(mBluetoothLeService==null));
+					byte[] sensorCmd = new byte[]{(byte) 0xFA, (byte) 0xFB, 6, 0, 0, 0, 0, 0, 0, 0, 0, 6};
+					if (mBluetoothLeService != null) {
+						mBluetoothLeService.WriteValue(sensorCmd);
 					}
 
 				}
@@ -466,7 +484,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 
 	private int retryConfigCount;
-	private boolean isConfigReceived;
 
 	private void startConfigTimer() {
 		if (mTimer == null) {
@@ -477,8 +494,11 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				@Override
 				public void run() {
 					if (isSensorReceived) {
-						if (!isConfigReceived) {
 							if (retryConfigCount >= 6) {
+
+								if (mBluetoothLeService!=null){
+									mBluetoothLeService.disconnect();
+								}
 								stopTimer();
 								getActivity().runOnUiThread(new Runnable() {
 									@Override
@@ -489,10 +509,8 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 								});
 							} else {
 								retryConfigCount++;
-								isConfigReceived = false;
 								sendPowerOffCmd();
 							}
-						}
 					} else {
 						try {
 							//Thread.sleep(400 - (System.currentTimeMillis() - mCurSendSensorTime))
@@ -501,7 +519,6 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 									(System.currentTimeMillis() - mCurSendSensorTime) < 400) {
 								Thread.sleep(400 - (System.currentTimeMillis() - mCurSendSensorTime));
 							}
-							isConfigReceived = false;
 							sendPowerOffCmd();
 						} catch (InterruptedException e) {
 							e.printStackTrace();
@@ -547,9 +564,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				, (byte) stimulateFrequency, (byte) cauterizeGrade, (byte) cauterizeTime, (byte) needleType, (byte) needleGrade
 				, (byte) needleFrequency, (byte) medicineTime, (byte) crc};
 		Log.i(TAG, "onClick: off" + Arrays.toString(setting));
-		mBluetoothLeService.WriteValue(setting);
+		if (mBluetoothLeService!=null) {
+			mBluetoothLeService.WriteValue(setting);
+		}
 	}
-
 
 	/**
 	 * 根据传入的index参数来设置选中的tab页。
@@ -566,7 +584,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				if (mMedicalFragment == null) {
 					mMedicalFragment = new MedicalFragment();
 					transaction.add(R.id.fl_cure_content, mMedicalFragment, fragmentNames[0]);
-					transaction.addToBackStack(fragmentNames[0]);
+//					transaction.addToBackStack(fragmentNames[0]);
 				} else {
 					transaction.show(mMedicalFragment);
 				}
@@ -576,7 +594,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 				if (mPhysicalFragment == null) {
 					mPhysicalFragment = new PhysicalFragment();
 					transaction.add(R.id.fl_cure_content, mPhysicalFragment, fragmentNames[1]);
-					transaction.addToBackStack(fragmentNames[0]);
+//					transaction.addToBackStack(fragmentNames[0]);
 				} else {
 					transaction.show(mPhysicalFragment);
 				}
@@ -614,6 +632,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			tvDeviceStatus.setTextColor(getResources().getColor(R.color.connect_status));
 			tvTempStatus.setTextColor(getResources().getColor(R.color.connect_status));
 			tvCurrentTemp.setTextColor(Color.parseColor("#FFFFFF"));
+			mWaveLoadingView.setBottomTitleColor(Color.parseColor("#99ccff"));
 
 //			Toasty.success(getActivity(), "连接设备成功", Toast.LENGTH_SHORT).show();
 		} else {
@@ -626,6 +645,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 			tvTempStatus.setTextColor(getResources().getColor(R.color.disconnect_status));
 			tvCurrentTemp.setTextColor(getResources().getColor(R.color.disconnect_status));
 
+			mWaveLoadingView.setBottomTitleColor(getResources().getColor(R.color.disconnect_status));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.disconnect_status));
 			mWaveLoadingView.cancelAnimation();
 		}
@@ -678,14 +698,14 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 
 				mConnected = true;
 
-
-
 				byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
-					//TODO 接收数据处理
+
+
+					//TODO 此处可以删除
 					//当校验码前面的数据相加不等于校验码时表示数据错误
-					boolean crcIsRight = ConvertUtils.CommonUtils.IsCRCRight(data);
+					boolean crcIsRight = CommonUtils.IsCRCRight(data);
 					if (!crcIsRight) {
 						LogUtil.i(TAG, "数据校验出现错误");
 						if (data.length > 13) {
@@ -693,7 +713,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 							System.arraycopy(data, 13, frontData, 0, frontData.length);
 							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
 							data = Arrays.copyOfRange(data, 0, 13);
-							if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
+							if (!CommonUtils.IsCRCRight(data)) {
 								return;
 							}
 							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
@@ -704,7 +724,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
 								data = wholeData;
 								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
-								if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
+								if (!CommonUtils.IsCRCRight(data)) {
 									return;
 								}
 								wholeData = null;
@@ -725,6 +745,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 						gattIntent.setAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
 						getActivity().sendBroadcast(gattIntent);
 						setDisplayStatus(false);
+
+						if (mBluetoothLeService!=null){
+							mBluetoothLeService.disconnect();
+						}
 						stopTimer();
 					}
 
@@ -741,7 +765,7 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 						mReceivedDataCount++;
 						mVoltages.add(mVoltage);
 //						if (mReceivedDataCount % 20 == 0 || mReceivedDataCount == 1) {
-						if (mReceivedDataCount % 20 == 0) {
+						if (mReceivedDataCount % 10== 0) {
 							//发送电量的广播
 							Intent batIntent = new Intent();
 							batIntent.putExtra(Constants.EXTRAS_BATTERY_ELECTRIC_QUANTITY, mVoltage);
@@ -755,7 +779,10 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 							mVoltages.clear();
 							Message msg = Message.obtain();
 							msg.what = 0;
-							msg.arg1 = mDisplayVoltage;
+//							msg.arg1 = mDisplayVoltage;
+							msg.arg1= (int)Math.ceil((CommonUtils.eleFormula(mOriginalVoltage)*3600*300*10
+									-intent.getLongExtra(Constants.USED_ELE,0))*100/(3600*300*1000));
+							LogUtil.i(TAG,"显示的电量%="+msg.arg1);
 							msg.arg2 = mCurrentTemp;
 							mHandler.sendMessage(msg);
 						}
@@ -768,16 +795,16 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	/**
 	 * 根据电量来设置Ware的颜色-
 	 */
-	private void JudgeEleSetWare(int ele) {
+	private void JudgeEleSetWare(int preEle) {
 
 		mWaveLoadingView.startAnimation();//当断开接连时,停止了动画，所以要开始动画
 
-		mWaveLoadingView.setProgressValue(ele);
-		mWaveLoadingView.setCenterTitle(ele + "%");
-		if (ele >= Constants.EXTRAS_BATTERY_WARN) {
+		mWaveLoadingView.setProgressValue(preEle);
+		mWaveLoadingView.setCenterTitle(preEle + "%");
+		if (preEle >= Constants.EXTRAS_BATTERY_WARN) {
 			mWaveLoadingView.setCenterTitleColor(Color.parseColor("#cc000000"));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_normal));
-		} else if (ele < Constants.EXTRAS_BATTERY_WARN && ele >= Constants.EXTRAS_BATTERY_DANGER) {
+		} else if (preEle < Constants.EXTRAS_BATTERY_WARN && preEle >= Constants.EXTRAS_BATTERY_DANGER) {
 			mWaveLoadingView.setCenterTitleColor(getResources().getColor(R.color.battery_electric_quantity_warn));
 			mWaveLoadingView.setWaveColor(getResources().getColor(R.color.battery_electric_quantity_warn));
 		} else {
@@ -795,6 +822,9 @@ public class HomeFragment extends Fragment implements View.OnClickListener {
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
+
+		stopTimer();
+
 		getActivity().unregisterReceiver(mBlueToothBroadCast);
 		getActivity().unregisterReceiver(mGattUpdateReceiver);
 		getActivity().unbindService(mServiceConnection);

@@ -17,6 +17,7 @@
     <string name="title_record">记录</string>
     <string name="title_controller">控制设备</string>
     <string name="ble_need">需要开启蓝牙权限</string>
+    <string name="location_need">需要开启位置权限</string>
     <string name="title_running">治疗</string>
 
     <string name="cure_cauterize">灸疗程</string>

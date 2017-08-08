@@ -16,6 +16,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -24,6 +25,7 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -37,6 +39,7 @@ import android.widget.ToggleButton;
 import com.dafukeji.healthcare.BaseActivity;
 import com.dafukeji.healthcare.LeRecyclerAdapter;
 import com.dafukeji.healthcare.R;
+import com.dafukeji.healthcare.bean.Battery;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.ConvertUtils;
@@ -75,7 +78,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private BluetoothAdapter.LeScanCallback mLeScanCallback;
 
 	// Stops scanning after SCAN_PERIOD seconds.
-	private static final long SCAN_PERIOD = 3000;
+	private static final long SCAN_PERIOD = 6000;
 	public static final int REQUEST_ENABLE_BT = 1;
 
 	private static String TAG="测试DeviceScanActivity";
@@ -87,9 +90,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private BluetoothDevice device;
 
-	private boolean isItemClicked=false;
 	private static boolean isConnected=false;
-	private boolean isReceivedData=false;
 
 	//电压显示相关
 	private int mVoltageCount;
@@ -104,7 +105,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 		initWidgets();
 		initScanCallback();
-		mayRequestLocation();
 
 		// Use this check to determine whether BLE is supported on the device.  Then you can
 		// selectively disable BLE-related features.
@@ -125,16 +125,16 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			Toast.makeText(this, R.string.error_bluetooth_not_supported, Toast.LENGTH_SHORT).show();
 			finish();
 		}
-		// 若蓝牙没打开
-		if (!mBluetoothLEAdapter.isEnabled()) {
-			mBluetoothLEAdapter.enable();  //打开蓝牙，需要BLUETOOTH_ADMIN权限
 
-		}
+//		// 若蓝牙没打开
+//		if (!mBluetoothLEAdapter.isEnabled()) {
+//			mBluetoothLEAdapter.enable();  //打开蓝牙，需要BLUETOOTH_ADMIN权限
+//
+//		}
 
 		Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
 		LogUtil.i(TAG,"Try to bindService=" + bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE));//已经在HomeFragment中进行绑定服务了
 		registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
-
 
 	}
 
@@ -191,96 +191,55 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			} else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) { //可以开始干活了
 
 				LogUtil.i(TAG, "In what we need");
-
-				new Thread(new Runnable() {
-					@Override
-					public void run() {
-						while (!isReceivedData){
-							try {
-								Thread.sleep(300);
-								LogUtil.i(TAG,"DeviceSanActivity发送的传感命令");
-								byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,6,0,0,0,0,0,0,0,0,6};
-								mBluetoothLeService.WriteValue(init);
-							} catch (InterruptedException e) {
-								e.printStackTrace();
-							}
-						}
-					}
-				}).start();
-
-//				byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,6,0,0,0,0,0,0,0,0,6};
-//				HomeFragment.getBluetoothLeService().WriteValue(init);
-//				startSendInitTask();
+				startSensorTimer();
 
 			} else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) { //收到数据
-
-				if (!isItemClicked){
-					return;
-				}
 
 				final byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data==null?"data为null":Arrays.toString(data)));
 				if (data != null) {
 
-					boolean crcIsRight= ConvertUtils.CommonUtils.IsCRCRight(data);
-					if (!crcIsRight){
-						LogUtil.i(TAG,"数据校验出现错误");
-						return;
-					}
-
 					mVoltageCount++;
 					mVoltages.add(ConvertUtils.byte2unsignedInt(data[7]));
 					LogUtil.i(TAG,"mVoltageCount="+ mVoltageCount);
-					if (mVoltageCount <=10){
-						return;
+
+
+					//延迟跳转为了获取稳定的电压值
+					if (mVoltageCount==6){
+						stopTimer();//获取到数据的情况下,停止发送传感命令
+
+						if (mProgressDialog!=null&&mProgressDialog.isShowing()) {
+							mProgressDialog.dismiss();
+						}
+
+						Toasty.success(DeviceScanActivity.this, "连接设备成功", 500).show();
+
+						//TODO 接收数据处理
+						Intent intent2=new Intent();
+						intent2.putExtra(Constants.EXTRAS_GATT_STATUS,true);
+						intent2.setAction(Constants.RECEIVE_GATT_STATUS);
+						sendBroadcast(intent2);
+
+						Intent intent3 =new Intent();
+						intent3.putExtra(Constants.RECEIVE_CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
+						intent3.putExtra(Constants.RECEIVE_CURRENT_VOLTAGE, getMaxVoltage(mVoltages));
+						Battery.ORIGINAL_VOLTAGE=getMaxVoltage(mVoltages);
+						intent3.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
+						sendBroadcast(intent3);
+
+						DeviceScanActivity.this.setResult(RESULT_OK);//通过广播发送的不需要此处
+						finish();
 					}
-
-					isReceivedData=true;
-					isItemClicked=false;
-
-					stopProgressTimer();//获取到数据的情况下，停止计时
-
-					if (mProgressDialog!=null&&mProgressDialog.isShowing()) {
-						mProgressDialog.dismiss();
-					}
-
-					Toasty.success(DeviceScanActivity.this, "连接设备成功", 500).show();
-					//TODO 接收数据处理
-					Intent intent2=new Intent();
-					intent2.putExtra(Constants.EXTRAS_GATT_STATUS,true);
-					intent2.setAction(Constants.RECEIVE_GATT_STATUS);
-					sendBroadcast(intent2);
-
-					Intent intent3 =new Intent();
-					intent3.putExtra(Constants.RECEIVE_CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
-					intent3.putExtra(Constants.RECEIVE_CURRENT_ELE, ConvertUtils.CommonUtils.eleFormula(getMaxVoltage(mVoltages)));
-					intent3.setAction(Constants.RECEIVE_BLUETOOTH_INFO);
-					sendBroadcast(intent3);
-
-					finish();
-
 				}else{
 					Toasty.warning(DeviceScanActivity.this, "连接失败，请重连或重启设备", 500).show();
 				}
 			}
 
-//			if (BluetoothDevice.ACTION_ACL_DISCONNECTED.equals(action)){
-//				LogUtil.i(TAG,"设备断开了");
-//				if (mLeDeviceRecyclerAdapter.getItemCount()>0&&device!=null){
-//					HomeFragment.getBluetoothLeService().connect(device.getAddress());
-//				}
-//
-//				isConnected=false;
-//			}
-//
-//			if (BluetoothDevice.ACTION_ACL_CONNECTED.equals(action)){
-//				LogUtil.i(TAG,"设备连接上了");
-//				isConnected=true;
-//			}
 		}
 	};
 
 
+	//TODO 此方法可以删去
 	private int getAverageVoltage(List<Integer> voltages){
 		int sum = 0;
 		for (int i = 0; i < voltages.size(); i++) {
@@ -294,132 +253,48 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		return Collections.max(voltages);
 	}
 
-	private TimerTask mProgressTask;
-//	private TimerTask mSendInitTask;
+	private TimerTask mSensorTask;
 	private Timer mTimer;
-	private int mOverTime ;
-	private void startProgressTimer() {
-
-		stopProgressTimer();
-
-		mOverTime=8000;//连接断开的时间
+	private int mSensorCmdCount;
+	private void startSensorTimer() {
 		if (mTimer == null) {
 			mTimer = new Timer();
 		}
-		if (mProgressTask == null) {
-			mProgressTask = new TimerTask() {
+		if (mSensorTask == null) {
+			mSensorTask = new TimerTask() {
 				@Override
 				public void run() {
-					mOverTime=mOverTime-1000;
-					LogUtil.i(TAG,"超时的时间mOverTime="+mOverTime);
-					if (mOverTime<=0) {
-						Message msg = Message.obtain();
-						msg.what = 2;
+					mSensorCmdCount++;
+					if (mSensorCmdCount>=20){
+						Message msg=new Message();
+						msg.what=2;
 						mHandler.sendMessage(msg);
+					}
+
+					LogUtil.i(TAG,"DeviceSanActivity发送的传感命令");
+					byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,6,0,0,0,0,0,0,0,0,6};
+					if (mBluetoothLeService!=null) {
+						mBluetoothLeService.WriteValue(init);
 					}
 				}
 			};
 		}
 
-		if (mTimer != null && mProgressTask!= null) {
-			mTimer.schedule(mProgressTask,0, 1000);
+		if (mTimer != null && mSensorTask != null) {
+			mTimer.schedule(mSensorTask,0, 400);
 		}
 	}
 
-	private void stopProgressTimer(){
+	private void stopTimer(){
 
-		if(mProgressTask!=null){
-			mProgressTask.cancel();
-			mProgressTask=null;
+		if(mSensorTask !=null){
+			mSensorTask.cancel();
+			mSensorTask =null;
 		}
 
 		if (mTimer != null) {
 			mTimer.cancel();
 			mTimer = null;
-		}
-	}
-
-//	private void startSendInitTask(){
-//
-//		if (mTimer==null){
-//			mTimer=new Timer();
-//		}
-//
-//		if (mSendInitTask==null){
-//			mSendInitTask=new TimerTask() {
-//				@Override
-//				public void run() {
-//
-//					if (isReceivedData){
-//						stopSendInitTask();
-//						isReceivedData=false;
-//					}else{
-//						byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,6,0,0,0,0,0,0,0,0,6};
-//						HomeFragment.getBluetoothLeService().WriteValue(init);
-//					}
-//				}
-//			};
-//		}
-//
-//		if (mTimer!=null&&mSendInitTask!=null){
-//			mTimer.schedule(mSendInitTask,0,300);
-//		}
-//	}
-//
-//	private void stopSendInitTask(){
-//		if (mSendInitTask!=null){
-//			mSendInitTask.cancel();
-//			mSendInitTask=null;
-//		}
-//	}
-
-//	private void stopTimer() {
-//		if (mTimer != null) {
-//			mTimer.cancel();
-//			mTimer = null;
-//		}
-//	}
-
-
-	private static final int REQUEST_FINE_LOCATION=0;
-	private void mayRequestLocation() {
-		if (Build.VERSION.SDK_INT >= 23) {
-			try {
-				int checkCallPhonePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-				if(checkCallPhonePermission != PackageManager.PERMISSION_GRANTED){
-					//判断是否需要 向用户解释，为什么要申请该权限
-					if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION))
-						Toast.makeText(this,R.string.ble_need,Toast.LENGTH_LONG).show();
-
-					ActivityCompat.requestPermissions(this ,new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_FINE_LOCATION);
-					return;
-
-				}else{
-
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		} else {
-
-		}
-	}
-
-	@Override
-	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-	                                       @NonNull int[] grantResults) {
-		switch (requestCode) {
-			case REQUEST_FINE_LOCATION:
-				// If request is cancelled, the result arrays are empty.
-				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-					// The requested permission is granted.
-					if (mScanning == false) {
-//						tbScan.setChecked(true);
-					}
-				} else{
-					// The user disallowed the requested permission.
-				}
-				break;
 		}
 	}
 
@@ -435,9 +310,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			@Override
 			public void onItemClick(View view, int position) {
 
-
-				isReceivedData=false;//当点击连接时，要置为false，才可以一直向下位机发6
-				isItemClicked=true;
 				if (mScanning) {
 					stopScan();
 					mScanning = false;
@@ -447,19 +319,18 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 				device= mLeDeviceRecyclerAdapter.getDevice(position);
 
-//				if (!isConnected){
-//					mBluetoothLeService.connect(device.getAddress());
-//				}
-
 				mBluetoothLeService.connect(device.getAddress());
-					startProgressTimer();//开始连接倒计时
-					mProgressDialog=new ProgressDialog(DeviceScanActivity.this);
-					mProgressDialog.setMessage("正在连接设备，请稍等...");
-					mProgressDialog.setCancelable(false);//设置进度条是否可以按退回键取消
-					mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
-					mProgressDialog.show();
+				if (mProgressDialog!=null){
+					return;
+				}
 
-//					stopProgressTimer();//确保不发生java.lang.IllegalStateException: TimerTask is scheduled already
+				mProgressDialog = new ProgressDialog(DeviceScanActivity.this);
+				mProgressDialog.setMessage("正在连接设备，请稍等...");
+				mProgressDialog.setCancelable(false);//设置进度条是否可以按退回键取消
+				mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
+				mProgressDialog.show();
+
+//					stopTimer();//确保不发生java.lang.IllegalStateException: TimerTask is scheduled already
 
 
 			}
@@ -492,40 +363,47 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 		switch (buttonView.getId()) {
 			case R.id.tb_scan:
+				LogUtil.i(TAG,"tbScan的状态："+tbScan.isChecked());
 				if (tbScan.isChecked()) {
-
-					mScanDialog=new ProgressDialog(this);
-					mScanDialog.setMessage("正在搜索设备，请稍等...");
-					mScanDialog.setCancelable(true);
-					mScanDialog.setCanceledOnTouchOutside(true);
-					mScanDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
-						@Override
-						public void onCancel(DialogInterface dialog) {
-							if (mScanning){
-								scanLeDevice(false);
-							}
-
-							dialog.dismiss();
-						}
-					});
-
-					mSBScanString.setVisibility(View.INVISIBLE);//当点击搜索时，则隐藏文字
-					openBlueTooth();
-					LogUtil.i(TAG,"DeviceScan蓝牙打开了？"+mBluetoothLEAdapter.isEnabled());
-					if (!mBluetoothLEAdapter.isEnabled()) {
-						return;
-					}
-					mRippleBackground.startRippleAnimation();
-					mLeDeviceRecyclerAdapter.clear();
-					mLeDeviceRecyclerAdapter.notifyDataSetChanged();
-					scanLeDevice(true);
+					mayRequestLocation();
 				} else {
-					mSBScanString.setVisibility(View.VISIBLE);
-					mRippleBackground.stopRippleAnimation();
-					scanLeDevice(false);
+
+					if (mBluetoothLEAdapter.isEnabled()) {
+						mSBScanString.setVisibility(View.VISIBLE);
+						mRippleBackground.stopRippleAnimation();
+						scanLeDevice(false);
+					}
 				}
 				break;
 		}
+	}
+
+
+	/**
+	 * 在权限及蓝牙都开启的情况下显示搜索
+	 */
+	private void displayScan() {
+		mRippleBackground.startRippleAnimation();
+		mLeDeviceRecyclerAdapter.clear();
+		mLeDeviceRecyclerAdapter.notifyDataSetChanged();
+
+		mScanDialog=new ProgressDialog(this);
+		mScanDialog.setMessage("正在搜索设备，请稍等...");
+		mScanDialog.setCancelable(true);
+		mScanDialog.setCanceledOnTouchOutside(true);
+		mScanDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				if (mScanning){
+					scanLeDevice(false);
+				}
+
+				dialog.dismiss();
+			}
+		});
+
+		mSBScanString.setVisibility(View.INVISIBLE);//当点击搜索时，则隐藏文字
+		scanLeDevice(true);
 	}
 
 	private void openBlueTooth() {
@@ -542,7 +420,106 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		if (mBluetoothLEAdapter == null || !mBluetoothLEAdapter.isEnabled()) {
 			Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 			startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+		}else{
+			//蓝牙已经开启了
+			displayScan();
 		}
+	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		super.onActivityResult(requestCode, resultCode, data);
+		if (requestCode==REQUEST_ENABLE_BT){
+			if (mBluetoothLEAdapter.isEnabled()){
+				if (tbScan.isChecked()){
+					displayScan();
+				}
+			}else {
+				tbScan.setChecked(false);
+			}
+		}
+	}
+
+	private static final int REQUEST_COARSE_LOCATION=0;
+	private void mayRequestLocation() {
+		if (Build.VERSION.SDK_INT >= 23) {
+			try {
+				//校验是否已具有模糊定位权限，Android6.0蓝牙需要此权限
+				int checkCallPhonePermission = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
+				if(checkCallPhonePermission != PackageManager.PERMISSION_GRANTED){
+					//判断是否需要 向用户解释，为什么要申请该权限
+					if(ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION))
+						Toast.makeText(this,R.string.ble_need,Toast.LENGTH_LONG).show();
+
+					ActivityCompat.requestPermissions(this ,new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},REQUEST_COARSE_LOCATION);
+
+				}else{
+					//具有权限,则去打开蓝牙
+					openBlueTooth();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			//系统不高于6.0直接执行打开蓝牙
+			openBlueTooth();
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+	                                       @NonNull int[] grantResults) {
+		switch (requestCode) {
+			case REQUEST_COARSE_LOCATION:
+				// If request is cancelled, the result arrays are empty.
+				if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+					// The requested permission is granted.
+
+					//如果权限被允许了，则打开蓝牙
+					openBlueTooth();
+				} else{
+					// The user disallowed the requested permission.
+					LogUtil.i(TAG,"disallowed the requested location permission");
+
+					//如果用户将模糊定位权限关闭了，则弹出对话框提示转到应用详情界面去设置权限
+					tbScan.setChecked(false);
+					showPermissionDialog();
+
+				}
+				break;
+		}
+	}
+
+	private void showPermissionDialog() {
+		AlertDialog.Builder builder=new AlertDialog.Builder(DeviceScanActivity.this)
+				.setTitle("提醒")
+				.setMessage("开启蓝牙需要将定位权限设置为允许")
+				.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.dismiss();
+						startActivity(getAppDetailSettingIntent());
+					}
+				});
+		builder.create().show();
+
+	}
+
+	/**
+	 * 获取应用详情界面Intent
+	 */
+	private Intent getAppDetailSettingIntent(){
+		Intent localIntent=new Intent();
+		localIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+		if (Build.VERSION.SDK_INT>=9){
+			localIntent.setAction("android.settings.APPLICATION_DETAILS_SETTINGS");
+			localIntent.setData(Uri.fromParts("package",getPackageName(),null));
+		}else if (Build.VERSION.SDK_INT<=8){
+			localIntent.setAction(Intent.ACTION_VIEW);
+			localIntent.setClassName("com.android.settings", "com.android.settings.InstalledAppDetails");
+			localIntent.putExtra("com.android.settings.ApplicationPkgName", getPackageName());
+		}
+		return localIntent;
 	}
 
 	private Handler mHandler = new Handler() {
@@ -557,12 +534,10 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					break;
 				case 2://连接超时
 
+					stopTimer();
 					mProgressDialog.dismiss();
-					stopProgressTimer();
-
-					isItemClicked=false;
-					isReceivedData=true;//当超时时要停止向下位机发6
-
+					mSensorCmdCount=0;
+					mVoltageCount=0;
 					mLeDeviceRecyclerAdapter.clear();
 					mLeDeviceRecyclerAdapter.notifyDataSetChanged();
 					Toasty.warning(DeviceScanActivity.this,"连接超时，请重连或重启设备",500).show();
@@ -576,7 +551,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 	private void scanLeDevice(final boolean enable) {
 		if (enable) {
 			mScanning = true;
-
 			// Stops scanning after a pre-defined scan period.
 			mHandler.postDelayed(new Runnable() {
 				@Override
@@ -588,7 +562,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					}
 				}
 			}, SCAN_PERIOD);
-			mLeDeviceRecyclerAdapter.clear();
 			startScan();
 			LogUtil.i(TAG,"开始扫描，蓝牙设备");
 		} else {
@@ -602,24 +575,34 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		if(mScanDialog!=null){
 			mScanDialog.show();
 		}
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			mBluetoothLEAdapter.getBluetoothLeScanner().startScan(mScanCallback);
-		} else {
-			mBluetoothLEAdapter.startLeScan(mLeScanCallback);
-		}
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+					mBluetoothLEAdapter.getBluetoothLeScanner().startScan(mScanCallback);//这是耗时操作
+				} else {
+					mBluetoothLEAdapter.startLeScan(mLeScanCallback);
+				}
+			}
+		}).start();
 	}
 
 	private void stopScan() {
-		if (mScanDialog!=null){
+		if (mScanDialog!=null&&mScanDialog.isShowing()){
 			mScanDialog.dismiss();
 		}
 		tbScan.setChecked(false);
 
-		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			mBluetoothLEAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
-		} else {
-			mBluetoothLEAdapter.stopLeScan(mLeScanCallback);
-		}
+		new Thread(new Runnable() {
+			@Override
+			public void run() {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+					mBluetoothLEAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
+				} else {
+					mBluetoothLEAdapter.stopLeScan(mLeScanCallback);
+				}
+			}
+		}).start();
 	}
 
 	@TargetApi(21)
@@ -685,6 +668,7 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 			mScanDialog.dismiss();
 			mScanDialog=null;
 		}
+		stopTimer();
 		unbindService(mServiceConnection);
 		unregisterReceiver(mGattUpdateReceiver);
 		super.onDestroy();

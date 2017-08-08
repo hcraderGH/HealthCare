@@ -40,6 +40,7 @@ import com.dafukeji.healthcare.fragment.RecordFragment;
 import com.dafukeji.healthcare.fragment.SettingFragment;
 import com.dafukeji.healthcare.fragment.ShareFragment;
 import com.dafukeji.healthcare.service.BluetoothLeService;
+import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
 import com.nightonke.boommenu.BoomButtons.BoomButton;
 import com.nightonke.boommenu.BoomButtons.ButtonPlaceEnum;
@@ -55,16 +56,16 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener{
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
 	private HomeFragment homeFragment;
 	private RecordFragment recordFragment;
 	private ShareFragment shareFragment;
 	private SettingFragment settingFragment;
 	private List<Fragment> mFragments;
-	private int mIndex=0;
+	private int mIndex = 0;
 
-	private RadioButton rbHome,rbRecord,rbShare,rbSetting;
+	private RadioButton rbHome, rbRecord, rbShare, rbSetting;
 	private RadioGroup rgTab;
 	private Toolbar mToolbar;
 	private TextView mTvTitle;
@@ -72,12 +73,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	private ImageView ivScan;
 
 	private BoomMenuButton mBmbController;
-	private String[] content=new String[]{"连接设备","断开连接"};
+	private String[] content = new String[]{"连接设备", "断开连接"};
 	private Bitmap mBitmap;
-	private boolean isBoomShowing=false;
+	private boolean isBoomShowing = false;
 
 	private BluetoothAdapter mBluetoothLEAdapter;
-	private boolean isGATTConnected=false;
+	private boolean isGATTConnected = false;
 	private BlueToothBroadCast mBlueToothBroadCast;
 
 //	private DrawerLayout mDrawer;
@@ -87,7 +88,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	private MaterialRippleLayout mrlShare;
 	private MaterialRippleLayout mrlSetting;
 	private MaterialRippleLayout mrlHome;
-	private static String TAG="测试MainActivity";
+	private static String TAG = "测试MainActivity";
 
 	private static boolean isBoomOff;
 
@@ -103,7 +104,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		registerGATTReceiver();
 
 		final BluetoothManager bluetoothManager =
-				(BluetoothManager)this.getSystemService(Context.BLUETOOTH_SERVICE);
+				(BluetoothManager) this.getSystemService(Context.BLUETOOTH_SERVICE);
 		mBluetoothLEAdapter = bluetoothManager.getAdapter();
 	}
 
@@ -127,10 +128,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 	private void registerGATTReceiver() {
 		//注册接受蓝牙信息的广播
-		mBlueToothBroadCast=new BlueToothBroadCast();
-		IntentFilter filter=new IntentFilter();
+		mBlueToothBroadCast = new BlueToothBroadCast();
+		IntentFilter filter = new IntentFilter();
 		filter.addAction(Constants.RECEIVE_GATT_STATUS);
-		registerReceiver(mBlueToothBroadCast,filter);
+		registerReceiver(mBlueToothBroadCast, filter);
 	}
 
 	public class BlueToothBroadCast extends BroadcastReceiver {
@@ -138,25 +139,31 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的服务连接
-			isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
-//			ReinitializeBoom();
+			String action = intent.getAction();
+			if (action.equals(Constants.RECEIVE_GATT_STATUS_FROM_HOME)) {
+				isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
+				LogUtil.i(TAG, "onReceive  isGATTConnectedFromHome:" + isGATTConnected);
+			} else if (action.equals(Constants.RECEIVE_GATT_STATUS)) {
+				isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS, false);
+				LogUtil.i(TAG, "onReceive  isGATTConnectedFromRunning:" + isGATTConnected);
+			}
 		}
 	}
 
 	private void initViews() {
 
-		rbHome= (RadioButton) findViewById(R.id.rb_home);
-		rbRecord= (RadioButton) findViewById(R.id.rb_record);
-		rbShare= (RadioButton) findViewById(R.id.rb_share);
-		rbSetting= (RadioButton) findViewById(R.id.rb_setting);
-		mTvTitle= (TextView) findViewById(R.id.tv_toolbar_title);
+		rbHome = (RadioButton) findViewById(R.id.rb_home);
+		rbRecord = (RadioButton) findViewById(R.id.rb_record);
+		rbShare = (RadioButton) findViewById(R.id.rb_share);
+		rbSetting = (RadioButton) findViewById(R.id.rb_setting);
+		mTvTitle = (TextView) findViewById(R.id.tv_toolbar_title);
 
-		rgTab= (RadioGroup) findViewById(R.id.rg_tab);
+		rgTab = (RadioGroup) findViewById(R.id.rg_tab);
 
-		mToolbar= (Toolbar) findViewById(R.id.toolbar);
+		mToolbar = (Toolbar) findViewById(R.id.toolbar);
 
 
-		ivScan= (ImageView) findViewById(R.id.iv_scan);
+		ivScan = (ImageView) findViewById(R.id.iv_scan);
 
 //		mDrawer = (DrawerLayout) findViewById(R.id.draw_layout);
 		//设置左上角导航抽屉图标
@@ -271,7 +278,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 	@Override
 	public void onClick(View v) {
-		switch (v.getId()){
+		switch (v.getId()) {
 			case R.id.rb_home:
 				setIndexSelected(0);
 				mTvTitle.setText(rbHome.getText().toString());
@@ -290,7 +297,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 				break;
 
 			case R.id.iv_scan:
-				startActivity(new Intent(MainActivity.this,DeviceScanActivity.class));
+				startActivityForResult(new Intent(MainActivity.this, DeviceScanActivity.class), 0);
 				break;
 		}
 	}
@@ -302,16 +309,16 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 //			mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
 //			mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
 //		}else{
-			mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_1);
-			mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_1);
+		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_1);
+		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_1);
 //		}
 
 //		mBmbController.setPiecePlaceEnum(PiecePlaceEnum.DOT_2_1);
 //		mBmbController.setButtonPlaceEnum(ButtonPlaceEnum.SC_2_1);
 
-		int[] normalColor=new int[]{Color.parseColor("#4CAF50"),Color.parseColor("#ff0000")};//设置子控件的颜色
-		int[] highLightedColor=new int[]{Color.parseColor("#70bf73"),Color.parseColor("#ff5c5c")};//设置子控件点击后的背景颜色
-		int[] res=new int[]{R.mipmap.ic_controller_connect,R.mipmap.ic_controller_disconnect};//设置子控件的背景的图片
+		int[] normalColor = new int[]{Color.parseColor("#4CAF50"), Color.parseColor("#ff0000")};//设置子控件的颜色
+		int[] highLightedColor = new int[]{Color.parseColor("#70bf73"), Color.parseColor("#ff5c5c")};//设置子控件点击后的背景颜色
+		int[] res = new int[]{R.mipmap.ic_controller_connect, R.mipmap.ic_controller_disconnect};//设置子控件的背景的图片
 
 
 		//Boom事件响应的顺序onBoomWillShow，onBoomDidShow，onClicked[onBackgroundClick],onBoomWillHide,onBoomDidHide
@@ -335,7 +342,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 			@Override
 			public void onBoomDidHide() {
-				isBoomShowing=false;
+				isBoomShowing = false;
 //				Toast.makeText(MainActivity.this,"onBoomDidHide",Toast.LENGTH_LONG).show();
 			}
 
@@ -346,7 +353,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 			@Override
 			public void onBoomDidShow() {
-				isBoomShowing=true;
+				isBoomShowing = true;
 //				Toast.makeText(MainActivity.this,"onBoomDidShow",Toast.LENGTH_LONG).show();
 			}
 		});
@@ -357,22 +364,22 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			int width = mBitmap.getWidth();
 			int height = mBitmap.getHeight();
 
-			int left= (int) (Math.max(width,height)-Math.floor(width/2));
-			int top=(int) (Math.max(width,height)-Math.floor(height/2));
-			int right=(int) (Math.max(width,height)+Math.floor(width/2));
-			int bottom=(int) (Math.max(width,height)+Math.floor(height/2));
+			int left = (int) (Math.max(width, height) - Math.floor(width / 2));
+			int top = (int) (Math.max(width, height) - Math.floor(height / 2));
+			int right = (int) (Math.max(width, height) + Math.floor(width / 2));
+			int bottom = (int) (Math.max(width, height) + Math.floor(height / 2));
 			TextOutsideCircleButton.Builder builder = new TextOutsideCircleButton.Builder()
 					.listener(new OnBMClickListener() {
 						@Override
 						public void onBoomButtonClick(int index) {
-							switch (index){
+							switch (index) {
 								case 0:
-									startActivity(new Intent(MainActivity.this,DeviceScanActivity.class));
+									startActivity(new Intent(MainActivity.this, DeviceScanActivity.class));
 									break;
 								case 1:
 									//断开蓝牙的连接
-									synchronized (HomeFragment.getBluetoothLeService()){
-										byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,2,0,0,0,0,0,0,0,0,2};
+									synchronized (HomeFragment.getBluetoothLeService()) {
+										byte[] init = new byte[]{(byte) 0xFA, (byte) 0xFB, 2, 0, 0, 0, 0, 0, 0, 0, 0, 2};
 										HomeFragment.getBluetoothLeService().WriteValue(init);
 										HomeFragment.getBluetoothLeService().disconnect();
 									}
@@ -382,7 +389,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 					})
 					.normalImageRes(res[i])
 					.textSize(15)
-					.buttonRadius(Math.max(width,height))
+					.buttonRadius(Math.max(width, height))
 					.normalColor(normalColor[i])
 					.highlightedColor(highLightedColor[i])
 					.imageRect(new Rect(left, top, right, bottom))//通过此方法来设置图片的位置
@@ -394,7 +401,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	}
 
 
-	public static boolean getIsBoomOff(){
+	public static boolean getIsBoomOff() {
 		return isBoomOff;
 	}
 
@@ -404,28 +411,28 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 	}
 
 	private void initFragment() {
-		if (homeFragment==null){
+		if (homeFragment == null) {
 			homeFragment = new HomeFragment();
 		}
-		if (recordFragment==null){
-			recordFragment=new RecordFragment();
+		if (recordFragment == null) {
+			recordFragment = new RecordFragment();
 		}
-		if (shareFragment==null){
-			shareFragment=new ShareFragment();
+		if (shareFragment == null) {
+			shareFragment = new ShareFragment();
 		}
-		if (settingFragment==null){
-			settingFragment=new SettingFragment();
+		if (settingFragment == null) {
+			settingFragment = new SettingFragment();
 		}
 
 
-		mFragments=new ArrayList<>();
+		mFragments = new ArrayList<>();
 		mFragments.add(homeFragment);
 		mFragments.add(recordFragment);
 		mFragments.add(shareFragment);
 		mFragments.add(settingFragment);
-		
+
 		//开始事务
-		FragmentTransaction transaction=getSupportFragmentManager().beginTransaction();
+		FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
 		transaction.add(R.id.fl_content, homeFragment).commit();
 		//默认设置为第0个
 		setIndexSelected(0);
@@ -456,7 +463,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 			} else {
 				ToastUtil.cancelToast();
 
-				if (homeFragment!=null){
+				if (homeFragment != null) {
 					homeFragment.disConnect();
 					homeFragment.disableBlueTooth();
 				}
@@ -464,7 +471,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 				//当退出程序的时候，关闭蓝牙扫描服务
 
 				//关闭蓝牙
-				if (mBluetoothLEAdapter != null&&mBluetoothLEAdapter.isEnabled()) {
+				if (mBluetoothLEAdapter != null && mBluetoothLEAdapter.isEnabled()) {
 					mBluetoothLEAdapter.disable();
 				}
 
@@ -481,7 +488,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 	public void setIndexSelected(int index) {//TODO 重新优化方法
 
-		switch (index){
+		switch (index) {
 			case 0:
 				rbHome.setChecked(true);
 				break;
@@ -497,40 +504,41 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
 		}
 
-		if (mIndex==index){
+		if (mIndex == index) {
 			return;
 		}
-		FragmentManager fragmentManager=getSupportFragmentManager();
-		FragmentTransaction ft=fragmentManager.beginTransaction();
-		if (index==1){
-			recordFragment=null;
-			recordFragment=new RecordFragment();
-			mFragments.set(index,recordFragment);
+		FragmentManager fragmentManager = getSupportFragmentManager();
+		FragmentTransaction ft = fragmentManager.beginTransaction();
+		if (index == 1) {
+			recordFragment = null;
+			recordFragment = new RecordFragment();
+			mFragments.set(index, recordFragment);
 		}
 
-		if (index==3){
+		if (index == 3) {
 			//
 		}
 
 		//隐藏
 		ft.hide(mFragments.get(mIndex));
 		//判断是否添加
-		if (!mFragments.get(index).isAdded()){
-			ft.add(R.id.fl_content,mFragments.get(index)).show(mFragments.get(index));
-		}else{
+		if (!mFragments.get(index).isAdded()) {
+			ft.add(R.id.fl_content, mFragments.get(index)).show(mFragments.get(index));
+		} else {
 			ft.show(mFragments.get(index));
 		}
 		ft.commit();
 		//再次赋值
-		mIndex=index;
+		mIndex = index;
 	}
 
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		super.onActivityResult(requestCode, resultCode, data);
-		setIndexSelected(0);//当从搜索界面连接成功后跳回主页面
-		if (resultCode==RESULT_OK&&homeFragment!=null){
-			homeFragment.onActivityResult(requestCode,resultCode,data);
+		if (resultCode == RESULT_OK && homeFragment != null) {
+			LogUtil.i(TAG, "从RunningActivity中返回的");
+			setIndexSelected(0);//当从搜索界面连接成功后跳回主页面
+			homeFragment.onActivityResult(requestCode, resultCode, data);
 		}
 	}
 

@@ -10,6 +10,8 @@ public class Constants {
 
 	public static final String USED_ELE="used_ele";
 
+	public static final String RUNNING_CONNECT_STATUS="running_connect_status";
+
 	public static final String MATCH_DEVICE_NAME="USR-BLE101";
 
 	public static final String NOTIFY_CHARACTERISTIC_UUID="0003cdd1-0000-1000-8000-00805f9b0131";
@@ -23,7 +25,7 @@ public class Constants {
 
 	public static final String RECEIVE_BLUETOOTH_INFO="receive_bluetooth_info";
 	public static final String RECEIVE_CURRENT_TEMP="receive_current_temp";
-	public static final String RECEIVE_CURRENT_ELE="receive_current_ele";
+	public static final String RECEIVE_CURRENT_VOLTAGE ="receive_current_ele";
 
 	public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
 	public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";

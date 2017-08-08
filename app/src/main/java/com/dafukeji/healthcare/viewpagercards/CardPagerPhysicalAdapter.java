@@ -95,7 +95,7 @@ public class CardPagerPhysicalAdapter extends PagerAdapter implements CardAdapte
 				spnKneadType.setAdapter(adapter10);
 				spnKneadType.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_KNEAD_TYPE,mContext)){
-					spnKneadType.setSelection(CureSPUtil.getSP(Constants.SP_KNEAD_TYPE,mContext));
+					spnKneadType.setSelection(CureSPUtil.getSP(Constants.SP_KNEAD_TYPE,mContext)-1);
 				}
 
 				spnKneadGrade = (Spinner) mView.findViewById(R.id.spn_knead_grade);
@@ -103,7 +103,7 @@ public class CardPagerPhysicalAdapter extends PagerAdapter implements CardAdapte
 				spnKneadGrade.setAdapter(adapter11);
 				spnKneadGrade.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE,mContext)){
-					spnKneadGrade.setSelection(CureSPUtil.getSP(Constants.SP_KNEAD_GRADE,mContext));
+					spnKneadGrade.setSelection(CureSPUtil.getSP(Constants.SP_KNEAD_GRADE,mContext)-1);
 				}
 
 				spnKneadFrequency = (Spinner) mView.findViewById(R.id.spn_knead_frequency);
@@ -111,7 +111,7 @@ public class CardPagerPhysicalAdapter extends PagerAdapter implements CardAdapte
 				spnKneadFrequency.setAdapter(adapter12);
 				spnKneadFrequency.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_KNEAD_FREQUENCY,mContext)){
-					spnKneadFrequency.setSelection(CureSPUtil.getSP(Constants.SP_KNEAD_FREQUENCY,mContext));
+					spnKneadFrequency.setSelection(CureSPUtil.getSP(Constants.SP_KNEAD_FREQUENCY,mContext)-1);
 				}
 
 				spnKneadTimeGrade = (Spinner) mView.findViewById(R.id.spn_knead_time_grade);
@@ -119,7 +119,7 @@ public class CardPagerPhysicalAdapter extends PagerAdapter implements CardAdapte
 				spnKneadTimeGrade.setAdapter(adapter13);
 				spnKneadTimeGrade.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_KNEAD_TIME_GRADE,mContext)){
-					spnKneadTimeGrade.setSelection(CureSPUtil.getSP(Constants.SP_KNEAD_TIME_GRADE,mContext));
+					spnKneadTimeGrade.setSelection(CureSPUtil.getSP(Constants.SP_KNEAD_TIME_GRADE,mContext)-1);
 				}
 
 				scStimulate= (SwitchCompat) mView.findViewById(R.id.switch_stimulate_knead);
@@ -158,6 +158,7 @@ public class CardPagerPhysicalAdapter extends PagerAdapter implements CardAdapte
 
 	@Override
 	public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+		position=position+1;
 		switch (parent.getId()){
 			case R.id.spn_knead_type:
 				CureSPUtil.setSP(Constants.SP_KNEAD_TYPE,position,mContext);//0表示无，+1;

@@ -40,4 +40,20 @@ public class TimeUtil {
 
 		return time;
 	}
+
+	public static String getTimeString(int time){
+		String strTime;
+		if (time>=60){
+			if (time%60>9){
+				strTime=(Math.floor(time/60))+"′"+(time%60)+"′"+"00″";
+			}else{
+				strTime=(Math.floor(time/60))+"′"+"0"+(time%60)+"′"+"00″";
+			}
+
+		}else {
+			strTime=time>9?time+"′"+"00″":"0"+time+"′"+"00″";
+		}
+
+		return strTime;
+	}
 }

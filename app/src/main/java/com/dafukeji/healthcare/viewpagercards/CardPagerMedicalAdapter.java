@@ -101,7 +101,7 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 				spnCauterizeGrade.setOnItemSelectedListener(this);
 
 				if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_GRADE,mContext)) {
-					spnCauterizeGrade.setSelection(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE,mContext));
+					spnCauterizeGrade.setSelection(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE,mContext)-1);
 				}
 
 				spnCauterizeTimeGrade = (Spinner) mView.findViewById(R.id.spn_cauterize_time_grade);
@@ -109,7 +109,7 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 				spnCauterizeTimeGrade.setAdapter(adapter01);
 				spnCauterizeTimeGrade.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_TIME_GRADE,mContext)) {
-					spnCauterizeTimeGrade.setSelection(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE,mContext));
+					spnCauterizeTimeGrade.setSelection(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE,mContext)-1);
 				}
 
 				scStimulate = (SwitchCompat) mView.findViewById(R.id.switch_stimulate);
@@ -133,7 +133,7 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 				spnNeedleType.setAdapter(adapter1);
 				spnNeedleType.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_NEEDLE_TYPE,mContext)) {
-					spnNeedleType.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE,mContext));
+					spnNeedleType.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE,mContext)-1);
 				}
 
 				spnNeedleGrade = (Spinner) mView.findViewById(R.id.spn_needle_grade);
@@ -141,7 +141,7 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 				spnNeedleGrade.setAdapter(adapter11);
 				spnNeedleGrade.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE,mContext)) {
-					spnNeedleGrade.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE,mContext));
+					spnNeedleGrade.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE,mContext)-1);
 				}
 
 				spnNeedleFrequency = (Spinner) mView.findViewById(R.id.spn_needle_frequency);
@@ -149,7 +149,7 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 				spnNeedleFrequency.setAdapter(adapter12);
 				spnNeedleFrequency.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_NEEDLE_FREQUENCY,mContext)) {
-					spnNeedleFrequency.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY,mContext));
+					spnNeedleFrequency.setSelection(CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY,mContext)-1);
 				}
 
 				break;
@@ -161,7 +161,7 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 				spnMedicineTimeGrade.setAdapter(adapter3);
 				spnMedicineTimeGrade.setOnItemSelectedListener(this);
 				if (CureSPUtil.isSaved(Constants.SP_MEDICINE_TIME_GRADE,mContext)) {
-					spnMedicineTimeGrade.setSelection(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE,mContext));
+					spnMedicineTimeGrade.setSelection(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE,mContext)-1);
 				}
 
 				break;
@@ -183,6 +183,8 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 
 	@Override
 	public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+		position=position+1;
+		LogUtil.i(TAG,"选的的位置position+1"+position);
 		switch (parent.getId()) {
 			case R.id.spn_cauterize_grade:
 				CureSPUtil.setSP(Constants.SP_CAUTERIZE_GRADE, position,mContext);
@@ -203,6 +205,7 @@ public class CardPagerMedicalAdapter extends PagerAdapter implements CardAdapter
 
 			case R.id.spn_medical_time_grade:
 				CureSPUtil.setSP(Constants.SP_MEDICINE_TIME_GRADE, position,mContext);
+				break;
 		}
 	}
 

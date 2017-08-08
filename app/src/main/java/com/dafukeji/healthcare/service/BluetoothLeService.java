@@ -34,6 +34,7 @@ import android.util.Log;
 
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.constants.GattAttributes;
+import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 
@@ -90,12 +91,16 @@ public class BluetoothLeService extends Service {
         LogUtil.i(TAG, "WriteValue: bytesValue"+ Arrays.toString(bytesValue));
         mWriteCharacteristic.setValue(bytesValue);
         LogUtil.i(TAG, "WriteValue: getValue"+Arrays.toString(mWriteCharacteristic.getValue()));
-        mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+        if (mBluetoothGatt!=null) {
+            mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
+        }
     }
 
     public void WriteValue(byte[] bytesValue,BluetoothGattCharacteristic write) {
         mWriteCharacteristic.setValue(bytesValue);
-        mBluetoothGatt.writeCharacteristic(write);
+        if (mBluetoothGatt!=null) {
+            mBluetoothGatt.writeCharacteristic(write);
+        }
     }
 
     public void findService(List<BluetoothGattService> gattServices) {
@@ -125,7 +130,7 @@ public class BluetoothLeService extends Service {
                         }
 
                     }
-                    
+
                     if(gattCharacteristic.getUuid().toString().equalsIgnoreCase(UUID_WRITE.toString())) {
                         LogUtil.i(TAG, gattCharacteristic.getUuid().toString());
                         LogUtil.i(TAG, UUID_NOTIFY.toString());
@@ -157,6 +162,11 @@ public class BluetoothLeService extends Service {
                     intentAction = ACTION_GATT_CONNECTED;
 
                     broadcastUpdate(intentAction);
+
+	                //连接成功时需要将电量计算的数据初始化
+	                mEleSum=0;
+                    mDataCount=0;
+
                     LogUtil.i(TAG, "Connected to GATT server.");
                     // Attempts to discover services after successful connection.
                     Log.i(TAG, "Attempting to start service discovery:" +
@@ -169,9 +179,10 @@ public class BluetoothLeService extends Service {
                     mBluetoothGatt.close();
                     mBluetoothGatt = null;
                     LogUtil.i(TAG, "Disconnected from GATT server.");
+
                     broadcastUpdate(intentAction);
 //                }
-            }
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -196,6 +207,7 @@ public class BluetoothLeService extends Service {
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
+
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             }
 
@@ -271,8 +283,9 @@ public class BluetoothLeService extends Service {
             //    stringBuilder.append(String.format("%02X ", byteChar));
             //intent.putExtra(EXTRA_DATA, new String(data) + "\n" + stringBuilder.toString());
 
+            LogUtil.i(TAG,"BluetoothLeService中收到的数据:"+Arrays.toString(data));
             /*==在此进行校正，那么其他地方则可不再使用此方法==*/
-            boolean crcIsRight= ConvertUtils.CommonUtils.IsCRCRight(data);
+            boolean crcIsRight= CommonUtils.IsCRCRight(data);
             if (!crcIsRight){
                 //误码纠正
                 if (data.length > 13) {
@@ -280,7 +293,7 @@ public class BluetoothLeService extends Service {
                     System.arraycopy(data, 13, frontData, 0, frontData.length);
                     LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
                     data = Arrays.copyOfRange(data, 0, 13);
-                    if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
+                    if (!CommonUtils.IsCRCRight(data)) {
                         return;
                     }
                     LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
@@ -291,7 +304,7 @@ public class BluetoothLeService extends Service {
                         System.arraycopy(data, 0, wholeData, frontData.length, data.length);
                         data = wholeData;
                         LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
-                        if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
+                        if (!CommonUtils.IsCRCRight(data)) {
                             return;
                         }
                         wholeData = null;
@@ -313,6 +326,7 @@ public class BluetoothLeService extends Service {
                 mPreTime=mCurTime;
             }
 
+            LogUtil.i(TAG,"在蓝牙服务里的消耗电量："+mEleSum);
             intent.putExtra(Constants.USED_ELE,mEleSum);
 
              /*==在此进行校正，那么其他地方则可不再使用此方法==*/
@@ -446,9 +460,11 @@ public class BluetoothLeService extends Service {
 
             if (mConnectionState==STATE_CONNECTED){
                 mBluetoothGatt.disconnect();
-                close();
+                //close();
             }
+            close();
         }
+
 
 
     /**

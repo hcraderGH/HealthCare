@@ -2,6 +2,7 @@ package com.dafukeji.healthcare.ui;
 
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -36,6 +37,7 @@ import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.util.ColorArcProgressBar;
 import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
+import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.TimeUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
@@ -46,8 +48,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import de.greenrobot.dao.InternalUnitTestDaoAccess;
-import lecho.lib.hellocharts.formatter.AxisValueFormatter;
 import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
 import lecho.lib.hellocharts.model.Axis;
 import lecho.lib.hellocharts.model.AxisValue;
@@ -62,12 +62,13 @@ import lecho.lib.hellocharts.view.LineChartView;
  * Created by DevCheng on 2017/4/21.
  */
 
-public class RunningActivity extends BaseActivity implements View.OnClickListener {
+public class RunningActivity_bak extends BaseActivity implements View.OnClickListener {
 
 	private BluetoothAdapter mBluetoothLEAdapter;
 	private String mDeviceName;
 	private String mDeviceAddress;
 	private BluetoothLeService mBluetoothLeService;
+	private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics = new ArrayList<>();
 	private boolean mConnected = false;
 
 	private long mRunningTime = 0;
@@ -76,7 +77,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private Toolbar mToolbar;
 	private ImageView mIvAgain, mIvSpace, mIvOver;
 	private ImageView mIvBack;
-	private TextView mTvCurrentTemp, mTvReminderTime, mTvToolbarTitle, mTvReminderEle;
+	private TextView mTvCurrentTemp, mTvReminderTime, mTvToolbarTitle,mTvReminderEle;
 	private ColorArcProgressBar mColorArcProgressBar;
 
 	private boolean isOver = false;
@@ -88,7 +89,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	/*=========== 配置命令相关 ===========*/
 	private LinearLayout llCauterize;
-	private TextView tvCauterizeGrade, tvNeedleGrade, tvNeedleFrequency;
+	private TextView tvCauterizeGrade,tvNeedleGrade,tvNeedleRequency;
 
 	/*=========== 控件相关 ==========*/
 	private LineChartView mLineChartView;               //线性图表控件
@@ -97,17 +98,15 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private LineChartData mLineChartData;               //图表数据
 	private int numberOfLines = 1;                      //图上折线/曲线的显示条数
 	private int maxNumberOfLines = 4;                   //图上折线/曲线的最多条数
-	private int numberOfPoints = 16;                    //图上的节点数
+	private int numberOfPoints = 12;                    //图上的节点数
 
-	private int mXDisplayCount =18;//X轴显示的适配个数，适合6个
+	private int mXDisplayCount = 6;//X轴显示的适配个数
 
 	/*=========== 其他相关 ==========*/
 	private ValueShape pointsShape = ValueShape.CIRCLE; //点的形状(圆/方/菱形)
 	float[][] randomNumbersTab = new float[maxNumberOfLines][numberOfPoints]; //将线上的点放在一个数组中
 
-
 	private int dataCount = 0;//接受到的数据的个数
-	private int intervalCount;
 	private List<PointValue> mPointValueList = new ArrayList<>();
 	private List<Line> mLinesList = new ArrayList<>();
 	private List<AxisValue> mAxisValues = new ArrayList<>();
@@ -141,8 +140,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private boolean mSendStopCmdFlag;
 	private boolean mSendAgainCmdFlag;
+
+
+	private byte[] frontData;
+	private byte[] wholeData;
 	private byte[] configSetting;
-	private byte[] configSettingWithoutStimulate;
 
 	//电量相关
 	private long mEleSum;
@@ -159,14 +161,12 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 		mOriginalTime = (long) (getIntent().getIntExtra(Constants.ORIGINAL_TIME, 0) * 60 * 1000);//获取的是int类型的分钟数，则需要强转
 		LogUtil.i(TAG, "onCreate: mOriginalTime" + mOriginalTime);
-		configSetting = getIntent().getByteArrayExtra(Constants.SETTING);
+		configSetting=getIntent().getByteArrayExtra(Constants.SETTING);
 
 		//获取运行时的时间
 		mStartTime = System.currentTimeMillis();
 
-		insertPoint(mStartTime, ConvertUtils.byte2unsignedInt(configSetting[3]));//开始时的温度点
-
-		mBluetoothLeService = HomeFragment.getBluetoothLeService();
+		mBluetoothLeService=HomeFragment.getBluetoothLeService();
 
 		initViews();
 
@@ -179,9 +179,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 							mColorArcProgressBar.setCurrentValues((float) Math.floor((mRunningTime * 100 / mOriginalTime)));
 						}
 						String[] remindTime = TimeUtil.getSubtractedString(mOriginalTime, mRunningTime);
-						if (remindTime[0].equals("00")) {
+						if(remindTime[0].equals("00")){
 							mTvReminderTime.setText(remindTime[1] + "′" + remindTime[2] + "″");
-						} else {
+						}else{
 							mTvReminderTime.setText(remindTime[0] + "′" + remindTime[1] + "′" + remindTime[2] + "″");
 						}
 
@@ -191,9 +191,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 //						mTvReminderTime.setText("00′00′00″");
 						mTvReminderTime.setText("00′00″");
 						isOver = true;
-
-						mLineChartView.setInteractive(true);
-
 						stopTimer();
 						sendStopSettingData();//为了防止与设备之间疗程时间的不同步，在此直接结束疗程
 						saveData();//保存数据
@@ -203,7 +200,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 					case 2://接受温度和电量
 						mTvCurrentTemp.setText(msg.arg1 + "℃");
-						mTvReminderEle.setText(CommonUtils.getOptimizePerEle(msg.arg2) + "%");
+						mTvReminderEle.setText(CommonUtils.getOptimizePerEle(msg.arg2)+"%");
 						break;
 
 					case 3://显示图表
@@ -231,42 +228,28 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 		startConfigTimer();
 		new Thread(new MyThread()).start();
-
-		setResult(RESULT_OK);
 	}
 
 	private void initViews() {
 
 		/*=========配置命令相关=========*/
-		llCauterize = (LinearLayout) findViewById(R.id.ll_cauterize);
-		tvCauterizeGrade = (TextView) findViewById(R.id.tv_running_cauterize_grade);
-		tvNeedleGrade = (TextView) findViewById(R.id.tv_running_needle_grade);
-		tvNeedleFrequency = (TextView) findViewById(R.id.tv_running_needle_frequency);
-		if (mCureType == 1) {
+		llCauterize= (LinearLayout) findViewById(R.id.ll_cauterize);
+		tvCauterizeGrade=(TextView)findViewById(R.id.tv_running_cauterize_grade);
+		tvNeedleGrade=(TextView)findViewById(R.id.tv_running_needle_grade);
+		tvNeedleRequency=(TextView)findViewById(R.id.tv_running_needle_frequency);
+		if (mCureType==1){
 			llCauterize.setVisibility(View.VISIBLE);
 			tvCauterizeGrade.setText(getCauterizeGrade(configSetting[5]));
-		} else {
+		}else{
 			llCauterize.setVisibility(View.GONE);
 		}
-
-		//根据是否设置了强刺激来对档位进行处理
-		if (configSetting[3]!=0||configSetting[4]!=0){
-			tvNeedleGrade.setText((configSetting[8]-2) + "档");//档位是从1开始的
-			tvNeedleFrequency.setText((configSetting[9]-2) + "档");
-		}else{
-			tvNeedleGrade.setText((configSetting[8]) + "档");//档位是从1开始的
-			tvNeedleFrequency.setText((configSetting[9]) + "档");
-		}
+		tvNeedleGrade.setText((configSetting[8]+1)+"档");//档位是从0开始的，显示是从1开始的
+		tvNeedleRequency.setText((configSetting[9]+1)+"档");
 
 
 		mTvCurrentTemp = (TextView) findViewById(R.id.tv_current_temp);
-		mTvCurrentTemp.setText(getIntent().getIntExtra(Constants.CURRENT_TEMP, 0) + "℃");
-
 		mTvReminderTime = (TextView) findViewById(R.id.tv_reminder_time);
-		mTvReminderTime.setText(TimeUtil.getTimeString(configSetting[6]+configSetting[10]));
-
-		mTvReminderEle = (TextView) findViewById(R.id.tv_reminder_ele);
-		mTvReminderEle.setText(Battery.REMINDER_PER_ELE+"%");
+		mTvReminderEle= (TextView) findViewById(R.id.tv_reminder_ele);
 
 		mTvToolbarTitle = (TextView) findViewById(R.id.tv_toolbar_title);
 		mTvToolbarTitle.setText(getCureTypeString(mCureType));
@@ -293,27 +276,29 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		mLineChartView.setViewportCalculationEnabled(false);
 		mLineChartView.setOnValueTouchListener(new ValueTouchListener());
 
-		dynamicDataDisplay(getIntent().getLongExtra(Constants.CURRENT_TIME, 0),0);
+
+		LogUtil.i(TAG, "接受到的温度：" + getIntent().getIntExtra(Constants.CURRENT_TEMP, 0));
+		dynamicDataDisplay(getIntent().getLongExtra(Constants.CURRENT_TIME, 0), getIntent().getIntExtra(Constants.CURRENT_TEMP, 0));
 	}
 
 
 	/**
 	 * 根据setting中的灸的温度判断档位
 	 */
-	private String getCauterizeGrade(int temp) {
+	private String getCauterizeGrade(int temp){
 		String grade = null;
-		switch (temp) {
-			case 39+2:
-				grade = "微热";
+		switch (temp){
+			case 39:
+				grade="微热";
 				break;
-			case 42+2:
-				grade = "热";
+			case 42:
+				grade="热";
 				break;
-			case 45+2:
-				grade = "很热";
+			case 45:
+				grade="很热";
 				break;
-			case 48+2:
-				grade = "灼热";
+			case 48:
+				grade="灼热";
 				break;
 		}
 		return grade;
@@ -370,10 +355,11 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						mCure = new Cure();
 						mCure.setCureType(mCureType);
 //						mCure.setStartTime(mStartTime);
-						mCure.setStartTime(mStopTime - mRunningTime);//防止不准确采取的方法
+						mCure.setStartTime(mStopTime-mRunningTime);//防止不准确采取的方法
 						mCure.setStopTime(mStopTime);
 						mCureId = mCureDao.insert(mCure);
 
+						LogUtil.i(TAG, "当点击again时mCureID会改变" + mCureId);
 					}
 
 					for (int i = 0; i < points.size(); i++) {
@@ -391,7 +377,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		@Override
 		public void run() {
 			try {
-				while (true) {
+				while (true){
 					Thread.sleep(1000);
 					mRunningTime = mRunningTime + 1000;
 					Message msg = Message.obtain();
@@ -414,124 +400,100 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private static Timer mTimer;
 	private static TimerTask mTimerTask;
 	private int retrySensorCount;
-	private int mSendConfigCount;
-	private boolean isConfigReceived = false;
+	private boolean isConfigReceived =false;
 	private long mSendSensorTime;
-
-	private void startConfigTimer() {
-		if (mTimer == null) {
-			mTimer = new Timer();
+	private void startConfigTimer(){
+		if (mTimer==null){
+			mTimer=new Timer();
 		}
-		if (mTimerTask == null) {
-			mTimerTask = new TimerTask() {
+		if (mTimerTask==null){
+			mTimerTask=new TimerTask() {
 				@Override
 				public void run() {
-					if (!isConfigReceived) {
-						if (retrySensorCount >= 6) {
-							disconnected();
-							return;
-						} else {
-							retrySensorCount++;
-						}
-					} else {
-						retrySensorCount = 0;
-					}
+					if (!isConfigReceived){
+						if (retrySensorCount>=6) {
+							Intent intent=new Intent();
+							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
+							intent.setAction(Constants.RECEIVE_GATT_STATUS);
+							sendBroadcast(intent);
+							runOnUiThread(new Runnable() {
+								@Override
+								public void run() {
+									AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity_bak.this)
+											.setMessage("已断开连接，请重新连接")
+											.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+												@Override
+												public void onClick(DialogInterface dialog, int which) {
+//													saveData();//需要在此保存数据 TODO PRIMARY KEY must be unique (code 19)
+													dialog.dismiss();
 
-					//根据是否设置了强刺激来进行发送不同的配置领命
-					mSendSensorTime = System.currentTimeMillis();
-					isConfigReceived = false;
-					mSendConfigCount++;
-					if (configSetting[3]!=0||configSetting[4]!=0) {
-						if (mSendConfigCount<=450){
-							if (mBluetoothLeService!=null) {
-								mBluetoothLeService.WriteValue(configSetting);
-							}
+													sendEle();
+													finish();
+												}
+											});
+									builder.setCancelable(false);
+									builder.create().show();
+								}
+							});
+							stopTimer();
+
 						}else{
-
-							configSettingWithoutStimulate =configSetting;
-							configSettingWithoutStimulate[11]= (byte) (configSettingWithoutStimulate[11]
-									- configSettingWithoutStimulate[3]- configSettingWithoutStimulate[4]-2-2);//记得校验核改变
-							configSettingWithoutStimulate[3]=0;
-							configSettingWithoutStimulate[4]=0;
-							configSettingWithoutStimulate[8]-=2;
-							configSettingWithoutStimulate[9]-=2;
-
-							mBluetoothLeService.WriteValue(configSettingWithoutStimulate);
+							retrySensorCount++;
+							mSendSensorTime =System.currentTimeMillis();
+							isConfigReceived =false;
+							mBluetoothLeService.WriteValue(configSetting);
 						}
 					}else{
+						retrySensorCount=0;
+						mSendSensorTime =System.currentTimeMillis();
+						isConfigReceived =false;
 						mBluetoothLeService.WriteValue(configSetting);
 					}
+
 				}
 			};
 		}
-		if (mTimer != null && mTimerTask != null) {
-			mTimer.schedule(mTimerTask, 0, 400);
+		if (mTimer!=null&&mTimerTask!=null){
+			mTimer.schedule(mTimerTask,0,400);
 		}
 	}
 
-
-	/**
-	 * 设备意外断开时，处于断开状态
-	 */
-	private void disconnected(){
-		stopTimer();
-		Intent intent = new Intent();
-		intent.putExtra(Constants.EXTRAS_GATT_STATUS, false);
-		intent.setAction(Constants.RECEIVE_GATT_STATUS);
-		sendBroadcast(intent);
-		runOnUiThread(new Runnable() {
-			@Override
-			public void run() {
-				AlertDialog.Builder builder = new AlertDialog.Builder(RunningActivity.this)
-						.setMessage("已断开连接，请重新连接")
-						.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-							@Override
-							public void onClick(DialogInterface dialog, int which) {
-//													saveData();//需要在此保存数据 TODO PRIMARY KEY must be unique (code 19)
-
-								if (mBluetoothLeService!=null){
-									mBluetoothLeService.disconnect();
-								}
-								dialog.dismiss();
-								stopTimer();
-								finish();
-							}
-						});
-				builder.setCancelable(false);
-				builder.create().show();
-			}
-		});
-	}
 
 	private int retryStopCount;
 	private boolean isStopReceived;
-
-	private void startStopTimer() {
-		if (mTimer == null) {
-			mTimer = new Timer();
+	private void startStopTimer(){
+		if (mTimer==null){
+			mTimer=new Timer();
 		}
-		if (mTimerTask == null) {
-			mTimerTask = new TimerTask() {
+		if (mTimerTask==null){
+			mTimerTask=new TimerTask() {
 				@Override
 				public void run() {
-					if (!isStopReceived) {
-						if (retryStopCount >= 2) {//TODO 发2底层没有应答
-//							disconnected();//没有应答则不能在此处使用此方法
+					if (!isStopReceived){
+
+						if (retryStopCount>=2) {//TODO 发2底层没有应答
+
+							sendEle();
 							finish();
-						} else {
+							stopTimer();
+
+						}else{
 							retryStopCount++;
-							if (mSendStopCmdFlag) {
+							isStopReceived =false;
+							if (mSendStopCmdFlag){
 								sendStopSettingData();
 							}
+
+							if (mSendAgainCmdFlag){
+								sendAgainSettingData();
+							}
 						}
-					}else{
-						retryStopCount=0;
 					}
 				}
 			};
 		}
-		if (mTimer != null && mTimerTask != null) {
-			mTimer.schedule(mTimerTask, 0, 400);
+		if (mTimer!=null&&mTimerTask!=null){
+			mTimer.schedule(mTimerTask,0,400);
 		}
 	}
 
@@ -584,72 +546,113 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
 
-					if (mSendStopCmdFlag) {
-						if (data[2] == 2) {
-							retryStopCount = 0;
-							isStopReceived = true;
+					//TODO 接收数据处理
+					//当校验码前面的数据相加不等于校验码时表示数据错误
+					boolean crcIsRight = CommonUtils.IsCRCRight(data);
+					if (!crcIsRight) {
+						//误码纠正
+						if (data.length > 13) {
+							frontData = new byte[data.length - 13];
+							System.arraycopy(data, 13, frontData, 0, frontData.length);
+							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
+							data = Arrays.copyOfRange(data, 0, 13);
+							if (!CommonUtils.IsCRCRight(data)) {
+								return;
+							}
+							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
+						} else if (data.length < 13) {
+							wholeData = new byte[13];
+							if (frontData != null) {
+								System.arraycopy(frontData, 0, wholeData, 0, frontData.length);
+								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
+								data = wholeData;
+								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
+								if (!CommonUtils.IsCRCRight(data)) {
+									return;
+								}
+								wholeData = null;
+								frontData = null;
+							} else {
+								return;
+							}
+						} else {//data.length==11
+
+						}
+					}
+
+					if (mSendAgainCmdFlag) {
+						if (data[2]==configSetting[2]){
 							stopTimer();
-							mSendStopCmdFlag = false;
+							startConfigTimer();
+							mSendAgainCmdFlag=false;
+						}
+					}
+
+					if (mSendStopCmdFlag){
+						if (data[2]==2){
+							retryStopCount=0;
+							isStopReceived=true;
+							stopTimer();
+							mSendStopCmdFlag=false;
+							sendEle();
 							finish();
 						}
 					}
 
-					if (data[2] == configSetting[2]) {
+					if (data[2]==configSetting[2]) {
 
 						mReceiveDataCount++;
 
 						//目前只计算正常运行时使用的电量
-						if (mReceiveDataCount == 1) {
-							mPreDataTime = System.currentTimeMillis();
-						} else {
-							mCurDataTime = System.currentTimeMillis();
-							mEleSum += (mCurDataTime - mPreDataTime) * getEle(data[8], data[9]);
-							mPreDataTime = mCurDataTime;
-							LogUtil.i(TAG, "运行时消耗的电量：" + mEleSum);
+						if (mReceiveDataCount==1){
+							mPreDataTime=System.currentTimeMillis();
+						}else {
+							mCurDataTime=System.currentTimeMillis();
+							mEleSum+=(mCurDataTime-mPreDataTime)*getEle(data[8],data[9]);
+							mPreDataTime=mCurDataTime;
+							LogUtil.i(TAG,"运行时消耗的电量："+mEleSum);
 						}
 
-						isConfigReceived = true;
+						isConfigReceived =true;
 						int temp;
-						mSum = mSum + ConvertUtils.byte2unsignedInt(data[3]);//10个数据的平均值作为一个显示数据
+						mSum = mSum + ConvertUtils.byte2unsignedInt(data[3]);//11个数据的平均值作为一个显示数据
 
-						mCurrentTime = System.currentTimeMillis();
-						if (mReceiveDataCount%10==0){
-							//实时点温度
-							temp=ConvertUtils.byte2unsignedInt(data[3]);
+						if (mReceiveDataCount % 11 == 0 || mReceiveDataCount == 1) {
+							mCurrentTime = System.currentTimeMillis();
+							if (mReceiveDataCount == 1) {
+								insertPoint(mCurrentTime, (int) Math.floor(mSum));
+								temp = (int) Math.floor(mSum);
+							} else {
+								insertPoint(mCurrentTime, (int) Math.floor(mSum / 11));
+								temp = (int) Math.floor(mSum / 11);//无符号位转换
+
+								mSum = 0;
+							}
 
 							Message msg = Message.obtain();
 							msg.what = 2;
 							msg.arg1 = temp;
-							msg.arg2 = (int) Math.ceil((CommonUtils.eleFormula(Battery.ORIGINAL_VOLTAGE) * 3600 * 300 * 10
-									- intent.getLongExtra(Constants.USED_ELE, 0)) * 100 / (3600 * 300 * 1000));
+							msg.arg2=(int)Math.ceil((CommonUtils.eleFormula(Battery.ORIGINAL_VOLTAGE)*3600*300*10
+									-intent.getLongExtra(Constants.USED_ELE,0))*100/(3600*300*1000));
 							mHandler.sendMessage(msg);
 
-						}
-
-						int gatherFrequency=1;
-						if (configSetting[3]!=0||configSetting[4]!=0){
-							gatherFrequency=12-ConvertUtils.byte2unsignedInt(data[6]);
-							LogUtil.i(TAG,"------------------------->强刺激时：gatherFrequency="+gatherFrequency);
-						}else{
-							gatherFrequency =10-ConvertUtils.byte2unsignedInt(data[6]);
-							LogUtil.i(TAG,"------------------------->无强刺激时：gatherFrequency="+gatherFrequency);
-						}
-						if (mReceiveDataCount % gatherFrequency == 0||mReceiveDataCount==1) {
-
-							intervalCount++;
-							Message msgVoltage = Message.obtain();
-							msgVoltage.what = 3;
-							int realVoltage=CommonUtils.getRunningVoltageByGrade(ConvertUtils.byte2unsignedInt(data[4]));
-							if (intervalCount % 2 == 0) {
-//								msgVoltage.arg1 = 0;
-								msgVoltage.arg1 =(int)(Math.random()*realVoltage/4);
-								LogUtil.i(TAG,"产生的最低点的随机数="+msgVoltage.arg1);
-							} else {
-								msgVoltage.arg1 = realVoltage-(int)(Math.random()*10);
-							}
-							mHandler.sendMessage(msgVoltage);
+							Message msgTemp = Message.obtain();
+							msgTemp.what = 3;
+							msgTemp.arg1 = temp;
+							mHandler.sendMessage(msgTemp);
 						}
 					}
+
+//					//TODO 测试添加到数据库中的数据
+//					List<Point> points=mCureDao.queryBuilder().list().get((int) mCureDao.queryBuilder().count()-1).getPoints();
+//					Logger.v( "onReceive: point的个数"+points.size());
+//					for (Point point : points) {
+//						Logger.v( "onReceive: point时间："+point.getCurrentTime()+"温度："+point.getTemperature());
+//					}
+//					Logger.v( "onReceive: cure的个数"+mCureDao.queryBuilder().count());
+
+//					dynamicDataDisplay();//TODO 目前测试不了
+//					tvCurrentTemp.setText(ConvertUtils.bytes2HexString(data)+"℃");//TODO 注意此处获取的数据
 				}
 			}
 		}
@@ -657,30 +660,33 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 
 	//通过接收到的数据计算电流的大小
-	private int getEle(byte high, byte low) {
-		return ConvertUtils.byte2unsignedInt(high) * 256 + ConvertUtils.byte2unsignedInt(low);
+	private int getEle(byte high,byte low){
+		return ConvertUtils.byte2unsignedInt(high)*256+ConvertUtils.byte2unsignedInt(low);
 	}
 
-	private void dynamicDataDisplay(long currentTime, int grade) {
+
+	private void dynamicDataDisplay(long currentTime, int temp) {
 		if (!isOver) {
 			mLineChartView.setInteractive(false);
-			PointValue value = new PointValue(dataCount, grade);
+			PointValue value = new PointValue(dataCount, temp);
 			mPointValueList.add(value);
 			mAxisValues.add(new AxisValue(dataCount).setLabel(TimeUtil.date2String(currentTime, "mm:ss")));
 			dataCount++;
 			float x = value.getX();
+			LogUtil.i(TAG, "x的值：" + x);
+			LogUtil.i(TAG, "点的个数：dataCount" + dataCount);
 
 			Line line;
 			line = new Line(mPointValueList);
-			line.setColor(Color.parseColor("#ff0033"));//设置线的颜色
+			line.setColor(Color.RED);//设置线的颜色
 			line.setStrokeWidth(2);//设置线的粗细
 			line.setShape(pointsShape);                 //设置点的形状
-			line.setPointRadius(2);
-			line.setPointColor(Color.parseColor("#006600"));
+			line.setPointRadius(3);
+			line.setPointColor(Color.GREEN);
 			line.setHasLines(true);               //设置是否显示线
 			line.setHasPoints(true);             //设置是否显示节点
 			line.setCubic(true);                     //设置线是否立体或其他效果
-			line.setFilled(false);                   //设置是否填充线下方区域
+			line.setFilled(true);                   //设置是否填充线下方区域
 			line.setHasLabels(false);       //设置是否显示节点标签
 			//设置节点点击的效果
 			line.setHasLabelsOnlyForSelected(true);
@@ -691,20 +697,16 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 			mLineChartView.setLineChartData(mLineChartData);
 			//根据点的横坐标实时变换坐标的视图范围
 			Viewport port;
-			LogUtil.i(TAG,"图表中的X="+x);
-			LogUtil.i(TAG,"图表中的dataCount="+(dataCount-1));
+			LogUtil.i(TAG, "X的值：" + x);
 			if (x > mXDisplayCount) {
 				port = initViewPort(x - mXDisplayCount, x);
 			} else {
 				port = initViewPort(0, mXDisplayCount);
 			}
-
 			mLineChartView.setCurrentViewport(port);//当前窗口
-			mLineChartView.setMaximumViewport(port);
 
-//			Viewport maxPort = initMaxViewPort(x);
-//			mLineChartView.setMaximumViewport(maxPort);//最大窗口
-
+			Viewport maxPort = initMaxViewPort(x);
+			mLineChartView.setMaximumViewport(maxPort);//最大窗口
 
 		} else {
 			mLineChartView.setInteractive(true);
@@ -717,17 +719,10 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		Axis axisY = new Axis().setHasLines(true);
 		axisX.setTextColor(Color.GRAY);
 		axisX.setValues(mAxisValues);
-		if (mPointValueList.size()<=16){
-			axisX.setMaxLabelChars(12);
-		}else {
-			axisX.setMaxLabelChars(6);
-		}
-//		axisX.setMaxLabelChars(6);
-		axisX.setHasLines(true);//x轴分割线
-
+		axisX.setMaxLabelChars(8);
 		axisY.setTextColor(Color.GRAY);
 		axisX.setName("时间");
-		axisY.setName("强度/V");//设置名称
+		axisY.setName("温度/℃");//设置名称
 		lineData.setAxisXBottom(axisX);//设置X轴位置 下方
 		lineData.setAxisYLeft(axisY);//设置Y轴位置 左边
 		return lineData;
@@ -735,19 +730,17 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private Viewport initViewPort(float left, float right) {
 		Viewport port = new Viewport();
-		port.top = 200;
-		port.bottom = 0;//y轴显示的最低值
+		port.top = 60;
+		port.bottom = 20;//y轴显示的最低值
 		port.left = left;
 		port.right = right;
 		return port;
 	}
 
-
-	//TODO 此方法可以删除
 	private Viewport initMaxViewPort(float right) {
 		Viewport port = new Viewport();
-		port.top = 200;
-		port.bottom = 0;
+		port.top = 60;
+		port.bottom = 20;
 		port.left = 0;
 		port.right = right + mXDisplayCount;
 		return port;
@@ -757,7 +750,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		stopTimer();
 		if (mHandler != null) {
 			mHandler = null;
 		}
@@ -780,11 +772,12 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	public void onClick(View v) {
 		switch (v.getId()) {
 			case R.id.iv_again:
-//				mSendAgainCmdFlag = true;
+				mSendAgainCmdFlag=true;
+				mStartTime = System.currentTimeMillis();
 				isAgain();
 				break;
 			case R.id.iv_over://实现结束功能(当结束后则直接返回，如果疗程没有进行完则提示)
-				mSendStopCmdFlag = true;
+				mSendStopCmdFlag=true;
 				if (mRunningTime < mOriginalTime) {
 					stopTimer();
 					if (mConnected) {
@@ -792,15 +785,23 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 					}
 					saveData();//此处保存的数据为未做完的
 				} else {
-					stopTimer();
+
+					sendEle();
 					finish();
 				}
 				break;
 			case R.id.iv_back:
-				mSendStopCmdFlag = true;
+				mSendStopCmdFlag=true;
 				isOver();
 				break;
 		}
+	}
+
+
+	private void sendEle(){
+		Intent intent=new Intent();
+		intent.putExtra("ele",mEleSum);
+		setResult(RESULT_OK,intent);
 	}
 
 	private void sendStopSettingData() {
@@ -876,27 +877,13 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						isOver = false;
 						//重新发送配置的数据
 						stopTimer();
+						startStopTimer();
 
 						getDb();//如果要将重新开始的保存为另一份；
-						mCure = null;//设置为null,将会重新新建cure对象
-						points = null;
-						points = new ArrayList<>();
+						mCure=null;//设置为null,将会重新新建cure对象
+						points=null;
+						points=new ArrayList<>();
 						dialog.dismiss();
-
-						//清空图表
-						mPointValueList.clear();
-
-						//初始化数据
-						mStartTime = System.currentTimeMillis();
-						mTvReminderTime.setText(TimeUtil.getTimeString(configSetting[6]+configSetting[10]));
-						mRunningTime=0;
-						retrySensorCount=0;
-						isConfigReceived=false;
-						mSendConfigCount=0;
-						retryStopCount=0;
-						isStopReceived=false;
-						startConfigTimer();
-						new Thread(new MyThread()).start();
 
 						mRunningTime = 0;//当点击新开始
 						mIvAgain.setVisibility(View.GONE);
@@ -913,47 +900,40 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		builder.create().show();
 	}
 
-
-	//TODO 无用的方法可以删去
 	private void sendAgainSettingData() {
 
-//		if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE, this)) {
-//			mStimulate = CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE, this);
-//		}
-//
-//		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_GRADE, this)) {
-//			mCauterizeGrade = CureSPUtil.getTempByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE, this));
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_TIME_GRADE, this)) {
-//			mCauterizeTime = CureSPUtil.getCauterizeTimeByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE, this));
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_TYPE, this)) {
-//			mNeedleType = CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE, this);
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE, this)) {
-//			mNeedleGrade = CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE, this);
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_FREQUENCY, this)) {
-//			mNeedleFrequency = CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY, this);
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_MEDICINE_TIME_GRADE, this)) {
-//			mMedicineTime = CureSPUtil.getMedicineTimeByPosition(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE, this));
-//		}
-//
-//		LogUtil.i(TAG, "发送的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
-//				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime)));
-//
-//		if (HomeFragment.getBluetoothLeService() == null) {
-//			return;
-//		}
-//
-//		HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
-//				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime));
+		if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE, this)) {
+			mStimulate = CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE, this);
+		}
+
+		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_GRADE, this)) {
+			mCauterizeGrade = CureSPUtil.getTempByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE, this));
+		}
+		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_TIME_GRADE, this)) {
+			mCauterizeTime = CureSPUtil.getCauterizeTimeByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE, this));
+		}
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_TYPE, this)) {
+			mNeedleType = CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE, this);
+		}
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE, this)) {
+			mNeedleGrade = CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE, this);
+		}
+		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_FREQUENCY, this)) {
+			mNeedleFrequency = CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY, this);
+		}
+		if (CureSPUtil.isSaved(Constants.SP_MEDICINE_TIME_GRADE, this)) {
+			mMedicineTime = CureSPUtil.getMedicineTimeByPosition(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE, this));
+		}
+
+		LogUtil.i(TAG, "发送的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
+				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime)));
 
 		if (HomeFragment.getBluetoothLeService() == null) {
 			return;
 		}
-		HomeFragment.getBluetoothLeService().WriteValue(configSetting);
+
+		HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
+				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime));
 	}
 
 
@@ -963,7 +943,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private class ValueTouchListener implements LineChartOnValueSelectListener {
 		@Override
 		public void onValueSelected(int lineIndex, int pointIndex, PointValue value) {
-			ToastUtil.showToast(RunningActivity.this, value.getY() + "V", 1000);
+			ToastUtil.showToast(RunningActivity_bak.this, value.getY() + "℃", 1000);
 		}
 
 		@Override
@@ -974,9 +954,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	@Override
 	public void onBackPressed() {
-		mSendStopCmdFlag = true;
+		mSendStopCmdFlag=true;
 		isOver();
 //		super.onBackPressed();//调用父类的方法，使得点击返回键时直接返回上一个Activity，去掉此方法则不会直接退出
 	}
-
 }

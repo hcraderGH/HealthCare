@@ -17,6 +17,7 @@ import com.dafukeji.healthcare.R;
 import com.dafukeji.healthcare.constants.Constants;
 import com.dafukeji.healthcare.service.BluetoothLeService;
 import com.dafukeji.healthcare.ui.RunningActivity;
+import com.dafukeji.healthcare.util.CommonUtils;
 import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.CureSPUtil;
 import com.dafukeji.healthcare.util.LogUtil;
@@ -30,6 +31,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import es.dmoral.toasty.Toasty;
+
+import static android.app.Activity.RESULT_OK;
 
 /**
  * Created by DevCheng on 2017/6/1.
@@ -68,17 +71,26 @@ public class PhysicalFragment extends Fragment {
 		mBlueToothBroadCast = new BlueToothBroadCast();
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(Constants.RECEIVE_GATT_STATUS_FROM_HOME);
+		filter.addAction(Constants.RECEIVE_GATT_STATUS);
 		getActivity().registerReceiver(mBlueToothBroadCast, filter);
+		LogUtil.i(TAG,"==============>onAttach()");
 		super.onAttach(context);
 	}
+
 
 	class BlueToothBroadCast extends BroadcastReceiver {
 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			//得到蓝牙的服务连接
-			isGATTConnected = intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME, false);
-			LogUtil.i(TAG, "onReceive  isGATTConnectedFromHome:" + isGATTConnected);
+			String action=intent.getAction();
+			if (action.equals(Constants.RECEIVE_GATT_STATUS_FROM_HOME)){
+				isGATTConnected= intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS_FORM_HOME,false);
+				LogUtil.i(TAG,"onReceive  isGATTConnectedFromHome:"+isGATTConnected);
+			}else if (action.equals(Constants.RECEIVE_GATT_STATUS)){
+				isGATTConnected=intent.getBooleanExtra(Constants.EXTRAS_GATT_STATUS,false);
+				LogUtil.i(TAG,"onReceive  isGATTConnectedFromRunning:"+isGATTConnected);
+			}
 //			if (isGATTConnected){
 //				btnStart.setBackgroundResource(R.drawable.selector_connect);
 //				btnStart.setTextColor(Color.WHITE);
@@ -91,6 +103,7 @@ public class PhysicalFragment extends Fragment {
 
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+		LogUtil.i(TAG,"==============>onCreateView()");
 		mView = inflater.inflate(R.layout.fragment_home_physical, container, false);
 		initViews();
 		getActivity().registerReceiver(mGattUpdateReceiver, makeGattUpdateIntentFilter());
@@ -131,8 +144,9 @@ public class PhysicalFragment extends Fragment {
 				byte[] data = intent.getByteArrayExtra(BluetoothLeService.EXTRA_DATA);
 				LogUtil.i(TAG, "onReceive: " + (data == null ? "data为null" : Arrays.toString(data)));
 				if (data != null) {
-					//TODO 接收数据处理
-					boolean crcIsRight = ConvertUtils.CommonUtils.IsCRCRight(data);
+
+					//TODO 此处可以删除
+					boolean crcIsRight =CommonUtils.IsCRCRight(data);
 					if (!crcIsRight){
 						//误码纠正
 						if (data.length > 13) {
@@ -140,7 +154,7 @@ public class PhysicalFragment extends Fragment {
 							System.arraycopy(data, 13, frontData, 0, frontData.length);
 							LogUtil.i(TAG, "截取的frontData:" + Arrays.toString(frontData));
 							data = Arrays.copyOfRange(data, 0, 13);
-							if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
+							if (!CommonUtils.IsCRCRight(data)) {
 								return;
 							}
 							LogUtil.i(TAG, "截取的data:" + Arrays.toString(data));
@@ -151,7 +165,7 @@ public class PhysicalFragment extends Fragment {
 								System.arraycopy(data, 0, wholeData, frontData.length, data.length);
 								data = wholeData;
 								LogUtil.i(TAG, "拼接的data：" + Arrays.toString(data));
-								if (!ConvertUtils.CommonUtils.IsCRCRight(data)) {
+								if (!CommonUtils.IsCRCRight(data)) {
 									return;
 								}
 								wholeData = null;
@@ -166,6 +180,7 @@ public class PhysicalFragment extends Fragment {
 
 					if (mSendNewCmdFlag && data[2] != 6) {
 
+						retryConfigCount=0;
 						mSendNewCmdFlag=false;
 						stopTimer();
 
@@ -175,7 +190,7 @@ public class PhysicalFragment extends Fragment {
 						intent2.putExtra(Constants.SETTING,setting);
 						intent2.putExtra(Constants.CURRENT_TEMP, ConvertUtils.byte2unsignedInt(data[3]));
 						intent2.putExtra(Constants.CURRENT_TIME, System.currentTimeMillis());
-						getActivity().startActivity(intent2);
+						getActivity().startActivityForResult(intent2,0);
 					}
 				}
 			}
@@ -202,9 +217,11 @@ public class PhysicalFragment extends Fragment {
 									ToastUtil.showToast(getActivity(),"断开连接",1000);
 								}
 							});
+
+							isGATTConnected=false;
 							stopTimer();
 							Intent intent=new Intent();
-							intent.putExtra(Constants.EXTRAS_GATT_STATUS,false);
+							intent.putExtra(Constants.EXTRAS_GATT_STATUS,isGATTConnected);
 							intent.setAction(Constants.RECEIVE_GATT_STATUS);
 							getActivity().sendBroadcast(intent);
 						}else{
@@ -220,6 +237,7 @@ public class PhysicalFragment extends Fragment {
 			mTimer.schedule(mTimerTask,0,400);
 		}
 	}
+
 
 	private void stopTimer(){
 		if (mTimer!=null){
@@ -251,7 +269,6 @@ public class PhysicalFragment extends Fragment {
 			@Override
 			public void onClick(View v) {
 
-
 				if (!isGATTConnected) {
 					Toasty.warning(getActivity(), "请连接设备", getResources().getInteger(R.integer.toasty_duration)).show();
 					return;
@@ -279,8 +296,8 @@ public class PhysicalFragment extends Fragment {
 				HomeFragment.stopTimer();
 
 				mSendNewCmdFlag = true;
+				stopTimer();
 				startConfigTimer();
-
 
 			}
 		});
