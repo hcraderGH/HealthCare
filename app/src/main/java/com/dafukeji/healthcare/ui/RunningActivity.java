@@ -193,7 +193,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 //						mTvReminderTime.setText("00′00′00″");
 						mTvReminderTime.setText("00′00″");
 						isOver = true;
-						dynamicDataDisplay(System.currentTimeMillis(),0);//结束时能够显示完整波形变动
+//						dynamicDataDisplay(System.currentTimeMillis(),0);//结束时能够显示完整波形变动
 
 						mLineChartView.setInteractive(true);
 

@@ -92,6 +92,8 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 
 	private static boolean isConnected=false;
 
+	private MyOverTimeScanRunnable myOverTimeScanRunnable;
+
 	//电压显示相关
 	private int mVoltageCount;
 	private List<Integer> mVoltages =new ArrayList<>();
@@ -203,9 +205,10 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 					mVoltages.add(ConvertUtils.byte2unsignedInt(data[7]));
 					LogUtil.i(TAG,"mVoltageCount="+ mVoltageCount);
 
-
 					//延迟跳转为了获取稳定的电压值
 					if (mVoltageCount==6){
+
+						mHandler.removeCallbacks(myOverTimeScanRunnable);
 						stopTimer();//获取到数据的情况下,停止发送传感命令
 
 						if (mProgressDialog!=null&&mProgressDialog.isShowing()) {
@@ -265,11 +268,11 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				@Override
 				public void run() {
 					mSensorCmdCount++;
-					if (mSensorCmdCount>=20){
-						Message msg=new Message();
-						msg.what=2;
-						mHandler.sendMessage(msg);
-					}
+//					if (mSensorCmdCount>=20){
+//						Message msg=new Message();
+//						msg.what=2;
+//						mHandler.sendMessage(msg);
+//					}
 
 					LogUtil.i(TAG,"DeviceSanActivity发送的传感命令");
 					byte[] init=new byte[]{(byte)0xFA,(byte)0xFB,6,0,0,0,0,0,0,0,0,6};
@@ -309,7 +312,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		mLeDeviceRecyclerAdapter.setOnItemClickListener(new LeRecyclerAdapter.OnItemClickListener() {
 			@Override
 			public void onItemClick(View view, int position) {
-
 				if (mScanning) {
 					stopScan();
 					mScanning = false;
@@ -320,9 +322,6 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				device= mLeDeviceRecyclerAdapter.getDevice(position);
 
 				mBluetoothLeService.connect(device.getAddress());
-				if (mProgressDialog!=null){
-					return;
-				}
 
 				mProgressDialog = new ProgressDialog(DeviceScanActivity.this);
 				mProgressDialog.setMessage("正在连接设备，请稍等...");
@@ -330,8 +329,10 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				mProgressDialog.setCanceledOnTouchOutside(false);//设置点击进度对话框外的区域对话框是否消失
 				mProgressDialog.show();
 
-//					stopTimer();//确保不发生java.lang.IllegalStateException: TimerTask is scheduled already
+				myOverTimeScanRunnable=new MyOverTimeScanRunnable();
+				mHandler.postDelayed(myOverTimeScanRunnable,8000);
 
+//					stopTimer();//确保不发生java.lang.IllegalStateException: TimerTask is scheduled already
 
 			}
 		});
@@ -348,6 +349,16 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		mSBScanString= (ShimmerTextView) findViewById(R.id.stv_scan_string);
 		Shimmer shimmer=new Shimmer();
 		shimmer.start(mSBScanString);
+	}
+
+	class MyOverTimeScanRunnable implements Runnable {
+
+		@Override
+		public void run() {
+			Message msg=new Message();
+			msg.what=2;
+			mHandler.sendMessage(msg);
+		}
 	}
 
 	@Override
@@ -535,6 +546,9 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 				case 2://连接超时
 
 					stopTimer();
+					if(mBluetoothLeService!=null){
+						mBluetoothLeService.disconnect();
+					}
 					mProgressDialog.dismiss();
 					mSensorCmdCount=0;
 					mVoltageCount=0;
@@ -575,16 +589,23 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		if(mScanDialog!=null){
 			mScanDialog.show();
 		}
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-					mBluetoothLEAdapter.getBluetoothLeScanner().startScan(mScanCallback);//这是耗时操作
-				} else {
-					mBluetoothLEAdapter.startLeScan(mLeScanCallback);
-				}
-			}
-		}).start();
+
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			mBluetoothLEAdapter.getBluetoothLeScanner().startScan(mScanCallback);//这是耗时操作
+		} else {
+			mBluetoothLEAdapter.startLeScan(mLeScanCallback);
+		}
+
+//		new Thread(new Runnable() {
+//			@Override
+//			public void run() {
+//				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//					mBluetoothLEAdapter.getBluetoothLeScanner().startScan(mScanCallback);//这是耗时操作
+//				} else {
+//					mBluetoothLEAdapter.startLeScan(mLeScanCallback);
+//				}
+//			}
+//		}).start();
 	}
 
 	private void stopScan() {
@@ -593,16 +614,22 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 		}
 		tbScan.setChecked(false);
 
-		new Thread(new Runnable() {
-			@Override
-			public void run() {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-					mBluetoothLEAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
-				} else {
-					mBluetoothLEAdapter.stopLeScan(mLeScanCallback);
-				}
-			}
-		}).start();
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			mBluetoothLEAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
+		} else {
+			mBluetoothLEAdapter.stopLeScan(mLeScanCallback);
+		}
+
+//		new Thread(new Runnable() {
+//			@Override
+//			public void run() {
+//				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+//					mBluetoothLEAdapter.getBluetoothLeScanner().stopScan(mScanCallback);
+//				} else {
+//					mBluetoothLEAdapter.stopLeScan(mLeScanCallback);
+//				}
+//			}
+//		}).start();
 	}
 
 	@TargetApi(21)
@@ -613,21 +640,21 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						@Override
 						public void onScanResult(int callbackType, final ScanResult result) {
 
-							if (result.getDevice().getName().equals(Constants.MATCH_DEVICE_NAME)) {
-								runOnUiThread(new Runnable() {
-									@Override
-									public void run() {
-										try {
+//							if (result.getDevice().getName().equals(Constants.MATCH_DEVICE_NAME)) {
+//								runOnUiThread(new Runnable() {
+//									@Override
+//									public void run() {
+//										try {
 											mLeDeviceRecyclerAdapter.addDevice(result.getDevice());
 											if (mHandler!=null) {
 												mHandler.sendEmptyMessage(1);
 											}
-										} catch (Exception e) {
-											e.printStackTrace();
-										}
-									}
-								});
-							}
+//										} catch (Exception e) {
+//											e.printStackTrace();
+//										}
+//									}
+//								});
+//							}
 						}
 					};
 		}else{
@@ -637,21 +664,21 @@ public class DeviceScanActivity extends BaseActivity implements View.OnClickList
 						@Override
 						public void onLeScan(final BluetoothDevice device, final int rssi, final byte[] scanRecord) {
 
-							if (device.getName().equals(Constants.MATCH_DEVICE_NAME)) {
-								runOnUiThread(new Runnable() {
-									@Override
-									public void run() {
-										try {
+//							if (device.getName().equals(Constants.MATCH_DEVICE_NAME)) {
+//								runOnUiThread(new Runnable() {
+//									@Override
+//									public void run() {
+//										try {
 											mLeDeviceRecyclerAdapter.addDevice(device);
 											if (mHandler!=null) {
 												mHandler.sendEmptyMessage(1);
 											}
-										} catch (Exception e) {
-											e.printStackTrace();
-										}
-									}
-								});
-							}
+//										} catch (Exception e) {
+//											e.printStackTrace();
+//										}
+//									}
+//								});
+//							}
 						}
 					};
 		}

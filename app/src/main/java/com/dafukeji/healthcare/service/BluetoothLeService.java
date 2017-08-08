@@ -89,7 +89,9 @@ public class BluetoothLeService extends Service {
 
     public void WriteValue(byte[] bytesValue) {
         LogUtil.i(TAG, "WriteValue: bytesValue"+ Arrays.toString(bytesValue));
-        mWriteCharacteristic.setValue(bytesValue);
+        if(mWriteCharacteristic!=null){
+            mWriteCharacteristic.setValue(bytesValue);
+        }
         LogUtil.i(TAG, "WriteValue: getValue"+Arrays.toString(mWriteCharacteristic.getValue()));
         if (mBluetoothGatt!=null) {
             mBluetoothGatt.writeCharacteristic(mWriteCharacteristic);
@@ -97,7 +99,9 @@ public class BluetoothLeService extends Service {
     }
 
     public void WriteValue(byte[] bytesValue,BluetoothGattCharacteristic write) {
-        mWriteCharacteristic.setValue(bytesValue);
+       if (mWriteCharacteristic!=null){
+           mWriteCharacteristic.setValue(bytesValue);
+       }
         if (mBluetoothGatt!=null) {
             mBluetoothGatt.writeCharacteristic(write);
         }
