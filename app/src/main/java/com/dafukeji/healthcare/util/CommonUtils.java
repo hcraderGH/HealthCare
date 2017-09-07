@@ -32,6 +32,20 @@ public class CommonUtils {
 		}
 	}
 
+
+	/**
+	 * 获取CRC
+	 * @param
+	 * @return
+	 */
+	public static byte getCRC(byte[] data){
+		byte crc=0x00;
+		for (int i = 2; i < data.length-1; i++) {
+			crc+=data[i];
+		}
+		return crc;
+	}
+
 	public static int eleFormula(int voltage) {
 		int perEle;
 		if (voltage >= 42) {

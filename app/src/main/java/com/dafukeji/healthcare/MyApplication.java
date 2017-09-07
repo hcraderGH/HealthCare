@@ -44,7 +44,7 @@ public class MyApplication extends Application {
 	private static String TAG="测试MyApplication";
 	private boolean isClearSP=false;
 	private boolean isClearDB=false;
-	private static boolean isTest=false;//TODO 当不处于测试的时候应该设置为false
+	private static boolean isTest=true;//TODO 当不处于测试的时候应该设置为false
 
 
 	private boolean mIsGATTConnected=false;

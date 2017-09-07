@@ -161,16 +161,34 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView
-                android:background="@drawable/shape_config_detail"
-                android:paddingTop="5dp"
-                android:paddingBottom="5dp"
-                android:paddingLeft="10dp"
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="16sp"
-                android:textColor="#FFF"
-                android:text="设置详情"/>
+                android:background="@drawable/shape_config_detail">
+
+                <TextView
+                    android:layout_centerVertical="true"
+                    android:layout_alignParentLeft="true"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:paddingLeft="8dp"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textColor="#FFF"
+                    android:text="设置详情"/>
+
+                <ImageButton
+                    android:id="@+id/ib_modify"
+                    android:background="@mipmap/ic_modify"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"/>
+
+            </RelativeLayout>
+
 
             <View
                 android:layout_width="match_parent"
@@ -323,24 +341,27 @@
             android:layout_gravity="center_horizontal"
             android:orientation="horizontal">
 
-            <ImageView
+            <ImageButton
+                android:contentDescription="@null"
                 android:id="@+id/iv_again"
                 style="@style/RunningStatus"
                 android:background="@mipmap/ic_continue"
                 android:clickable="true"
                 android:visibility="gone"/>
 
-            <ImageView
+            <ImageButton
+                android:contentDescription="@null"
                 android:id="@+id/iv_space"
                 style="@style/RunningStatus"
                 android:background="@mipmap/ic_pause"
                 android:clickable="false"
                 android:visibility="gone"/>
 
-            <ImageView
+            <ImageButton
+                android:contentDescription="@null"
                 android:id="@+id/iv_over"
                 style="@style/RunningStatus"
-                android:background="@mipmap/ic_over"
+                android:background="@drawable/selector_over"
                 android:clickable="true"
                 android:visibility="visible"/>
         </LinearLayout>

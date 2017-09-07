@@ -38,7 +38,7 @@
         style="@style/ButtonStyle"
         android:layout_width="220dp"
         android:layout_height="35dp"
-        android:background="@drawable/shape_connect"
+        android:background="@drawable/selector_connect"
         android:layout_gravity="center_horizontal"
         android:text="开始"
         android:textColor="#FFF"

@@ -40,4 +40,7 @@
     <color name="setting_title_color">#ff80bd01</color>
 
     <color name="background_gray">#F6F8F7</color>
+
+
+    <color name="divider">#ffd2d2d2</color>
 </resources>

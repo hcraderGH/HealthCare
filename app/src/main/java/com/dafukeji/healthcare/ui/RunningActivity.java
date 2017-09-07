@@ -16,7 +16,9 @@ import android.os.Message;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -39,6 +41,7 @@ import com.dafukeji.healthcare.util.ConvertUtils;
 import com.dafukeji.healthcare.util.LogUtil;
 import com.dafukeji.healthcare.util.TimeUtil;
 import com.dafukeji.healthcare.util.ToastUtil;
+import com.dafukeji.healthcare.widget.AmountView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,8 +49,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import de.greenrobot.dao.InternalUnitTestDaoAccess;
-import lecho.lib.hellocharts.formatter.AxisValueFormatter;
 import lecho.lib.hellocharts.listener.LineChartOnValueSelectListener;
 import lecho.lib.hellocharts.model.Axis;
 import lecho.lib.hellocharts.model.AxisValue;
@@ -74,8 +75,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 	private long mOriginalTime;
 
 	private Toolbar mToolbar;
-	private ImageView mIvAgain, mIvSpace, mIvOver;
+	private ImageButton mIbAgain, mIbSpace, mIbOver;
 	private ImageView mIvBack;
+	private ImageButton mIbModify;
 	private TextView mTvCurrentTemp, mTvReminderTime, mTvToolbarTitle, mTvReminderEle;
 	private ColorArcProgressBar mColorArcProgressBar;
 
@@ -143,8 +145,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 	private boolean mSendStopCmdFlag;
 	private boolean mSendAgainCmdFlag;
-	private byte[] configSetting;
-	private byte[] configSettingWithoutStimulate;
+	private byte[] mConfigSetting;
+	private byte[] mConfigSettingWithoutStimulate;
+	private int mReminderTime;
 
 	//电量相关
 	private long mEleSum;
@@ -161,14 +164,24 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 		mOriginalTime = (long) (getIntent().getIntExtra(Constants.ORIGINAL_TIME, 0) * 60 * 1000);//获取的是int类型的分钟数，则需要强转
 		LogUtil.i(TAG, "onCreate: mOriginalTime" + mOriginalTime);
-		configSetting = getIntent().getByteArrayExtra(Constants.SETTING);
+		mConfigSetting = getIntent().getByteArrayExtra(Constants.SETTING);
+
+		if (mConfigSetting[3]!=0|| mConfigSetting[4]!=0){
+			mNeedleGrade=mConfigSetting[8]-2;
+			mNeedleFrequency=mConfigSetting[9]-2;
+		}else{
+			mNeedleGrade=mConfigSetting[8];
+			mNeedleFrequency=mConfigSetting[9];
+		}
+		mCauterizeGrade=mConfigSetting[5];
 
 		//获取运行时的时间
 		mStartTime = System.currentTimeMillis();
 
-		insertPoint(mStartTime, ConvertUtils.byte2unsignedInt(configSetting[3]));//开始时的温度点
+		insertPoint(mStartTime, ConvertUtils.byte2unsignedInt(mConfigSetting[3]));//开始时的温度点
 
 		mBluetoothLeService = HomeFragment.getBluetoothLeService();
+
 
 		initViews();
 
@@ -200,8 +213,8 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						stopTimer();
 						sendStopSettingData();//为了防止与设备之间疗程时间的不同步，在此直接结束疗程
 						saveData();//保存数据
-						mIvSpace.setVisibility(View.INVISIBLE);
-						mIvAgain.setVisibility(View.VISIBLE);
+						mIbSpace.setVisibility(View.INVISIBLE);
+						mIbAgain.setVisibility(View.VISIBLE);
 						break;
 
 					case 2://接受温度和电量
@@ -247,18 +260,18 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		tvNeedleFrequency = (TextView) findViewById(R.id.tv_running_needle_frequency);
 		if (mCureType == 1) {
 			llCauterize.setVisibility(View.VISIBLE);
-			tvCauterizeGrade.setText(getCauterizeGrade(configSetting[5]));
+			tvCauterizeGrade.setText(getCauterizeGrade(mConfigSetting[5]));
 		} else {
 			llCauterize.setVisibility(View.GONE);
 		}
 
 		//根据是否设置了强刺激来对档位进行处理
-		if (configSetting[3]!=0||configSetting[4]!=0){
-			tvNeedleGrade.setText((configSetting[8]-2) + "档");//档位是从1开始的
-			tvNeedleFrequency.setText((configSetting[9]-2) + "档");
+		if (mConfigSetting[3]!=0|| mConfigSetting[4]!=0){
+			tvNeedleGrade.setText((mConfigSetting[8]-2) + "档");//档位是从1开始的
+			tvNeedleFrequency.setText((mConfigSetting[9]-2) + "档");
 		}else{
-			tvNeedleGrade.setText((configSetting[8]) + "档");//档位是从1开始的
-			tvNeedleFrequency.setText((configSetting[9]) + "档");
+			tvNeedleGrade.setText((mConfigSetting[8]) + "档");//档位是从1开始的
+			tvNeedleFrequency.setText((mConfigSetting[9]) + "档");
 		}
 
 
@@ -266,7 +279,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		mTvCurrentTemp.setText(getIntent().getIntExtra(Constants.CURRENT_TEMP, 0) + "℃");
 
 		mTvReminderTime = (TextView) findViewById(R.id.tv_reminder_time);
-		mTvReminderTime.setText(TimeUtil.getTimeString(configSetting[6]+configSetting[10]));
+		mTvReminderTime.setText(TimeUtil.getTimeString(mConfigSetting[6]+ mConfigSetting[10]));
 
 		mTvReminderEle = (TextView) findViewById(R.id.tv_reminder_ele);
 		mTvReminderEle.setText(Battery.REMINDER_PER_ELE+"%");
@@ -274,15 +287,17 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 		mTvToolbarTitle = (TextView) findViewById(R.id.tv_toolbar_title);
 		mTvToolbarTitle.setText(getCureTypeString(mCureType));
 
-		mIvAgain = (ImageView) findViewById(R.id.iv_again);
-		mIvSpace = (ImageView) findViewById(R.id.iv_space);
-		mIvOver = (ImageView) findViewById(R.id.iv_over);
+		mIbAgain = (ImageButton) findViewById(R.id.iv_again);
+		mIbSpace = (ImageButton) findViewById(R.id.iv_space);
+		mIbOver = (ImageButton) findViewById(R.id.iv_over);
 
 		mIvBack = (ImageView) findViewById(R.id.iv_back);
 		mToolbar = (Toolbar) findViewById(R.id.toolbar);
+		mIbModify= (ImageButton) findViewById(R.id.ib_modify);
+		mIbModify.setOnClickListener(this);
 
-		mIvAgain.setOnClickListener(this);
-		mIvOver.setOnClickListener(this);
+		mIbAgain.setOnClickListener(this);
+		mIbOver.setOnClickListener(this);
 
 		mIvBack.setOnClickListener(this);
 
@@ -317,6 +332,44 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				break;
 			case 48+2:
 				grade = "灼热";
+				break;
+		}
+		return grade;
+	}
+
+	private int getCauterizeGradeByAmount(int amount){
+		int grade = 1;
+		switch (amount){
+			case 1:
+				grade=39+2;
+				break;
+			case 2:
+				grade=42+2;
+				break;
+			case 3:
+				grade=45+2;
+				break;
+			case 4:
+				grade=48+2;
+				break;
+		}
+		return grade;
+	}
+
+	private int getGradeByTemp(int temp){
+		int grade=1;
+		switch (temp){
+			case 39+2:
+				grade=1;
+				break;
+			case 42+2:
+				grade=2;
+				break;
+			case 45+2:
+				grade=3;
+				break;
+			case 48+2:
+				grade=4;
 				break;
 		}
 		return grade;
@@ -440,30 +493,59 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						retrySensorCount = 0;
 					}
 
-					//根据是否设置了强刺激来进行发送不同的配置领命
+					//根据是否设置了强刺激来进行发送不同的配置命令
 					mSendSensorTime = System.currentTimeMillis();
 					isConfigReceived = false;
 					mSendConfigCount++;
-					if (configSetting[3]!=0||configSetting[4]!=0) {
-						if (mSendConfigCount<=450){
-							if (mBluetoothLeService!=null) {
-								mBluetoothLeService.WriteValue(configSetting);
-							}
-						}else{
+//					if (mConfigSetting[3]!=0|| mConfigSetting[4]!=0) {
+//						if (mSendConfigCount<=450){
+//							if (mBluetoothLeService!=null) {
+//								mBluetoothLeService.WriteValue(mConfigSetting);
+//							}
+//						}else{
+//
+//							mConfigSettingWithoutStimulate = mConfigSetting;
+//							mConfigSettingWithoutStimulate[11]= (byte) (mConfigSettingWithoutStimulate[11]
+//									- mConfigSettingWithoutStimulate[3]- mConfigSettingWithoutStimulate[4]-2-2);//记得校验核改变
+//							mConfigSettingWithoutStimulate[3]=0;
+//							mConfigSettingWithoutStimulate[4]=0;
+//							mConfigSettingWithoutStimulate[8]-=2;
+//							mConfigSettingWithoutStimulate[9]-=2;
+//
+//							mBluetoothLeService.WriteValue(mConfigSettingWithoutStimulate);
+//						}
+//					}else{
+//						mBluetoothLeService.WriteValue(mConfigSetting);
+//					}
 
-							configSettingWithoutStimulate =configSetting;
-							configSettingWithoutStimulate[11]= (byte) (configSettingWithoutStimulate[11]
-									- configSettingWithoutStimulate[3]- configSettingWithoutStimulate[4]-2-2);//记得校验核改变
-							configSettingWithoutStimulate[3]=0;
-							configSettingWithoutStimulate[4]=0;
-							configSettingWithoutStimulate[8]-=2;
-							configSettingWithoutStimulate[9]-=2;
+					if (mConfigSetting[3]!=0|| mConfigSetting[4]!=0) {
+						if (mSendConfigCount > 450) {
 
-							mBluetoothLeService.WriteValue(configSettingWithoutStimulate);
+							mConfigSettingWithoutStimulate = mConfigSetting;
+//							mConfigSettingWithoutStimulate[11] = (byte) (mConfigSettingWithoutStimulate[11]
+//									- mConfigSettingWithoutStimulate[3] - mConfigSettingWithoutStimulate[4] - 2 - 2);//记得校验核改变
+							mConfigSettingWithoutStimulate[3] = 0;
+							mConfigSettingWithoutStimulate[4] = 0;
+							mConfigSettingWithoutStimulate[8] -= 2;
+							mConfigSettingWithoutStimulate[9] -= 2;
+							mConfigSettingWithoutStimulate[11]=CommonUtils.getCRC(mConfigSettingWithoutStimulate);
+							mConfigSetting = mConfigSettingWithoutStimulate;
 						}
 					}else{
-						mBluetoothLeService.WriteValue(configSetting);
+						//当没有强刺激时，将会根据改变的参数发送配置命令
+						if (mCauterizeGrade!=mConfigSetting[5]){
+							mConfigSetting[5]= (byte) mCauterizeGrade;
+						}
+						if (mNeedleGrade!=mConfigSetting[8]){
+							mConfigSetting[8]= (byte) mNeedleGrade;
+						}
+						if (mNeedleFrequency!=mConfigSetting[9]){
+							mConfigSetting[9]= (byte) mNeedleFrequency;
+						}
+						mConfigSetting[11]=CommonUtils.getCRC(mConfigSetting);
 					}
+
+					mBluetoothLeService.WriteValue(mConfigSetting);
 				}
 			};
 		}
@@ -597,7 +679,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						}
 					}
 
-					if (data[2] == configSetting[2]) {
+					if (data[2] == mConfigSetting[2]) {
 
 						mReceiveDataCount++;
 
@@ -630,7 +712,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						}
 
 						int gatherFrequency=1;
-						if (configSetting[3]!=0||configSetting[4]!=0){
+						if (mConfigSetting[3]!=0|| mConfigSetting[4]!=0){
 							gatherFrequency=12-ConvertUtils.byte2unsignedInt(data[6]);
 							LogUtil.i(TAG,"------------------------->强刺激时：gatherFrequency="+gatherFrequency);
 						}else{
@@ -838,7 +920,64 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				mSendStopCmdFlag = true;
 				isOver();
 				break;
+
+			case R.id.ib_modify://修改配置命令
+				modifyDialog();
+				break;
 		}
+	}
+
+	private void modifyDialog(){
+		final int[] cauterizeGrade = new int[]{mCauterizeGrade};
+		final int[] needleGrade = new int[]{mNeedleGrade};
+		final int[] needleFrequency = new int[]{mNeedleFrequency};
+
+		AlertDialog.Builder builder=new AlertDialog.Builder(this);
+		View view= LayoutInflater.from(this).inflate(R.layout.layout_config_dialog,null);
+		AmountView avCauterizeGrade= (AmountView) view.findViewById(R.id.av_cauterize_grade);
+		avCauterizeGrade.setGrades(4,getGradeByTemp(mConfigSetting[5]),true);
+		avCauterizeGrade.setOnAmountChangeListener(new AmountView.OnAmountChangeListener() {
+			@Override
+			public void onAmountChange(View view, int amount) {
+				cauterizeGrade[0] = getCauterizeGradeByAmount(amount);
+			}
+		});
+		AmountView avNeedleGrade= (AmountView) view.findViewById(R.id.av_needle_grade);
+		avNeedleGrade.setGrades(9,mConfigSetting[8],false);
+		avNeedleGrade.setOnAmountChangeListener(new AmountView.OnAmountChangeListener() {
+			@Override
+			public void onAmountChange(View view, int amount) {
+				needleGrade[0] =amount;
+			}
+		});
+		AmountView avNeedleFrequency= (AmountView) view.findViewById(R.id.av_needle_frequency);
+		avNeedleFrequency.setGrades(9,mConfigSetting[9],false);
+		avNeedleFrequency.setOnAmountChangeListener(new AmountView.OnAmountChangeListener() {
+			@Override
+			public void onAmountChange(View view, int amount) {
+				needleFrequency[0] =amount;
+			}
+		});
+
+		builder.setView(view);
+		builder.setMessage("修改参数");
+		builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				mCauterizeGrade=cauterizeGrade[0];
+				mNeedleGrade=needleGrade[0];
+				mNeedleFrequency=needleFrequency[0];
+				tvNeedleGrade.setText(mNeedleGrade+ "档");//档位是从1开始的
+				tvNeedleFrequency.setText(mNeedleFrequency + "档");
+				tvCauterizeGrade.setText(getCauterizeGrade(mCauterizeGrade));
+			}
+		}).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+
+			}
+		});
+		builder.create().show();
 	}
 
 	private void sendStopSettingData() {
@@ -926,7 +1065,7 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 
 						//初始化数据
 						mStartTime = System.currentTimeMillis();
-						mTvReminderTime.setText(TimeUtil.getTimeString(configSetting[6]+configSetting[10]));
+						mTvReminderTime.setText(TimeUtil.getTimeString(mConfigSetting[6]+ mConfigSetting[10]));
 						mRunningTime=0;
 						retrySensorCount=0;
 						isConfigReceived=false;
@@ -937,9 +1076,9 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 						new Thread(new MyThread()).start();
 
 						mRunningTime = 0;//当点击新开始
-						mIvAgain.setVisibility(View.GONE);
-						mIvSpace.setVisibility(View.GONE);
-						mIvOver.setVisibility(View.VISIBLE);
+						mIbAgain.setVisibility(View.GONE);
+						mIbSpace.setVisibility(View.GONE);
+						mIbOver.setVisibility(View.VISIBLE);
 					}
 				})
 				.setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -950,50 +1089,6 @@ public class RunningActivity extends BaseActivity implements View.OnClickListene
 				});
 		builder.create().show();
 	}
-
-
-	//TODO 无用的方法可以删去
-	private void sendAgainSettingData() {
-
-//		if (CureSPUtil.isSaved(Constants.SP_MEDICAL_STIMULATE, this)) {
-//			mStimulate = CureSPUtil.getSP(Constants.SP_MEDICAL_STIMULATE, this);
-//		}
-//
-//		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_GRADE, this)) {
-//			mCauterizeGrade = CureSPUtil.getTempByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_GRADE, this));
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_CAUTERIZE_TIME_GRADE, this)) {
-//			mCauterizeTime = CureSPUtil.getCauterizeTimeByPosition(CureSPUtil.getSP(Constants.SP_CAUTERIZE_TIME_GRADE, this));
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_TYPE, this)) {
-//			mNeedleType = CureSPUtil.getSP(Constants.SP_NEEDLE_TYPE, this);
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_GRADE, this)) {
-//			mNeedleGrade = CureSPUtil.getSP(Constants.SP_NEEDLE_GRADE, this);
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_NEEDLE_FREQUENCY, this)) {
-//			mNeedleFrequency = CureSPUtil.getSP(Constants.SP_NEEDLE_FREQUENCY, this);
-//		}
-//		if (CureSPUtil.isSaved(Constants.SP_MEDICINE_TIME_GRADE, this)) {
-//			mMedicineTime = CureSPUtil.getMedicineTimeByPosition(CureSPUtil.getSP(Constants.SP_MEDICINE_TIME_GRADE, this));
-//		}
-//
-//		LogUtil.i(TAG, "发送的数据Settings:" + Arrays.toString(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
-//				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime)));
-//
-//		if (HomeFragment.getBluetoothLeService() == null) {
-//			return;
-//		}
-//
-//		HomeFragment.getBluetoothLeService().WriteValue(CureSPUtil.setSettingData(mStimulate, mCauterizeGrade, mCauterizeTime
-//				, mNeedleType, mNeedleGrade, mNeedleFrequency, mMedicineTime));
-
-		if (HomeFragment.getBluetoothLeService() == null) {
-			return;
-		}
-		HomeFragment.getBluetoothLeService().WriteValue(configSetting);
-	}
-
 
 	/**
 	 * 节点触摸监听
